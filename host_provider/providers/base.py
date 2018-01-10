@@ -1,6 +1,6 @@
 from libcloud.compute.providers import get_driver
 from libcloud import security
-from settings import LIBCLOUD_CA_CERTS_PATH
+from host_provider.settings import LIBCLOUD_CA_CERTS_PATH
 
 
 class ProviderBase(object):

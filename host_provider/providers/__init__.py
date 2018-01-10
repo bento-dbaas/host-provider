@@ -1,5 +1,5 @@
-from providers.base import ProviderBase
-from providers.cloudstack import CloudStackProvider
+from host_provider.providers.base import ProviderBase
+from host_provider.providers.cloudstack import CloudStackProvider
 
 
 def factory(provider_name, environment, engine):
