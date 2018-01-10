@@ -11,7 +11,7 @@ class ProviderBase(object):
         self._client = None
         self._credential = None
 
-        if LIBCLOUD_CA_CERTS_PATH != None:
+        if LIBCLOUD_CA_CERTS_PATH is not None:
             security.CA_CERTS_PATH = LIBCLOUD_CA_CERTS_PATH
             if security.CA_CERTS_PATH == "":
                 security.CA_CERTS_PATH = None
