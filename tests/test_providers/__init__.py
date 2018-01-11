@@ -3,8 +3,8 @@ from host_provider.providers.base import ProviderBase
 
 class FakeProvider(ProviderBase):
 
-    @staticmethod
-    def get_provider():
+    @classmethod
+    def get_provider(cls):
         return "ProviderForTests"
 
     def build_client(self):

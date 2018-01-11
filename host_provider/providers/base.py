@@ -33,8 +33,8 @@ class ProviderBase(object):
 
         return self._credential
 
-    @staticmethod
-    def get_provider():
+    @classmethod
+    def get_provider(cls):
         raise NotImplementedError
 
     def build_client(self):
