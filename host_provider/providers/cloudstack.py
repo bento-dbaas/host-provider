@@ -1,7 +1,7 @@
 from collections import namedtuple
 from libcloud.compute.types import Provider
 from host_provider.providers.base import ProviderBase
-from host_provider.settings import credentials
+from host_provider.credentials.cloudstack import CredentialCloudStack, CredentialAddCloudStack
 
 
 class CloudStackProvider(ProviderBase):
@@ -16,71 +16,31 @@ class CloudStackProvider(ProviderBase):
             secure=self.credential.secure
         )
 
-    def build_credential(self):
-        return Credential(self.environment, self.engine)
-
-    @staticmethod
-    def get_provider():
+    @classmethod
+    def get_provider(cls):
         return Provider.CLOUDSTACK
 
+    def build_credential(self):
+        return CredentialCloudStack(self.environment, self.engine)
+
     def create_host(self, cpu, memory, name):
-        BasicInfo = namedtuple("CloudStackBasicInfo", "id")
+        networks = [
+            self.BasicInfo(network for network in self.credential.networks)
+        ]
+
+        project = self.credential.project
+        if project:
+            project = self.BasicInfo(project)
+
         return self.client.create_node(
             name=name,
-            size=BasicInfo(self.credential.offering_to(cpu, memory)),
-            image=BasicInfo(self.credential.template),
-            location=BasicInfo(self.credential.zone),
-            networks=[BasicInfo(self.credential.networks)],
-            project=BasicInfo(self.credential.project)
+            size=self.BasicInfo(self.credential.offering_to(cpu, memory)),
+            image=self.BasicInfo(self.credential.template),
+            location=self.BasicInfo(self.credential.zone),
+            networks=networks,
+            project=project
         )
 
+    def get_credential_add(self):
+        return CredentialAddCloudStack
 
-class Credential(object):
-
-    def __init__(self, environment, engine):
-        self.environment = environment
-        self.engine = engine
-        self.env_data = credentials[self.environment]
-        self.engine_data = self.env_data[self.engine]
-
-    @property
-    def endpoint(self):
-        return self.env_data['endpoint']
-
-    @property
-    def api_key(self):
-        return self.env_data['api_key']
-
-    @property
-    def secret_key(self):
-        return self.env_data['secret_key']
-
-    def offering_to(self, cpu, memory):
-        return self.env_data['offerings']['{}c{}m'.format(cpu, memory)]
-
-    @property
-    def template(self):
-        return self.engine_data['template']
-
-    @property
-    def zone(self):
-        return list(self.env_data['zones'].keys())[0]
-
-    @property
-    def networks(self):
-        zone = self.env_data['zones'][self.zone]
-        if 'networks' in zone:
-            return zone['networks'][0]
-        return None
-
-    @property
-    def extra(self):
-        return self.env_data['extra']
-
-    @property
-    def project(self):
-        return self.env_data['extra']['projectid']
-
-    @property
-    def secure(self):
-        return self.env_data['secure']

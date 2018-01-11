@@ -33,6 +33,21 @@ class ProviderBase(object):
 
         return self._credential
 
+    def credential_add(self, content):
+        credential_cls = self.get_credential_add()
+        credential = credential_cls(self.get_provider(), content)
+
+        is_valid, error = credential.is_valid()
+        if not is_valid:
+            return False, error
+
+        try:
+            insert = credential.save()
+        except Exception as e:
+            return False, str(e)
+        else:
+            return True, insert.inserted_id
+
     @classmethod
     def get_provider(cls):
         raise NotImplementedError
@@ -44,4 +59,7 @@ class ProviderBase(object):
         raise NotImplementedError
 
     def build_credential(self):
+        raise NotImplementedError
+
+    def get_credential_add(self):
         raise NotImplementedError
