@@ -34,7 +34,13 @@ class CredentialBase(CredentialMongoDB):
         self.engine = engine
 
     def get_content(self):
-        return self.collection.find_one({"environment": self.environment})
+        content = self.collection.find_one({"environment": self.environment})
+        if content:
+            return content
+
+        raise NotImplementedError("No {} credential for {}".format(
+            self.provider, self.environment
+        ))
 
     @property
     def content(self):

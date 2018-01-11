@@ -1,5 +1,5 @@
 from collections import namedtuple
-from host_provider.credentials.base import CredentialMongoDB, CredentialAdd
+from host_provider.credentials.base import CredentialMongoDB, CredentialAdd, CredentialBase
 
 
 class FakeMongoDB(object):
@@ -18,6 +18,17 @@ class FakeMongoDB(object):
         self.ids.append(new_id)
         return InsertInfo(inserted_id=new_id)
 
+    def find_one(self, filter):
+        for line in self.metadata:
+            for key, value in filter.items():
+                if line.get(key, None) == value:
+                    return line
+        return None
+
+    @classmethod
+    def clear(cls):
+        cls.metadata = []
+
 
 class CredentialFakeDB(CredentialMongoDB):
 
@@ -27,9 +38,9 @@ class CredentialFakeDB(CredentialMongoDB):
             self._collection = FakeMongoDB()
         return self._collection
 
-    @property
-    def content(self):
-        return self._content
+
+class CredentialBaseFake(CredentialFakeDB, CredentialBase):
+    pass
 
 
 class CredentialAddFake(CredentialFakeDB, CredentialAdd):

@@ -14,6 +14,9 @@ FAKE_CERT_PATH = "/path/to/certs/"
 
 class TestBaseProvider(TestCase):
 
+    def tearDown(self):
+        FakeMongoDB.clear()
+
     def test_init_data(self):
         provider = ProviderBase(ENVIRONMENT, ENGINE)
         self.assertEqual(provider.environment, ENVIRONMENT)
