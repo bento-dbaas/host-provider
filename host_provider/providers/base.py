@@ -35,7 +35,9 @@ class ProviderBase(object):
 
     def credential_add(self, content):
         credential_cls = self.get_credential_add()
-        credential = credential_cls(self.get_provider(), content)
+        credential = credential_cls(
+            self.get_provider(), self.environment, content
+        )
 
         is_valid, error = credential.is_valid()
         if not is_valid:

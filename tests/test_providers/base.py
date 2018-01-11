@@ -4,6 +4,7 @@ from libcloud import security
 from host_provider.providers.base import ProviderBase
 from host_provider.providers import base
 from tests.test_providers import FakeProvider
+from tests.test_credentials import FakeMongoDB
 
 
 ENVIRONMENT = "dev"
@@ -26,6 +27,7 @@ class TestBaseProvider(TestCase):
         self.assertRaises(NotImplementedError, provider.build_client)
         self.assertRaises(NotImplementedError, provider.get_provider)
         self.assertRaises(NotImplementedError, provider.create_host, 0, 0, "")
+        self.assertRaises(NotImplementedError, provider.get_credential_add)
 
     def test_build_client(self):
         provider = FakeProvider(ENVIRONMENT, ENGINE)
@@ -38,6 +40,34 @@ class TestBaseProvider(TestCase):
         self.assertIsNone(provider._credential)
         self.assertEqual(provider.credential, provider.build_credential())
         self.assertIsNotNone(provider._credential)
+
+    def test_add_credential_success(self):
+        self._add_credential({"fake": "info"}, True)
+
+    def test_add_credential_invalid(self):
+        self._add_credential({"wrong": "info"}, False)
+
+    def test_add_credential_database_error(self):
+        self._add_credential({"raise": "info", "fake": "info"}, False)
+
+    def _add_credential(self, content, success_expected):
+        provider = FakeProvider(ENVIRONMENT, ENGINE)
+
+        full_data = {"environment": ENVIRONMENT}
+        full_data.update(content)
+        self.assertNotIn(full_data, FakeMongoDB.metadata)
+        latest = FakeMongoDB.ids[-1]
+        success, inserted_id = provider.credential_add(content)
+
+        if success_expected:
+            self.assertTrue(success)
+            self.assertIn(full_data, FakeMongoDB.metadata)
+            self.assertEqual(FakeMongoDB.ids[-1], inserted_id)
+        else:
+            self.assertFalse(success)
+            self.assertIsInstance(inserted_id, str)
+            self.assertNotIn(full_data, FakeMongoDB.metadata)
+            self.assertEqual(FakeMongoDB.ids[-1], latest)
 
     @patch("host_provider.providers.base.get_driver", return_value="Fake")
     def test_get_driver(self, get_driver):
@@ -55,5 +85,3 @@ class TestBaseProvider(TestCase):
         self.assertNotEqual(security.CA_CERTS_PATH, "")
         ProviderBase(ENVIRONMENT, ENGINE)
         self.assertIsNone(security.CA_CERTS_PATH, None)
-
-
