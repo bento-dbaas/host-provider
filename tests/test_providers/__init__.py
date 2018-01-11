@@ -1,4 +1,5 @@
 from host_provider.providers.base import ProviderBase
+from tests.test_credentials import CredentialAddFake
 
 
 class FakeProvider(ProviderBase):
@@ -12,3 +13,6 @@ class FakeProvider(ProviderBase):
 
     def build_credential(self):
         return "FakeCredential"
+
+    def get_credential_add(self):
+        return CredentialAddFake

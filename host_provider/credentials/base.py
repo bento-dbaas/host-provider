@@ -3,7 +3,7 @@ from host_provider.settings import MONGODB_DB, MONGODB_HOST, MONGODB_PORT, \
     MONGODB_USER, MONGODB_PWD
 
 
-class CredentialConnection(object):
+class CredentialMongoDB(object):
 
     def __init__(self, provider, environment):
         self.provider = provider
@@ -27,8 +27,7 @@ class CredentialConnection(object):
         return self._content
 
 
-
-class CredentialBase(CredentialConnection):
+class CredentialBase(CredentialMongoDB):
 
     def __init__(self, provider, environment, engine):
         super(CredentialBase, self).__init__(provider, environment)
@@ -44,10 +43,10 @@ class CredentialBase(CredentialConnection):
         return super(CredentialBase, self).content
 
 
-class CredentialAdd(CredentialConnection):
+class CredentialAdd(CredentialMongoDB):
 
-    def __init__(self, environment, content):
-        super(CredentialAdd, self).__init__(environment)
+    def __init__(self, provider, environment, content):
+        super(CredentialAdd, self).__init__(provider, environment)
         self._content = content
 
     def save(self):
