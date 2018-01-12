@@ -8,19 +8,19 @@ class CredentialMongoDB(object):
     def __init__(self, provider, environment):
         self.provider = provider
         self.environment = environment
-        self._collection = None
+        self._collection_credential = None
         self._content = None
 
     @property
-    def collection(self):
-        if not self._collection:
+    def credential(self):
+        if not self._collection_credential:
             client = MongoClient(
                 host=MONGODB_HOST, port=MONGODB_PORT,
                 username=MONGODB_USER, password=MONGODB_PWD
             )
             db = client[MONGODB_DB]
-            self._collection = db[self.provider]
-        return self._collection
+            self._collection_credential = db["credential"]
+        return self._collection_credential
 
     @property
     def content(self):
@@ -34,7 +34,10 @@ class CredentialBase(CredentialMongoDB):
         self.engine = engine
 
     def get_content(self):
-        content = self.collection.find_one({"environment": self.environment})
+        content = self.credential.find_one({
+            "provider": self.provider,
+            "environment": self.environment,
+        })
         if content:
             return content
 
@@ -56,7 +59,8 @@ class CredentialAdd(CredentialMongoDB):
         self._content = content
 
     def save(self):
-        return self.collection.insert_one({
+        return self.credential.insert_one({
+            'provider': self.provider,
             'environment': self.environment, **self.content,
         })
 

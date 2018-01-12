@@ -56,9 +56,13 @@ class TestBaseProvider(TestCase):
     def _add_credential(self, content, success_expected):
         provider = FakeProvider(ENVIRONMENT, ENGINE)
 
-        full_data = {"environment": ENVIRONMENT}
+        full_data = {
+            "environment": ENVIRONMENT,
+            "provider": provider.get_provider()
+        }
         full_data.update(content)
         self.assertNotIn(full_data, FakeMongoDB.metadata)
+
         latest = FakeMongoDB.ids[-1]
         success, inserted_id = provider.credential_add(content)
 

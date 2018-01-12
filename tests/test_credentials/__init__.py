@@ -33,10 +33,10 @@ class FakeMongoDB(object):
 class CredentialFakeDB(CredentialMongoDB):
 
     @property
-    def collection(self):
-        if not self._collection:
-            self._collection = FakeMongoDB()
-        return self._collection
+    def credential(self):
+        if not self._collection_credential:
+            self._collection_credential = FakeMongoDB()
+        return self._collection_credential
 
 
 class CredentialBaseFake(CredentialFakeDB, CredentialBase):
