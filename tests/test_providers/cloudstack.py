@@ -28,13 +28,21 @@ class TestBaseCredential(TestCase):
             type(self.provider.build_client()), CloudStackNodeDriver
         )
 
-    @patch('host_provider.providers.cloudstack.CredentialCloudStack.get_content')
-    @patch('libcloud.compute.drivers.cloudstack.CloudStackNodeDriver.create_node')
+    @patch(
+        'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
+    )
+    @patch(
+        'libcloud.compute.drivers.cloudstack.CloudStackNodeDriver.create_node'
+    )
     def test_create_host(self, create_node, credential_content):
         self.create_host_tests(create_node, credential_content)
 
-    @patch('host_provider.providers.cloudstack.CredentialCloudStack.get_content')
-    @patch('libcloud.compute.drivers.cloudstack.CloudStackNodeDriver.create_node')
+    @patch(
+        'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
+    )
+    @patch(
+        'libcloud.compute.drivers.cloudstack.CloudStackNodeDriver.create_node'
+    )
     def test_create_host_with_project(self, create_node, credential_content):
         self.create_host_tests(
             create_node, credential_content, projectid="myprojectid"
@@ -68,11 +76,14 @@ class TestBaseCredential(TestCase):
         if project:
             project = self.provider.BasicInfo(id=project)
 
+        networks = [
+            self.provider.BasicInfo("net1"), self.provider.BasicInfo("net2")
+        ]
+
         create_node.assert_called_once_with(
             name=name,
             size=self.provider.BasicInfo("offering1"),
             image=self.provider.BasicInfo("template-redis-1"),
             location=self.provider.BasicInfo("zone1"),
-            networks=[self.provider.BasicInfo("net1"), self.provider.BasicInfo("net2")],
-            project=project
+            networks=networks, project=project
         )
