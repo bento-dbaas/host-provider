@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch
-from host_provider.settings import MONGODB_DB, MONGODB_HOST, MONGODB_PORT, \
-    MONGODB_USER, MONGODB_PWD
+from host_provider.settings import MONGODB_HOST, MONGODB_PORT, MONGODB_USER, \
+    MONGODB_PWD
 from host_provider.credentials.base import CredentialAdd, CredentialBase
 from tests.test_credentials import CredentialAddFake, CredentialBaseFake, \
     FakeMongoDB
@@ -34,7 +34,7 @@ class TestBaseProvider(TestCase):
         self.assertIsNotNone(credential.content)
 
     def test_base_content_empty(self):
-        credential = CredentialBaseFake(PROVIDER, ENVIRONMENT + "-fake", ENGINE)
+        credential = CredentialBaseFake(PROVIDER, ENVIRONMENT + "-new", ENGINE)
         self.assertIsNone(credential._content)
         self.assertRaises(NotImplementedError, credential.get_content)
 

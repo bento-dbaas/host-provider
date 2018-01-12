@@ -1,7 +1,8 @@
 from collections import namedtuple
 from libcloud.compute.types import Provider
 from host_provider.providers.base import ProviderBase
-from host_provider.credentials.cloudstack import CredentialCloudStack, CredentialAddCloudStack
+from host_provider.credentials.cloudstack import CredentialCloudStack, \
+    CredentialAddCloudStack
 
 
 class CloudStackProvider(ProviderBase):
@@ -45,4 +46,3 @@ class CloudStackProvider(ProviderBase):
 
     def get_credential_add(self):
         return CredentialAddCloudStack
-

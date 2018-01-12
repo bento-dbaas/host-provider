@@ -1,5 +1,6 @@
 from collections import namedtuple
-from host_provider.credentials.base import CredentialMongoDB, CredentialAdd, CredentialBase
+from host_provider.credentials.base import CredentialMongoDB, CredentialAdd, \
+    CredentialBase
 
 
 class FakeMongoDB(object):
