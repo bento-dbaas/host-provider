@@ -47,4 +47,5 @@ class CredentialAddCloudStack(CredentialAdd):
 
     @classmethod
     def is_valid(self):
+        # TODO Create validation here
         return True, ""

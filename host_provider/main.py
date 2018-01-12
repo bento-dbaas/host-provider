@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, make_response
-from providers import factory
+from host_provider.providers import get_provider_to
 
 
 app = Flask(__name__)
@@ -17,12 +17,31 @@ def create_host(provider_name, env):
         return response_invalid_request("invalid data {}".format(data))
 
     try:
-        provider = factory(provider_name, env, engine)
+        provider_cls = get_provider_to(provider_name)
+        provider = provider_cls(env, engine)
         node = provider.create_host(cpu, memory, name)
     except Exception as e:
         return response_invalid_request(str(e))
     else:
         return response_created(ip=node.private_ips[0], id=node.id)
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/credential/new", methods=['POST']
+)
+def create_credential(provider_name, env):
+    data = request.get_json()
+    if not data:
+        return response_invalid_request("No data".format(data))
+
+    try:
+        provider_cls = get_provider_to(provider_name)
+        provider = provider_cls(env, None)
+        success, credential_id = provider.credential_add(data)
+    except Exception as e:
+        return response_invalid_request(str(e))
+    else:
+        return response_created(success=success, id=str(credential_id))
 
 
 def response_invalid_request(error, status_code=500):

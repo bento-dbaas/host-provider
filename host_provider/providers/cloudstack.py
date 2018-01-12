@@ -21,11 +21,13 @@ class CloudStackProvider(ProviderBase):
         return Provider.CLOUDSTACK
 
     def build_credential(self):
-        return CredentialCloudStack(self.environment, self.engine)
+        return CredentialCloudStack(
+            self.get_provider(), self.environment, self.engine
+        )
 
     def create_host(self, cpu, memory, name):
         networks = [
-            self.BasicInfo(network for network in self.credential.networks)
+            self.BasicInfo(network) for network in self.credential.networks
         ]
 
         project = self.credential.project
