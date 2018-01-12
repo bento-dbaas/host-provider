@@ -23,7 +23,12 @@ class TestBaseCredential(TestCase):
             self.provider.get_credential_add(), CredentialAddCloudStack
         )
 
-    def test_build_client(self):
+
+    @patch(
+        'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
+    )
+    def test_build_client(self, content):
+        self.build_credential_content(content)
         self.assertEqual(
             type(self.provider.build_client()), CloudStackNodeDriver
         )
@@ -48,7 +53,7 @@ class TestBaseCredential(TestCase):
             create_node, credential_content, projectid="myprojectid"
         )
 
-    def create_host_tests(self, create_node, content, **kwargs):
+    def build_credential_content(self, content, **kwargs):
         values = {
             "api_key": "Fake-123",
             "secret_key": "Fake-456",
@@ -69,10 +74,13 @@ class TestBaseCredential(TestCase):
         values.update(kwargs)
         content.return_value = values
 
+    def create_host_tests(self, create_node, content, **kwargs):
+        self.build_credential_content(content, **kwargs)
+
         name = "infra-01-123456"
         self.provider.create_host(1, 1024, name)
 
-        project = values.get("projectid", None)
+        project = content.return_value.get("projectid", None)
         if project:
             project = self.provider.BasicInfo(id=project)
 
