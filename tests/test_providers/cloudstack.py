@@ -61,7 +61,7 @@ class TestBaseCredential(TestCase):
             "secure": False,
             "projectid": "myprojectid",
             "zones": {
-                "zone1": {"networks": ["net1", "net2"]}
+                "zone1": {"networks": {'redis': ["net1", "net2"]}}
             },
             "offerings": {
                 "1c1024m": "offering1",

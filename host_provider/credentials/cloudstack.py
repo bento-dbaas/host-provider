@@ -30,7 +30,7 @@ class CredentialCloudStack(CredentialBase):
     def networks(self):
         zone = self.content['zones'][self.zone]
         if 'networks' in zone:
-            return zone['networks']
+            return zone['networks'][self.engine]
         raise NotImplementedError("Not network to zone {}".format(self.zone))
 
     @property
