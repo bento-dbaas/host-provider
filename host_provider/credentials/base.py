@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from pymongo import MongoClient
 from host_provider.settings import MONGODB_DB, MONGODB_HOST, MONGODB_PORT, \
     MONGODB_USER, MONGODB_PWD
@@ -8,18 +9,26 @@ class CredentialMongoDB(object):
     def __init__(self, provider, environment):
         self.provider = provider
         self.environment = environment
+        self._db = None
         self._collection_credential = None
         self._content = None
 
     @property
-    def credential(self):
-        if not self._collection_credential:
+    def db(self):
+        if not self._db:
             client = MongoClient(
                 host=MONGODB_HOST, port=MONGODB_PORT,
-                username=MONGODB_USER, password=MONGODB_PWD
+                username=MONGODB_USER, password=MONGODB_PWD,
+                document_class=OrderedDict
             )
-            db = client[MONGODB_DB]
-            self._collection_credential = db["credential"]
+            self._db = client[MONGODB_DB]
+
+        return self._db
+
+    @property
+    def credential(self):
+        if not self._collection_credential:
+            self._collection_credential = self.db["credential"]
         return self._collection_credential
 
     @property
@@ -50,6 +59,12 @@ class CredentialBase(CredentialMongoDB):
         if not self._content:
             self._content = self.get_content()
         return super(CredentialBase, self).content
+
+    def before_create_host(self, group):
+        pass
+
+    def after_create_host(self, group):
+        pass
 
 
 class CredentialAdd(CredentialMongoDB):
