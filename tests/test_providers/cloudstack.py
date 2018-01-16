@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from libcloud.compute.types import Provider
 from libcloud.compute.drivers.cloudstack import CloudStackNodeDriver
 from host_provider.providers.cloudstack import CloudStackProvider
@@ -39,8 +39,14 @@ class TestBaseCredential(TestCase):
     @patch(
         'libcloud.compute.drivers.cloudstack.CloudStackNodeDriver.create_node'
     )
-    def test_create_host(self, create_node, credential_content):
-        self.create_host_tests(create_node, credential_content)
+    @patch(
+        'host_provider.providers.cloudstack.CredentialCloudStack.zone'
+    )
+    @patch(
+        'host_provider.credentials.cloudstack.CredentialCloudStack.collection_last'
+    )
+    def test_create_host(self, collection_last, zone, create_node, credential_content):
+        self.create_host_tests(collection_last, create_node, credential_content, zone)
 
     @patch(
         'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
@@ -48,9 +54,18 @@ class TestBaseCredential(TestCase):
     @patch(
         'libcloud.compute.drivers.cloudstack.CloudStackNodeDriver.create_node'
     )
-    def test_create_host_with_project(self, create_node, credential_content):
+    @patch(
+        'host_provider.providers.cloudstack.CredentialCloudStack.zone'
+    )
+    @patch(
+        'host_provider.credentials.cloudstack.CredentialCloudStack.collection_last'
+    )
+    def test_create_host_with_project(
+        self, collection_last, zone, create_node, credential_content
+    ):
         self.create_host_tests(
-            create_node, credential_content, projectid="myprojectid"
+            collection_last, create_node, credential_content, zone,
+            projectid="myprojectid"
         )
 
     def build_credential_content(self, content, **kwargs):
@@ -74,11 +89,17 @@ class TestBaseCredential(TestCase):
         values.update(kwargs)
         content.return_value = values
 
-    def create_host_tests(self, create_node, content, **kwargs):
+    def create_host_tests(
+        self, collection_last, create_node, content, zone, **kwargs
+    ):
+        collection_last.find_one.return_value = []
         self.build_credential_content(content, **kwargs)
 
+        zone.__get__ = Mock(return_value="zone1")
+
         name = "infra-01-123456"
-        self.provider.create_host(1, 1024, name)
+        group = "infra123456"
+        self.provider._create_host(1, 1024, name, group)
 
         project = content.return_value.get("projectid", None)
         if project:

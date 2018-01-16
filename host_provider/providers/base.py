@@ -50,6 +50,12 @@ class ProviderBase(object):
         else:
             return True, insert.inserted_id
 
+    def _create_host(self, cpu, memory, name, group):
+        self.credential.before_create_host(group)
+        result = self.create_host(cpu, memory, name)
+        self.credential.after_create_host(group)
+        return result
+
     @classmethod
     def get_provider(cls):
         raise NotImplementedError

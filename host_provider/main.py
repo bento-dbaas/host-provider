@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, make_response
 from host_provider.providers import get_provider_to
-
+from host_provider.models import Host
+from traceback import print_exc
 
 app = Flask(__name__)
 
@@ -8,22 +9,33 @@ app = Flask(__name__)
 @app.route("/<string:provider_name>/<string:env>/host/new", methods=['POST'])
 def create_host(provider_name, env):
     data = request.get_json()
+    group = data.get("group", None)
+    name = data.get("name", None)
     engine = data.get("engine", None)
     cpu = data.get("cpu", None)
     memory = data.get("memory", None)
-    name = data.get("name", None)
 
-    if not(engine and cpu and memory and name):
+    # TODO improve validation and response
+    if not(group and name and engine and cpu and memory):
         return response_invalid_request("invalid data {}".format(data))
 
     try:
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, engine)
-        node = provider.create_host(cpu, memory, name)
+        node = provider._create_host(cpu, memory, name, group)
     except Exception as e:
+        print_exc()
         return response_invalid_request(str(e))
-    else:
-        return response_created(ip=node.private_ips[0], id=node.id)
+
+    address = node.private_ips[0]
+    host = Host(
+        name=name, group=group, engine=engine, environment=env,
+        cpu=cpu, memory=memory, provider=provider_name, identifier=node.id,
+        address=address
+    )
+    host.save()
+
+    return response_created(address=address, id=host.id)
 
 
 @app.route(
