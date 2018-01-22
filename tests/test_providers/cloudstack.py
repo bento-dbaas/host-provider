@@ -23,7 +23,6 @@ class TestBaseCredential(TestCase):
             self.provider.get_credential_add(), CredentialAddCloudStack
         )
 
-
     @patch(
         'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
     )
@@ -116,3 +115,78 @@ class TestBaseCredential(TestCase):
             location=self.provider.BasicInfo("zone1"),
             networks=networks, project=project
         )
+
+    @patch(
+        'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
+    )
+    @patch(
+        'libcloud.compute.drivers.cloudstack.CloudStackNodeDriver.ex_start'
+    )
+    def test_start(self, ex_start, content):
+        self.build_credential_content(content)
+        identifier = "fake-uuid-cloud-stac"
+        self.provider.start(identifier)
+        ex_start.assert_called_once_with(self.provider.BasicInfo(identifier))
+
+    @patch(
+        'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
+    )
+    @patch(
+        'libcloud.compute.drivers.cloudstack.CloudStackNodeDriver.ex_stop'
+    )
+    def test_stop(self, ex_stop, content):
+        self.build_credential_content(content)
+        identifier = "fake-uuid-cloud-stac"
+        self.provider.stop(identifier)
+        ex_stop.assert_called_once_with(self.provider.BasicInfo(identifier))
+
+    @patch(
+        'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
+    )
+    @patch(
+        'libcloud.compute.drivers.cloudstack.CloudStackNodeDriver.destroy_node'
+    )
+    def test_destroy_cloud_stack(self, destroy_node, content):
+        self.build_credential_content(content)
+        identifier = "fake-uuid-cloud-stac"
+        self.provider._destroy(identifier)
+        destroy_node.assert_called_once_with(
+            self.provider.BasicInfo(identifier)
+        )
+
+    @patch(
+        'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
+    )
+    @patch(
+        'host_provider.providers.cloudstack.CredentialCloudStack.collection_last'
+    )
+    def test_all_nodes_deleted(self, collection_last, content):
+        self.build_credential_content(content)
+        group = "fake123456"
+        self.provider._all_node_destroyed(group)
+        collection_last.delete_one.assert_called_once_with({
+            "environment": self.provider.credential.environment, "group": group
+        })
+
+    @patch(
+        'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
+    )
+    @patch(
+        'host_provider.providers.cloudstack.CloudStackProvider._destroy'
+    )
+    @patch(
+        'host_provider.providers.cloudstack.CloudStackProvider._all_node_destroyed'
+    )
+    @patch(
+        'host_provider.providers.base.Host'
+    )
+    def test_destroy(self, host, all_node_destroyed, destroy, content):
+        self.build_credential_content(content)
+        host.filter.return_value = [1]
+
+        group = "fake123456"
+        identifier = "fake-uuid-cloud-stac"
+        self.provider.destroy(group, identifier)
+        host.filter.assert_called_once_with(group=group)
+        destroy.assert_called_once_with(identifier)
+        all_node_destroyed.assert_called_once_with(group)

@@ -46,3 +46,18 @@ class CloudStackProvider(ProviderBase):
 
     def get_credential_add(self):
         return CredentialAddCloudStack
+
+    def start(self, identifier):
+        node = self.BasicInfo(identifier)
+        return self.client.ex_start(node)
+
+    def stop(self, identifier):
+        node = self.BasicInfo(identifier)
+        return self.client.ex_stop(node)
+
+    def _destroy(self, identifier):
+        node = self.BasicInfo(identifier)
+        return self.client.destroy_node(node)
+
+    def _all_node_destroyed(self, group):
+        self.credential.remove_last_used_for(group)
