@@ -1,5 +1,6 @@
 from libcloud.compute.providers import get_driver
 from libcloud import security
+from host_provider.models import Host
 from host_provider.settings import LIBCLOUD_CA_CERTS_PATH
 
 
@@ -71,3 +72,22 @@ class ProviderBase(object):
 
     def get_credential_add(self):
         raise NotImplementedError
+
+    def start(self, identifier):
+        raise NotImplementedError
+
+    def stop(self, identifier):
+        raise NotImplementedError
+
+    def _destroy(self, identifier):
+        raise NotImplementedError
+
+    def _all_node_destroyed(self, group):
+        pass
+
+    def destroy(self, group, identifier):
+        self._destroy(identifier)
+
+        quantity = len(Host.filter(group=group))
+        if quantity:
+            self._all_node_destroyed(group)

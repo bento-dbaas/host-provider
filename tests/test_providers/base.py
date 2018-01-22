@@ -31,6 +31,10 @@ class TestBaseProvider(TestCase):
         self.assertRaises(NotImplementedError, provider.get_provider)
         self.assertRaises(NotImplementedError, provider._create_host, 0, 0, "")
         self.assertRaises(NotImplementedError, provider.get_credential_add)
+        self.assertRaises(NotImplementedError, provider.start, "")
+        self.assertRaises(NotImplementedError, provider.stop, "")
+        self.assertRaises(NotImplementedError, provider._destroy, "")
+        self.assertIsNone(provider._all_node_destroyed(""))
 
     def test_build_client(self):
         provider = FakeProvider(ENVIRONMENT, ENGINE)
