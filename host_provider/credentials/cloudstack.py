@@ -42,6 +42,11 @@ class CredentialCloudStack(CredentialBase):
             {"$set": {"zone": self.zone}}, upsert=True
         )
 
+    def remove_last_used_for(self, group):
+        self.collection_last.delete_one({
+            "environment": self.environment, "group": group
+        })
+
     @property
     def collection_last(self):
         return self.db["cloudstack_zones_last"]

@@ -22,8 +22,10 @@ class FakeMongoDB(object):
     def find_one(self, filter):
         for line in self.metadata:
             for key, value in filter.items():
-                if line.get(key, None) == value:
-                    return line
+                if line.get(key, None) != value:
+                    break
+            else:
+                return line
         return None
 
     @classmethod
