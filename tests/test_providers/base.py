@@ -29,7 +29,7 @@ class TestBaseProvider(TestCase):
         self.assertRaises(NotImplementedError, provider.build_credential)
         self.assertRaises(NotImplementedError, provider.build_client)
         self.assertRaises(NotImplementedError, provider.get_provider)
-        self.assertRaises(NotImplementedError, provider.create_host, 0, 0, "")
+        self.assertRaises(NotImplementedError, provider._create_host, 0, 0, "")
         self.assertRaises(NotImplementedError, provider.get_credential_add)
 
     def test_build_client(self):

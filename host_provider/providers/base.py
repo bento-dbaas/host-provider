@@ -50,9 +50,9 @@ class ProviderBase(object):
         else:
             return True, insert.inserted_id
 
-    def _create_host(self, cpu, memory, name, group):
+    def create_host(self, cpu, memory, name, group):
         self.credential.before_create_host(group)
-        result = self.create_host(cpu, memory, name)
+        result = self._create_host(cpu, memory, name)
         self.credential.after_create_host(group)
         return result
 
@@ -63,7 +63,7 @@ class ProviderBase(object):
     def build_client(self):
         raise NotImplementedError
 
-    def create_host(self, cpu, memory, name):
+    def _create_host(self, cpu, memory, name):
         raise NotImplementedError
 
     def build_credential(self):

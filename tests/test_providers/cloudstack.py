@@ -99,7 +99,7 @@ class TestBaseCredential(TestCase):
 
         name = "infra-01-123456"
         group = "infra123456"
-        self.provider._create_host(1, 1024, name, group)
+        self.provider.create_host(1, 1024, name, group)
 
         project = content.return_value.get("projectid", None)
         if project:
