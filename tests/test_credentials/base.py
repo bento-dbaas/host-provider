@@ -54,3 +54,12 @@ class TestBaseProvider(TestCase):
             username=MONGODB_USER, password=MONGODB_PWD,
             document_class=OrderedDict
         )
+
+    @patch('host_provider.credentials.base.CredentialAdd.credential')
+    def test_delete(self, credential):
+        env = "env"
+        provider = "fake"
+        CredentialAdd(provider, env, {}).delete()
+        credential.delete_one.assert_called_once_with({
+            "environment": env, "provider": provider
+        })

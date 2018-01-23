@@ -79,5 +79,10 @@ class CredentialAdd(CredentialMongoDB):
             'environment': self.environment, **self.content,
         })
 
+    def delete(self):
+        return self.credential.delete_one({
+            'provider': self.provider, 'environment': self.environment
+        })
+
     def is_valid(self):
         raise NotImplementedError
