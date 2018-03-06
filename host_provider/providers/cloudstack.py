@@ -61,3 +61,17 @@ class CloudStackProvider(ProviderBase):
 
     def _all_node_destroyed(self, group):
         self.credential.remove_last_used_for(group)
+
+    def restore(self, identifier, template=None):
+        node = self.BasicInfo(identifier)
+
+        if template:
+            template = self.BasicInfo(template)
+
+        return self.client.ex_restore(node, template)
+
+    def resize(self, identifier, offering):
+        node = self.BasicInfo(identifier)
+        offering = self.BasicInfo(offering)
+
+        return self.client.ex_change_node_size(node, offering)
