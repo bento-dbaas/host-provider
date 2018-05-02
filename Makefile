@@ -4,8 +4,7 @@ dev:
 
 
 run:
-	export FLASK_APP=./host_provider/main.py
-	python -m flask run
+	export FLASK_APP=./host_provider/main.py; python -m flask run
 
 
 test:
