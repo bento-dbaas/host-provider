@@ -3,8 +3,13 @@ from host_provider.credentials.base import CredentialAdd
 from host_provider.providers import get_provider_to
 from host_provider.models import Host
 from traceback import print_exc
+from flask_cors import CORS
+from bson import json_util, ObjectId
+import json
+
 
 app = Flask(__name__)
+cors = CORS(app)
 
 
 @app.route("/<string:provider_name>/<string:env>/host/new", methods=['POST'])
@@ -24,8 +29,8 @@ def create_host(provider_name, env):
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, engine)
         node = provider.create_host(cpu, memory, name, group)
-    except Exception as e: # TODO What can get wrong here?
-        print_exc() # TODO Improve log
+    except Exception as e:  # TODO What can get wrong here?
+        print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
 
     address = node.private_ips[0]
@@ -57,8 +62,8 @@ def stop_host(provider_name, env):
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, host.engine)
         provider.stop(host.identifier)
-    except Exception as e: # TODO What can get wrong here?
-        print_exc() # TODO Improve log
+    except Exception as e:  # TODO What can get wrong here?
+        print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
 
     return response_ok()
@@ -82,8 +87,8 @@ def start_host(provider_name, env):
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, host.engine)
         provider.start(host.identifier)
-    except Exception as e: # TODO What can get wrong here?
-        print_exc() # TODO Improve log
+    except Exception as e:  # TODO What can get wrong here?
+        print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
 
     return response_ok()
@@ -106,8 +111,8 @@ def destroy_host(provider_name, env, host_id):
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, host.engine)
         provider.destroy(host.group, host.identifier)
-    except Exception as e: # TODO What can get wrong here?
-        print_exc() # TODO Improve log
+    except Exception as e:  # TODO What can get wrong here?
+        print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
 
     host.delete_instance()
@@ -131,6 +136,72 @@ def create_credential(provider_name, env):
         return response_invalid_request(str(e))
     else:
         return response_created(success=success, id=str(credential_id))
+
+
+@app.route(
+    "/<string:provider_name>/credentials", methods=['GET']
+)
+def get_all_credential(provider_name):
+    try:
+        provider_cls = get_provider_to(provider_name)
+        provider = provider_cls(None, None)
+        print(provider.build_credential())
+        credential = provider.build_credential().credential
+        return make_response(
+            json.dumps(
+                list(map(lambda x: x, credential.find({}))),
+                default=json_util.default
+            )
+        )
+    except Exception as e:
+        return response_invalid_request(str(e))
+
+
+@app.route(
+    "/<string:provider_name>/credential/<string:uuid>", methods=['GET']
+)
+def get_credential(provider_name, uuid):
+    try:
+        provider_cls = get_provider_to(provider_name)
+        provider = provider_cls(None, None)
+        credential = provider.build_credential().credential
+        return make_response(
+            json.dumps(
+                credential.find_one({'_id': ObjectId(uuid)}),
+                default=json_util.default
+            )
+        )
+    except Exception as e:
+        return response_invalid_request(str(e))
+
+
+@app.route(
+    "/<string:provider_name>/credential/<string:uuid>", methods=['PUT']
+)
+def update_credential(provider_name, uuid):
+    data = request.get_json()
+    if not data:
+        return response_invalid_request("No data".format(data))
+
+    try:
+        provider_cls = get_provider_to(provider_name)
+        provider = provider_cls(None, None)
+        credential = provider.build_credential().credential
+
+        # remove _id from data
+        data.get('_id') and data.pop('_id')
+
+        return make_response(
+            json.dumps(
+                credential.update(
+                    {'_id': ObjectId(uuid)},
+                    data
+                ),
+                default=json_util.default
+            )
+        )
+    except Exception as e:
+        return response_invalid_request(str(e))
 
 
 @app.route(

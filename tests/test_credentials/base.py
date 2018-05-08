@@ -29,7 +29,7 @@ class TestBaseProvider(TestCase):
             PROVIDER, ENVIRONMENT, {"fake": "info"}
         )
         credential_add.save()
-
+        __import__('ipdb').set_trace()
         credential = CredentialBaseFake(PROVIDER, ENVIRONMENT, ENGINE)
         self.assertIsNone(credential._content)
         self.assertEqual(credential.content, credential._content)

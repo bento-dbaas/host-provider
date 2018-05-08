@@ -55,7 +55,10 @@ class TestBaseProvider(TestCase):
         self._add_credential({"wrong": "info"}, False)
 
     def test_add_credential_database_error(self):
-        self._add_credential({"raise": "info", "fake": "info"}, False)
+        self._add_credential(
+            {"$set": {"raise": "info", "fake": "info"}},
+            False
+        )
 
     def _add_credential(self, content, success_expected):
         provider = FakeProvider(ENVIRONMENT, ENGINE)

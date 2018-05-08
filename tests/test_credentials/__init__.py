@@ -8,6 +8,15 @@ class FakeMongoDB(object):
     metadata = []
     ids = [0]
 
+    def find_one_and_update(self, query, data, **kw):
+        if "raise" in data:
+            raise Exception("Wrong values")
+
+        self.metadata.append(data['$set'])
+        new_id = self.ids[-1] + 1
+        self.ids.append(new_id)
+        return {'_id': new_id}
+
     def insert_one(self, data):
         if "raise" in data:
             raise Exception("Wrong values")

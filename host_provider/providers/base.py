@@ -49,7 +49,7 @@ class ProviderBase(object):
         except Exception as e:
             return False, str(e)
         else:
-            return True, insert.inserted_id
+            return True, insert and insert.get('_id')
 
     def create_host(self, cpu, memory, name, group):
         self.credential.before_create_host(group)

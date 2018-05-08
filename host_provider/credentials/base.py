@@ -74,10 +74,17 @@ class CredentialAdd(CredentialMongoDB):
         self._content = content
 
     def save(self):
-        return self.credential.insert_one({
-            'provider': self.provider,
-            'environment': self.environment, **self.content,
-        })
+        return self.credential.find_one_and_update(
+            {
+                'provider': self.provider,
+                'environment': self.environment
+            },
+            {'$set': {
+                'provider': self.provider,
+                'environment': self.environment, **self.content
+            }},
+            upsert=True
+        )
 
     def delete(self):
         return self.credential.delete_one({
