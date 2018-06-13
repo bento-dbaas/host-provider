@@ -9,6 +9,7 @@ MONGODB_PORT = int(getenv("MONGODB_PORT", 27017))
 MONGODB_DB = getenv("MONGODB_DB", "host_provider")
 MONGODB_USER = getenv("MONGODB_USER", None)
 MONGODB_PWD = getenv("MONGODB_PWD", None)
+MONGO_ENDPOINT = getenv("DBAAS_MONGODB_ENDPOINT", None)
 
 
 MYSQL_HOST = getenv("MYSQL_HOST", "127.0.0.1")
