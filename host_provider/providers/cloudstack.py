@@ -10,6 +10,7 @@ class CloudStackProvider(ProviderBase):
 
     def build_client(self):
         CloudStackClient = self.get_driver()
+
         return CloudStackClient(
             key=self.credential.api_key,
             secret=self.credential.secret_key,
@@ -62,11 +63,15 @@ class CloudStackProvider(ProviderBase):
     def _all_node_destroyed(self, group):
         self.credential.remove_last_used_for(group)
 
-    def restore(self, identifier, template=None):
+    def restore(self, identifier, engine=None):
         node = self.BasicInfo(identifier)
 
-        if template:
-            template = self.BasicInfo(template)
+        if engine is None:
+            template = self.credential.template
+        else:
+            template = self.credential.template_to(engine)
+
+        template = self.BasicInfo(template)
 
         return self.client.ex_restore(node, template)
 
