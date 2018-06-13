@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from pymongo import MongoClient
 from host_provider.settings import MONGODB_DB, MONGODB_HOST, MONGODB_PORT, \
-    MONGODB_USER, MONGODB_PWD
+    MONGODB_USER, MONGODB_PWD, MONGO_ENDPOINT
 
 
 class CredentialMongoDB(object):
@@ -16,11 +16,15 @@ class CredentialMongoDB(object):
     @property
     def db(self):
         if not self._db:
-            client = MongoClient(
-                host=MONGODB_HOST, port=MONGODB_PORT,
-                username=MONGODB_USER, password=MONGODB_PWD,
-                document_class=OrderedDict
-            )
+            params = {'document_class': OrderedDict}
+            if MONGO_ENDPOINT is None:
+                params.update({
+                    'host': MONGODB_HOST, 'port': MONGODB_PORT,
+                    'username': MONGODB_USER, 'password': MONGODB_PWD
+                })
+                client = MongoClient(**params)
+            else:
+                client = MongoClient(MONGO_ENDPOINT, **params)
             self._db = client[MONGODB_DB]
 
         return self._db
