@@ -86,14 +86,17 @@ class CredentialCloudStack(CredentialBase):
         if latest_used:
             return self.get_next_zone_from(latest_used["zone"])
 
-        return list(self.content['zones'].keys())[0]
+        resp = list(self.content['zones'].keys())
+        return resp[0]
 
     @property
     def networks(self):
+
         zone = self.content['zones'][self.zone]
-        if 'networks' in zone:
-            return zone['networks'][self.engine]
-        raise NotImplementedError("Not network to zone {}".format(self.zone))
+        if 'networks' not in zone:
+            raise NotImplementedError("Not network to zone {}".format(self.zone))
+
+        return [net['networkId'] for net in zone['networks'][self.engine]]
 
     @property
     def project(self):
