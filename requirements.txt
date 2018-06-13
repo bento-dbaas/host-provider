@@ -8,4 +8,3 @@ Flask-Cors==3.0.4
 # production
 gunicorn==19.7.1
 gevent==1.2.2
-flask_cors==3.0.6
