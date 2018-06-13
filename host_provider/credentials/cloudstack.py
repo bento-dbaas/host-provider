@@ -105,7 +105,7 @@ class CredentialCloudStack(CredentialBase):
 
     @property
     def secure(self):
-        return self.content['secure']
+        return self.content.get('secure', False)
 
 
 class CredentialAddCloudStack(CredentialAdd):
