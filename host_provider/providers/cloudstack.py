@@ -75,8 +75,8 @@ class CloudStackProvider(ProviderBase):
 
         return self.client.ex_restore(node, template)
 
-    def resize(self, identifier, offering):
+    def resize(self, identifier, cpus, memory):
         node = self.BasicInfo(identifier)
-        offering = self.BasicInfo(offering)
+        offering = self.BasicInfo(self.credential.offering_to(cpus, memory))
 
         return self.client.ex_change_node_size(node, offering)
