@@ -24,7 +24,9 @@ class CredentialCloudStack(CredentialBase):
 
     @property
     def template(self):
-        return self.content[self.engine]['template']
+        templates = self.content['templates']
+
+        return templates[self.engine]
 
     @property
     def zone(self):
