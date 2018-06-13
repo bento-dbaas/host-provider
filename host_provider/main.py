@@ -6,10 +6,12 @@ from traceback import print_exc
 from flask_cors import CORS
 from bson import json_util, ObjectId
 import json
+# TODO: remove duplicate code and write more tests
 
 
 app = Flask(__name__)
 cors = CORS(app)
+
 
 
 @app.route("/<string:provider_name>/<string:env>/host/new", methods=['POST'])
@@ -94,6 +96,66 @@ def start_host(provider_name, env):
     return response_ok()
 
 
+@app.route("/<string:provider_name>/<string:env>/host/resize", methods=['POST'])
+def resize_host(provider_name, env):
+    data = request.get_json()
+    host_id = data.get("host_id", None)
+    cpus = data.get("cpus", None)
+    memory = data.get("memory", None)
+
+    # TODO improve validation and response
+    if not cpus or not host_id or not memory:
+        return response_invalid_request(
+            "cpus, host_id and memory are required. Payload: {}".format(data)
+        )
+
+    try:
+        host = Host.get(id=host_id)
+    except Host.DoesNotExist:
+        return response_not_found(host_id)
+
+    try:
+        provider_cls = get_provider_to(provider_name)
+        provider = provider_cls(env, host.engine)
+        provider.resize(host.identifier, cpus, memory)
+    except Exception as e:  # TODO What can get wrong here?
+        print_exc()  # TODO Improve log
+        return response_invalid_request(str(e))
+
+    return response_ok()
+
+
+@app.route("/<string:provider_name>/<string:env>/host/reinstall", methods=['POST'])
+def reinstall_host(provider_name, env):
+    data = request.get_json()
+    host_id = data.get("host_id", None)
+    engine = data.get("engine", None)
+
+    # TODO improve validation and response
+    if not host_id:
+        return response_invalid_request(
+            "host_id are required. Payload: {}".format(data)
+        )
+
+    try:
+        host = Host.get(id=host_id)
+    except Host.DoesNotExist:
+        return response_not_found(host_id)
+
+    try:
+        provider_cls = get_provider_to(provider_name)
+        provider = provider_cls(env, host.engine)
+        provider.restore(host.identifier, engine)
+        if engine and engine != host.engine:
+            host.engine = engine
+            host.save()
+    except Exception as e:  # TODO What can get wrong here?
+        print_exc()  # TODO Improve log
+        return response_invalid_request(str(e))
+
+    return response_ok()
+
+
 @app.route(
     "/<string:provider_name>/<string:env>/host/<host_id>", methods=['DELETE']
 )
@@ -118,6 +180,20 @@ def destroy_host(provider_name, env, host_id):
     host.delete_instance()
 
     return response_ok()
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/host/<host_id>", methods=['GET']
+)
+def get_host(provider_name, env, host_id):
+    if not host_id:
+        return response_invalid_request("Missing parameter host_id")
+
+    try:
+        host = Host.get(id=host_id, environment=env)
+        return response_created(**host.to_dict)
+    except Host.DoesNotExist:
+        return response_not_found(host_id)
 
 
 @app.route(
