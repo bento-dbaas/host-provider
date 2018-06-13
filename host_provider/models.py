@@ -2,6 +2,7 @@ from datetime import datetime
 from peewee import MySQLDatabase, Model, DateTimeField, CharField, \
     PrimaryKeyField, IntegerField
 from host_provider.settings import MYSQL_PARAMS
+import copy
 
 
 mysql_db = MySQLDatabase(**MYSQL_PARAMS)
@@ -26,11 +27,21 @@ class Host(BaseModel):
     group = CharField()
     engine = CharField()
     environment = CharField()
+    user = CharField(default='')
+    password = CharField(default='')
     cpu = IntegerField()
     memory = IntegerField()
     provider = CharField()
     identifier = CharField()
     address = CharField()
+
+    @property
+    def to_dict(self):
+        my_data = copy.deepcopy(self._data)
+        if 'password' in my_data:
+            my_data.pop('password')
+
+        return my_data
 
 
 def initialize_database():
