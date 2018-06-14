@@ -33,3 +33,6 @@ MYSQL_PARAMS = {"database": MYSQL_DB, "host": MYSQL_HOST, "port": MYSQL_PORT}
 if MYSQL_USER:
     MYSQL_PARAMS["user"] = MYSQL_USER
     MYSQL_PARAMS["password"] = MYSQL_PWD
+
+APP_USERNAME = getenv("APP_USERNAME", None)
+APP_PASSWORD = getenv("APP_PASSWORD", None)
