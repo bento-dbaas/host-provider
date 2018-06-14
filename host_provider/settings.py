@@ -18,7 +18,7 @@ MYSQL_PORT = int(getenv("MYSQL_PORT", 3306))
 MYSQL_DB = getenv("MYSQL_DB", "host_provider")
 MYSQL_USER = getenv("MYSQL_USER", "root")
 MYSQL_PWD = getenv("MYSQL_PWD", "")
-DBAAS_MYSQL_ENDPOINT = getenv("BAAS_MYSQL_ENDPOINT")
+DBAAS_MYSQL_ENDPOINT = getenv("DBAAS_MYSQL_ENDPOINT")
 
 if DBAAS_MYSQL_ENDPOINT:
     matched_string = re.search(
