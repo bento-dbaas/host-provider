@@ -1,20 +1,34 @@
+import json
+from traceback import print_exc
+from bson import json_util, ObjectId
 from flask import Flask, request, jsonify, make_response
+from flask_cors import CORS
+from flask_httpauth import HTTPBasicAuth
+from host_provider.settings import APP_USERNAME, APP_PASSWORD
 from host_provider.credentials.base import CredentialAdd
 from host_provider.providers import get_provider_to
 from host_provider.models import Host
-from traceback import print_exc
-from flask_cors import CORS
-from bson import json_util, ObjectId
-import json
 # TODO: remove duplicate code and write more tests
 
 
 app = Flask(__name__)
+auth = HTTPBasicAuth()
 cors = CORS(app)
 
 
+@auth.verify_password
+def verify_password(username, password):
+    if APP_USERNAME and username != APP_USERNAME:
+        return False
+
+    if APP_PASSWORD and password != APP_PASSWORD:
+        return False
+
+    return True
+
 
 @app.route("/<string:provider_name>/<string:env>/host/new", methods=['POST'])
+@auth.login_required
 def create_host(provider_name, env):
     data = request.get_json()
     group = data.get("group", None)
@@ -47,6 +61,7 @@ def create_host(provider_name, env):
 
 
 @app.route("/<string:provider_name>/<string:env>/host/stop", methods=['POST'])
+@auth.login_required
 def stop_host(provider_name, env):
     data = request.get_json()
     host_id = data.get("host_id", None)
@@ -72,6 +87,7 @@ def stop_host(provider_name, env):
 
 
 @app.route("/<string:provider_name>/<string:env>/host/start", methods=['POST'])
+@auth.login_required
 def start_host(provider_name, env):
     data = request.get_json()
     host_id = data.get("host_id", None)
@@ -97,6 +113,7 @@ def start_host(provider_name, env):
 
 
 @app.route("/<string:provider_name>/<string:env>/host/resize", methods=['POST'])
+@auth.login_required
 def resize_host(provider_name, env):
     data = request.get_json()
     host_id = data.get("host_id", None)
@@ -126,6 +143,7 @@ def resize_host(provider_name, env):
 
 
 @app.route("/<string:provider_name>/<string:env>/host/reinstall", methods=['POST'])
+@auth.login_required
 def reinstall_host(provider_name, env):
     data = request.get_json()
     host_id = data.get("host_id", None)
@@ -159,6 +177,7 @@ def reinstall_host(provider_name, env):
 @app.route(
     "/<string:provider_name>/<string:env>/host/<host_id>", methods=['DELETE']
 )
+@auth.login_required
 def destroy_host(provider_name, env, host_id):
     # TODO improve validation and response
     if not host_id:
@@ -185,6 +204,7 @@ def destroy_host(provider_name, env, host_id):
 @app.route(
     "/<string:provider_name>/<string:env>/host/<host_id>", methods=['GET']
 )
+@auth.login_required
 def get_host(provider_name, env, host_id):
     if not host_id:
         return response_invalid_request("Missing parameter host_id")
@@ -199,6 +219,7 @@ def get_host(provider_name, env, host_id):
 @app.route(
     "/<string:provider_name>/<string:env>/credential/new", methods=['POST']
 )
+@auth.login_required
 def create_credential(provider_name, env):
     data = request.get_json()
     if not data:
@@ -217,6 +238,7 @@ def create_credential(provider_name, env):
 @app.route(
     "/<string:provider_name>/credentials", methods=['GET']
 )
+@auth.login_required
 def get_all_credential(provider_name):
     try:
         provider_cls = get_provider_to(provider_name)
@@ -236,6 +258,7 @@ def get_all_credential(provider_name):
 @app.route(
     "/<string:provider_name>/credential/<string:uuid>", methods=['GET']
 )
+@auth.login_required
 def get_credential(provider_name, uuid):
     try:
         provider_cls = get_provider_to(provider_name)
@@ -254,6 +277,7 @@ def get_credential(provider_name, uuid):
 @app.route(
     "/<string:provider_name>/credential/<string:uuid>", methods=['PUT']
 )
+@auth.login_required
 def update_credential(provider_name, uuid):
     data = request.get_json()
     if not data:
@@ -283,6 +307,7 @@ def update_credential(provider_name, uuid):
 @app.route(
     "/<string:provider_name>/<string:env>/credential/", methods=['DELETE']
 )
+@auth.login_required
 def destroy_credential(provider_name, env):
     try:
         credential = CredentialAdd(provider_name, env, {})
