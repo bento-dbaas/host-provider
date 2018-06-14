@@ -26,13 +26,10 @@ if DBAAS_MYSQL_ENDPOINT:
     )
     if matched_string:
         MYSQL_USER, MYSQL_PWD, MYSQL_HOST, MYSQL_PORT, MYSQL_DB  = matched_string.groups()
+        MYSQL_PORT = int(MYSQL_PORT)
 
 
 MYSQL_PARAMS = {"database": MYSQL_DB, "host": MYSQL_HOST, "port": MYSQL_PORT}
 if MYSQL_USER:
     MYSQL_PARAMS["user"] = MYSQL_USER
     MYSQL_PARAMS["password"] = MYSQL_PWD
-
-
-APP_USERNAME = getenv("APP_USERNAME", None)
-APP_PASSWORD = getenv("APP_PASSWORD", None)
