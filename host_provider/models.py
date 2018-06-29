@@ -27,8 +27,6 @@ class Host(BaseModel):
     group = CharField()
     engine = CharField()
     environment = CharField()
-    user = CharField(default='')
-    password = CharField(default='')
     cpu = IntegerField()
     memory = IntegerField()
     provider = CharField()
