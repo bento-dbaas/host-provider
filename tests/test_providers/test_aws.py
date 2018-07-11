@@ -126,9 +126,9 @@ class TestCredentialAWS(TestCase):
         create_node.assert_called_once_with(
             name=name,
             image=self.provider.BasicInfo('fake_so_image_id'),
-            ex_keyname='rafael.goncalves',
+            ex_keyname='elesbom',
             size=LIST_SIZES[1],
-            ex_security_group_ids=[self.provider.BasicInfo('fake_security_group_id')],
+            ex_security_group_ids=['fake_security_group_id'],
             ex_subnet=self.provider.BasicInfo('fake_subnet_id_2')
         )
 

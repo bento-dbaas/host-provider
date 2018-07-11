@@ -8,9 +8,19 @@ from host_provider.credentials.aws import CredentialAWS, \
 class OfferingNotFoundError(Exception):
     pass
 
+class NodeNotFounfError(Exception):
+    pass
+
 
 class AWSProvider(ProviderBase):
     BasicInfo = namedtuple("EC2BasicInfo", "id")
+
+
+    def get_node(self, node_id):
+        try:
+            return self.client.list_nodes(ex_node_ids=[node_id])[0]
+        except IndexError:
+            raise NodeNotFounfError("Node with id {} not found".format(node_id))
 
     def build_client(self):
         AwsClient = self.get_driver()
@@ -45,9 +55,9 @@ class AWSProvider(ProviderBase):
         return self.client.create_node(
             name=name,
             image=self.BasicInfo(self.credential.image_id),
-            size=self.offering_to(cpu, memory),
-            ex_keyname='rafael.goncalves',
-            ex_security_group_ids=[self.BasicInfo(self.credential.security_group_id)],
+            size=self.offering_to(int(cpu), int(memory)),
+            ex_keyname='elesbom',
+            ex_security_group_ids=[self.credential.security_group_id],
             ex_subnet=self.BasicInfo(self.credential.zone),
         )
 
@@ -70,20 +80,8 @@ class AWSProvider(ProviderBase):
     def _all_node_destroyed(self, group):
         self.credential.remove_last_used_for(group)
 
-    def restore(self, identifier, engine=None):
-        node = self.BasicInfo(identifier)
-
-        if engine is None:
-            template = self.credential.template
-        else:
-            template = self.credential.template_to(engine)
-
-        template = self.BasicInfo(template)
-
-        return self.client.ex_restore(node, template)
-
     def resize(self, identifier, cpus, memory):
-        node = self.BasicInfo(identifier)
-        offering = self.BasicInfo(self.credential.offering_to(cpus, memory))
+        node = self.get_node(identifier)
+        offering = self.offering_to(int(cpus), int(memory))
 
         return self.client.ex_change_node_size(node, offering)

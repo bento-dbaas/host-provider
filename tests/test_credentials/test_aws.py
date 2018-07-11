@@ -43,7 +43,7 @@ class TestAWSProvider(TestCase):
         })
 
     def test_collection_last(self):
-        self.credential._db = {"cloudstack_zones_last": "mocked_test"}
+        self.credential._db = {"ec2_zones_last": "mocked_test"}
         self.assertEqual(self.credential.collection_last, "mocked_test")
 
     def _force_content(self):
