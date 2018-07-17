@@ -26,9 +26,9 @@ class AWSProvider(ProviderBase):
         AwsClient = self.get_driver()
 
         return AwsClient(
-            self.credential.access_id,
-            self.credential.secret_key,
-            self.credential.region
+            key=self.credential.access_id,
+            secret=self.credential.secret_key,
+            region=self.credential.region
         )
 
     @classmethod
