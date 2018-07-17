@@ -243,7 +243,6 @@ def get_all_credential(provider_name):
     try:
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(None, None)
-        print(provider.build_credential())
         credential = provider.build_credential().credential
         return make_response(
             json.dumps(
@@ -267,6 +266,25 @@ def get_credential(provider_name, uuid):
         return make_response(
             json.dumps(
                 credential.find_one({'_id': ObjectId(uuid)}),
+                default=json_util.default
+            )
+        )
+    except Exception as e:
+        return response_invalid_request(str(e))
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/credential/<string:cpus>/<string:memory>", methods=['GET']
+)
+@auth.login_required
+def get_credential_by_offering(provider_name, env, cpus, memory):
+    try:
+        provider_cls = get_provider_to(provider_name)
+        provider = provider_cls(env, None)
+        credential = provider.build_credential()
+        return make_response(
+            json.dumps(
+                {'offering_id': credential.offering_to(cpus, memory)},
                 default=json_util.default
             )
         )
