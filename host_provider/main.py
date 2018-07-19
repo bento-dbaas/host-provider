@@ -139,6 +139,9 @@ def resize_host(provider_name, env):
         print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
 
+    host.cpu = int(cpus)
+    host.memory = int(memory)
+    host.save()
     return response_ok()
 
 

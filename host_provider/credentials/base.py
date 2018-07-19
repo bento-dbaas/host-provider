@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from pymongo import MongoClient
+from pymongo import MongoClient, ReturnDocument
 from host_provider.settings import MONGODB_DB, MONGODB_HOST, MONGODB_PORT, \
     MONGODB_USER, MONGODB_PWD, MONGO_ENDPOINT
 
@@ -87,7 +87,8 @@ class CredentialAdd(CredentialMongoDB):
                 'provider': self.provider,
                 'environment': self.environment, **self.content
             }},
-            upsert=True
+            upsert=True,
+            return_document=ReturnDocument.AFTER
         )
 
     def delete(self):
