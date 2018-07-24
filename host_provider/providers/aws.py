@@ -3,12 +3,18 @@ from libcloud.compute.types import Provider
 from host_provider.providers.base import ProviderBase
 from host_provider.credentials.aws import CredentialAWS, \
     CredentialAddAWS
+from host_provider.settings import AWS_PROXY
 
 
 class OfferingNotFoundError(Exception):
     pass
 
+
 class NodeNotFounfError(Exception):
+    pass
+
+
+class AWSProxyNotSet(Exception):
     pass
 
 
@@ -25,11 +31,21 @@ class AWSProvider(ProviderBase):
     def build_client(self):
         AwsClient = self.get_driver()
 
-        return AwsClient(
+        if not AWS_PROXY:
+            raise AWSProxyNotSet("Env DBAAS_AWS_PROXY is empty, please set proxy")
+
+        client = AwsClient(
             key=self.credential.access_id,
             secret=self.credential.secret_key,
-            region=self.credential.region
+            region=self.credential.region,
+            proxy_url=AWS_PROXY
         )
+
+        client.connection.connection.session.proxies.update({
+            'https': AWS_PROXY.replace('http://', 'https://')
+        })
+
+        return client
 
     @classmethod
     def get_provider(cls):
