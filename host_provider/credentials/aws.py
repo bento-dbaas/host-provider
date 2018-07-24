@@ -30,7 +30,14 @@ class CredentialAWS(CredentialBase):
 
     @property
     def zones(self):
-        return self.subnets
+        all_zones = self.subnets
+        filtered_zones = {}
+        for zone_key in all_zones.keys():
+            zone_val = all_zones[zone_key]
+            if zone_val['active'] == True:
+                filtered_zones[zone_key] = zone_val
+
+        return filtered_zones
 
     @property
     def zone(self):
