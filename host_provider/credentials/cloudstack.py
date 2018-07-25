@@ -29,6 +29,17 @@ class CredentialCloudStack(CredentialBase):
         return templates[self.engine]
 
     @property
+    def zones(self):
+        all_zones = self.content['zones']
+        filtered_zones = {}
+        for zone_key in all_zones.keys():
+            zone_val = all_zones[zone_key]
+            if zone_val['active'] == True:
+                filtered_zones[zone_key] = zone_val
+
+        return filtered_zones
+
+    @property
     def zone(self):
         return self._zone
 
@@ -68,7 +79,7 @@ class CredentialCloudStack(CredentialBase):
         })
 
     def get_next_zone_from(self, zone_name):
-        zones = list(self.content['zones'].keys())
+        zones = list(self.zones.keys())
         base_index = zones.index(zone_name)
 
         next_index = base_index + 1
@@ -86,7 +97,7 @@ class CredentialCloudStack(CredentialBase):
         if latest_used:
             return self.get_next_zone_from(latest_used["zone"])
 
-        resp = list(self.content['zones'].keys())
+        resp = list(self.zones.keys())
         return resp[0]
 
     @property
