@@ -80,11 +80,14 @@ class CredentialCloudStack(CredentialBase):
 
     def get_next_zone_from(self, zone_name):
         zones = list(self.zones.keys())
-        base_index = zones.index(zone_name)
-
-        next_index = base_index + 1
-        if next_index >= len(zones):
+        try:
+            base_index = zones.index(zone_name)
+        except ValueError:
             next_index = 0
+        else:
+            next_index = base_index + 1
+            if next_index >= len(zones):
+                next_index = 0
 
         return zones[next_index]
 
