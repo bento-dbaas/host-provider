@@ -14,6 +14,10 @@ class NodeNotFounfError(Exception):
     pass
 
 
+class WrongStateError(Exception):
+    pass
+
+
 class AWSProxyNotSet(Exception):
     pass
 
@@ -81,13 +85,34 @@ class AWSProvider(ProviderBase):
     def get_credential_add(self):
         return CredentialAddAWS
 
+    def wait_state(self, identifier, state):
+        attempts = 1
+        while attempts <= 15:
+
+            node = self.get_node(identifier)
+            node_state = node.state
+            if node_state == state:
+                return True
+
+            attempts += 1
+            sleep(5)
+
+        raise WrongStateError(
+            "It was expected state: {} got: {}".format(state, node_state)
+        )
+
     def start(self, identifier):
         node = self.BasicInfo(identifier)
-        return self.client.ex_start_node(node)
+        resp = self.client.ex_start_node(node)
+        self.wait_state(identifier, 'running')
+        return resp
+
 
     def stop(self, identifier):
         node = self.BasicInfo(identifier)
-        return self.client.ex_stop_node(node)
+        resp = self.client.ex_stop_node(node)
+        self.wait_state(identifier, 'stopped')
+        return resp
 
     def _destroy(self, identifier):
         node = self.BasicInfo(identifier)
