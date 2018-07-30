@@ -3,6 +3,7 @@ from libcloud.compute.types import Provider
 from host_provider.providers.base import ProviderBase
 from host_provider.credentials.cloudstack import CredentialCloudStack, \
     CredentialAddCloudStack
+import logging
 
 
 class CloudStackProvider(ProviderBase):
@@ -36,6 +37,14 @@ class CloudStackProvider(ProviderBase):
         if project:
             project = self.BasicInfo(project)
 
+        params = dict(name=name,
+            size=self.BasicInfo(self.credential.offering_to(cpu, memory)),
+            image=self.BasicInfo(self.credential.template),
+            location=self.BasicInfo(self.credential.zone),
+            networks=networks,
+            project=project
+        )
+        logging.error("Creating VM with params {}".format(params))
         return self.client.create_node(
             name=name,
             size=self.BasicInfo(self.credential.offering_to(cpu, memory)),
