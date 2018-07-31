@@ -8,9 +8,8 @@ class CredentialAWS(CredentialBase):
     def region(self):
         return self.content['region']
 
-    @property
-    def image_id(self):
-        return self.content['image_id']
+    def template_to(self, engine):
+        return self.content['templates'][engine]
 
     @property
     def security_group_id(self):

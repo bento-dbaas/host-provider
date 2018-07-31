@@ -74,7 +74,7 @@ class AWSProvider(ProviderBase):
     def _create_host(self, cpu, memory, name):
         return self.client.create_node(
             name=name,
-            image=self.BasicInfo(self.credential.image_id),
+            image=self.BasicInfo(self.credential.template_to(self.engine)),
             size=self.offering_to(int(cpu), int(memory)),
             ex_keyname='elesbom',
             ex_security_group_ids=[self.credential.security_group_id],
