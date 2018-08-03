@@ -37,4 +37,4 @@ if MYSQL_USER:
 APP_USERNAME = getenv("APP_USERNAME", None)
 APP_PASSWORD = getenv("APP_PASSWORD", None)
 
-AWS_PROXY = getenv("DBAAS_AWS_PROXY")
+AWS_PROXY = getenv("DBAAS_AWS_PROXY", None)
