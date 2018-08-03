@@ -75,10 +75,13 @@ class TestBaseCredential(TestCase):
             "secure": False,
             "projectid": "myprojectid",
             "zones": {
-                "zone1": {"networks": {'redis': [
-                    {"networkId": "net1", "name": "net_name1"},
-                    {"networkId": "net2", "name": "net_name2"}]
-                }}
+                "zone1": {
+                    "networks": {'redis': [
+                        {"networkId": "net1", "name": "net_name1"},
+                        {"networkId": "net2", "name": "net_name2"}]
+                    },
+                    "active": True
+                }
             },
             "offerings": {
                 "1c1024m": {"id": "offering1", "name": "offering_name1"},

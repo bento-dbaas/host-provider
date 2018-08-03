@@ -64,9 +64,18 @@ class TestCloudStackProvider(TestCase):
     def _force_content(self):
         self.credential._content = {
             "zones": {
-                "first": [1, 2],
-                "second": [3, 4],
-                "third": [5, 6],
+                "first": {
+                    "active": True,
+                    "name": "first zone"
+                },
+                "second": {
+                    "active": True,
+                    "name": "second zone"
+                },
+                "third": {
+                    "active": True,
+                    "name": "third zone"
+                }
             }
         }
 
