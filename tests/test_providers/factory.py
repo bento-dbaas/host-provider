@@ -12,4 +12,4 @@ class TestFactory(TestCase):
 
     def test_have_provider(self):
         provider = get_provider_to(FakeProvider.get_provider())
-        self.assertEqual(provider, FakeProvider)
+        self.assertEqual(provider.__name__, FakeProvider.__name__)
