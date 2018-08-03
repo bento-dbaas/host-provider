@@ -49,9 +49,9 @@ class TestAWSProvider(TestCase):
     def _force_content(self):
         self.credential._content = {
             "subnets": {
-                "first": {'id': 'first', 'name': 'first_name'},
-                "second": {'id': 'second', 'name': 'second_name'},
-                "third": {'id': 'third', 'name': 'third_name'}
+                "first": {'active': True, 'id': 'first', 'name': 'first_name'},
+                "second": {'active': True, 'id': 'second', 'name': 'second_name'},
+                "third": {'active': True, 'id': 'third', 'name': 'third_name'}
             }
         }
 

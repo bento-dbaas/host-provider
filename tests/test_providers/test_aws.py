@@ -15,6 +15,7 @@ class TestCredentialAWS(TestCase):
 
     def setUp(self):
         self.provider = AWSProvider(ENVIRONMENT, ENGINE)
+        self.provider.wait_state = MagicMock()
 
     def test_provider_name(self):
         self.assertEqual(Provider.EC2, self.provider.get_provider())
@@ -56,15 +57,26 @@ class TestCredentialAWS(TestCase):
         values = {
             'provider': 'ec2',
             'environment': 'dev',
-            'region': 'fake_region',
+            'region': 'sa-east-1',
             'image_id': 'fake_so_image_id',
             'security_group_id': 'fake_security_group_id',
             'access_id': 'fake_access_id',
             'secret_key': 'fake_secret_key',
-            'subnets': {'fake_subnet_id_1': {'id': 'fake_subnet_id_1',
-                        'name': 'fake_subnet_name_1'},
-                        'fake_subnet_id_2': {'id': 'fake_subnet_id_2',
-                        'name': 'fake_subnet_name_2'}},
+            'templates': {
+                'redis': 'fake_so_image_id'
+            },
+            'subnets': {
+                'fake_subnet_id_1': {
+                    'id': 'fake_subnet_id_1',
+                    'name': 'fake_subnet_name_1',
+                    'active': True
+                },
+                'fake_subnet_id_2': {
+                    'id': 'fake_subnet_id_2',
+                    'name': 'fake_subnet_name_2',
+                    'active': True
+                }
+            }
         }
         values.update(kwargs)
         content.return_value = values
@@ -72,13 +84,13 @@ class TestCredentialAWS(TestCase):
 
     @patch(
         'host_provider.providers.aws.CredentialAWS.get_content',
-        new=MagicMock()
     )
     @patch(
         'libcloud.compute.drivers.ec2.EC2NodeDriver.list_sizes',
         return_value=LIST_SIZES
     )
-    def test_offering(self, sizes_mock):
+    def test_offering(self, sizes_mock, content):
+        self.build_credential_content(content)
         result = self.provider.offering_to(cpu=1, memory=512)
 
         self.assertEqual(1, result.id)
@@ -93,13 +105,13 @@ class TestCredentialAWS(TestCase):
 
     @patch(
         'host_provider.providers.aws.CredentialAWS.get_content',
-        new=MagicMock()
     )
     @patch(
         'libcloud.compute.drivers.ec2.EC2NodeDriver.list_sizes',
         return_value=LIST_SIZES
     )
-    def test_offering_not_found(self, sizes_mock):
+    def test_offering_not_found(self, sizes_mock, content):
+        self.build_credential_content(content)
         with self.assertRaises(OfferingNotFoundError):
             result = self.provider.offering_to(cpu=99, memory=999)
 
@@ -136,13 +148,14 @@ class TestCredentialAWS(TestCase):
         'host_provider.providers.aws.CredentialAWS.get_content'
     )
     @patch(
-        'libcloud.compute.drivers.ec2.EC2NodeDriver.ex_start_node',
+        'libcloud.compute.drivers.ec2.EC2NodeDriver',
+        #'libcloud.compute.drivers.ec2.EC2NodeDriver.ex_start_node',
     )
-    def test_start(self, ex_start, content):
+    def test_start(self, node_driver, content):
         self.build_credential_content(content)
         identifier = "fake-uuid-ec2-stac"
         self.provider.start(identifier)
-        ex_start.assert_called_once_with(self.provider.BasicInfo(identifier))
+        node_driver().ex_start_node.assert_called_once_with(self.provider.BasicInfo(identifier))
 
     @patch(
         'host_provider.providers.aws.CredentialAWS.get_content'

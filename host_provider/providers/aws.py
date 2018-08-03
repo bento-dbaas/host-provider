@@ -1,3 +1,4 @@
+from time import sleep
 from collections import namedtuple
 from libcloud.compute.types import Provider
 from host_provider.providers.base import ProviderBase
@@ -35,19 +36,20 @@ class AWSProvider(ProviderBase):
     def build_client(self):
         AwsClient = self.get_driver()
 
-        if not AWS_PROXY:
+        if AWS_PROXY is None:
             raise AWSProxyNotSet("Env DBAAS_AWS_PROXY is empty, please set proxy")
 
         client = AwsClient(
             key=self.credential.access_id,
             secret=self.credential.secret_key,
             region=self.credential.region,
-            proxy_url=AWS_PROXY
+            **{'proxy_url': AWS_PROXY} if AWS_PROXY else {}
         )
 
-        client.connection.connection.session.proxies.update({
-            'https': AWS_PROXY.replace('http://', 'https://')
-        })
+        if AWS_PROXY:
+            client.connection.connection.session.proxies.update({
+                'https': AWS_PROXY.replace('http://', 'https://')
+            })
 
         return client
 
