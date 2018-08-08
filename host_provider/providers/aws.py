@@ -5,6 +5,7 @@ from host_provider.providers.base import ProviderBase
 from host_provider.credentials.aws import CredentialAWS, \
     CredentialAddAWS
 from host_provider.settings import AWS_PROXY
+from host_provider.clients.team import TeamClient
 
 
 class OfferingNotFoundError(Exception):
@@ -73,14 +74,17 @@ class AWSProvider(ProviderBase):
             "Offering with {} cpu and {} of memory not found.".format(cpu, memory)
         )
 
-    def _create_host(self, cpu, memory, name):
+    def _create_host(self, cpu, memory, name, *args, **kw):
+
         return self.client.create_node(
             name=name,
             image=self.BasicInfo(self.credential.template_to(self.engine)),
             size=self.offering_to(int(cpu), int(memory)),
+            # TODO: Put that in credential
             ex_keyname='elesbom',
             ex_security_group_ids=[self.credential.security_group_id],
             ex_subnet=self.BasicInfo(self.credential.zone),
+            ex_metadata=TeamClient.make_tags(kw.get('team_name'), self.engine)
         )
 
 

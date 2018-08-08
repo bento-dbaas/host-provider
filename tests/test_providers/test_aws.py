@@ -4,7 +4,7 @@ from libcloud.compute.types import Provider
 from libcloud.compute.drivers.ec2 import EC2NodeDriver
 from host_provider.providers.aws import AWSProvider, OfferingNotFoundError
 from host_provider.credentials.aws import CredentialAddAWS
-from .fakes.ec2 import LIST_SIZES
+from .fakes.ec2 import LIST_SIZES, FAKE_TAGS
 
 
 ENVIRONMENT = "dev"
@@ -50,8 +50,57 @@ class TestCredentialAWS(TestCase):
     @patch(
         'host_provider.credentials.aws.CredentialAWS.collection_last'
     )
-    def test_create_host(self, collection_last, zone, create_node, credential_content):
+    @patch(
+        'host_provider.providers.aws.TeamClient.API_URL',
+        new=None
+    )
+    def test_create_host_without_environment_of_teams(
+        self, collection_last, zone, create_node, credential_content
+    ):
+
         self.create_host_tests(collection_last, create_node, credential_content, zone)
+
+    @patch(
+        'libcloud.compute.drivers.ec2.EC2NodeDriver.list_sizes',
+        new=MagicMock(return_value=LIST_SIZES)
+    )
+    @patch(
+        'host_provider.providers.aws.CredentialAWS.get_content'
+    )
+    @patch(
+        'libcloud.compute.drivers.ec2.EC2NodeDriver.create_node'
+    )
+    @patch(
+        'host_provider.providers.aws.CredentialAWS.zone'
+    )
+    @patch(
+        'host_provider.credentials.aws.CredentialAWS.collection_last'
+    )
+    def test_create_host_without_teams(self, collection_last, zone, create_node, credential_content):
+        self.create_host_tests(collection_last, create_node, credential_content, zone)
+
+    @patch(
+        'libcloud.compute.drivers.ec2.EC2NodeDriver.list_sizes',
+        new=MagicMock(return_value=LIST_SIZES)
+    )
+    @patch(
+        'host_provider.providers.aws.CredentialAWS.get_content'
+    )
+    @patch(
+        'libcloud.compute.drivers.ec2.EC2NodeDriver.create_node'
+    )
+    @patch(
+        'host_provider.providers.aws.CredentialAWS.zone'
+    )
+    @patch(
+        'host_provider.credentials.aws.CredentialAWS.collection_last'
+    )
+    @patch(
+        'host_provider.providers.aws.TeamClient.make_tags',
+        new=MagicMock(return_value=FAKE_TAGS)
+    )
+    def test_create_host_with_teams(self, collection_last, zone, create_node, credential_content):
+        self.create_host_tests(collection_last, create_node, credential_content, zone, has_tags=True)
 
     def build_credential_content(self, content, **kwargs):
         values = {
@@ -141,7 +190,8 @@ class TestCredentialAWS(TestCase):
             ex_keyname='elesbom',
             size=LIST_SIZES[1],
             ex_security_group_ids=['fake_security_group_id'],
-            ex_subnet=self.provider.BasicInfo('fake_subnet_id_2')
+            ex_subnet=self.provider.BasicInfo('fake_subnet_id_2'),
+            ex_metadata=FAKE_TAGS if kwargs.get('has_tags') else {}
         )
 
     @patch(

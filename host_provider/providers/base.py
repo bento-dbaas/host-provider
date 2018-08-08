@@ -51,9 +51,9 @@ class ProviderBase(object):
         else:
             return True, insert and insert.get('_id')
 
-    def create_host(self, cpu, memory, name, group):
+    def create_host(self, cpu, memory, name, group, *args, **kw):
         self.credential.before_create_host(group)
-        result = self._create_host(cpu, memory, name)
+        result = self._create_host(cpu, memory, name, *args, **kw)
         self.credential.after_create_host(group)
         return result
 

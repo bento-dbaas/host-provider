@@ -38,3 +38,4 @@ APP_USERNAME = getenv("APP_USERNAME", None)
 APP_PASSWORD = getenv("APP_PASSWORD", None)
 
 AWS_PROXY = getenv("DBAAS_AWS_PROXY", None)
+TEAM_API_URL = getenv("TEAM_API_URL", None)
