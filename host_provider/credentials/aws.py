@@ -3,6 +3,9 @@ from host_provider.credentials.base import CredentialBase, CredentialAdd
 
 class CredentialAWS(CredentialBase):
 
+    @property
+    def keyname(self):
+        return self.content['keyname']
 
     @property
     def region(self):

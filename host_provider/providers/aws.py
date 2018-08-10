@@ -80,8 +80,7 @@ class AWSProvider(ProviderBase):
             name=name,
             image=self.BasicInfo(self.credential.template_to(self.engine)),
             size=self.offering_to(int(cpu), int(memory)),
-            # TODO: Put that in credential
-            ex_keyname='elesbom',
+            ex_keyname=self.credential.keyname,
             ex_security_group_ids=[self.credential.security_group_id],
             ex_subnet=self.BasicInfo(self.credential.zone),
             ex_metadata=TeamClient.make_tags(kw.get('team_name'), self.engine)

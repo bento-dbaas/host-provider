@@ -108,6 +108,7 @@ class TestCredentialAWS(TestCase):
             'environment': 'dev',
             'region': 'sa-east-1',
             'image_id': 'fake_so_image_id',
+            'keyname': 'elesbom',
             'security_group_id': 'fake_security_group_id',
             'access_id': 'fake_access_id',
             'secret_key': 'fake_secret_key',
