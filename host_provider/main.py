@@ -36,6 +36,7 @@ def create_host(provider_name, env):
     engine = data.get("engine", None)
     cpu = data.get("cpu", None)
     memory = data.get("memory", None)
+    team_name = data.get("team_name", None)
 
     # TODO improve validation and response
     if not(group and name and engine and cpu and memory):
@@ -44,7 +45,10 @@ def create_host(provider_name, env):
     try:
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, engine)
-        node = provider.create_host(cpu, memory, name, group)
+        extra_params = {
+            'team_name': team_name
+        }
+        node = provider.create_host(cpu, memory, name, group, **extra_params)
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
@@ -246,7 +250,6 @@ def get_all_credential(provider_name):
     try:
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(None, None)
-        print(provider.build_credential())
         credential = provider.build_credential().credential
         return make_response(
             json.dumps(
@@ -270,6 +273,25 @@ def get_credential(provider_name, uuid):
         return make_response(
             json.dumps(
                 credential.find_one({'_id': ObjectId(uuid)}),
+                default=json_util.default
+            )
+        )
+    except Exception as e:
+        return response_invalid_request(str(e))
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/credential/<string:cpus>/<string:memory>", methods=['GET']
+)
+@auth.login_required
+def get_credential_by_offering(provider_name, env, cpus, memory):
+    try:
+        provider_cls = get_provider_to(provider_name)
+        provider = provider_cls(env, None)
+        credential = provider.build_credential()
+        return make_response(
+            json.dumps(
+                {'offering_id': credential.offering_to(cpus, memory)},
                 default=json_util.default
             )
         )

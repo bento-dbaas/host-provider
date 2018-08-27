@@ -28,7 +28,7 @@ class CloudStackProvider(ProviderBase):
             self.get_provider(), self.environment, self.engine
         )
 
-    def _create_host(self, cpu, memory, name):
+    def _create_host(self, cpu, memory, name, *args, **kw):
         networks = [
             self.BasicInfo(network) for network in self.credential.networks
         ]

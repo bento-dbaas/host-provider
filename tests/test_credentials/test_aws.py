@@ -1,8 +1,8 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
-from host_provider.credentials.cloudstack import CredentialCloudStack, \
-    CredentialAddCloudStack
-from host_provider.providers.cloudstack import CloudStackProvider
+from host_provider.credentials.aws import CredentialAWS, \
+    CredentialAddAWS
+from host_provider.providers.aws import AWSProvider
 from tests.test_credentials.base import FakeMongoDB
 
 
@@ -10,14 +10,14 @@ ENVIRONMENT = "dev"
 ENGINE = "redis"
 
 
-class TestCloudStackProvider(TestCase):
+class TestAWSProvider(TestCase):
 
     def setUp(self):
-        self.credential = CredentialCloudStack(
-            CloudStackProvider.get_provider(), ENVIRONMENT, ENGINE
+        self.credential = CredentialAWS(
+            AWSProvider.get_provider(), ENVIRONMENT, ENGINE
         )
-        self.credential_add = CredentialAddCloudStack(
-            CloudStackProvider.get_provider(), ENVIRONMENT, ENGINE
+        self.credential_add = CredentialAddAWS(
+            AWSProvider.get_provider(), ENVIRONMENT, ENGINE
         )
         self.fake_mongo = FakeMongoDB()
 
@@ -29,27 +29,12 @@ class TestCloudStackProvider(TestCase):
         self.assertTrue(success)
         self.assertEqual(error, "")
 
-    @patch(
-        'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
-    )
-    @patch(
-        'host_provider.providers.cloudstack.CredentialCloudStack.zone'
-    )
-    def test_error_no_network(self, zone, content):
-        content.return_value = {"zones": {"zone1": {}}}
-        zone.__get__ = Mock(return_value="zone1")
-
-        def call_networks():
-            _ = self.credential.networks
-
-        self.assertRaises(NotImplementedError, call_networks)
-
     def test_zone(self):
         self.credential._zone = "fake_zone"
         self.assertEqual(self.credential.zone, self.credential._zone)
 
     @patch(
-        'host_provider.providers.cloudstack.CredentialCloudStack.collection_last'
+        'host_provider.providers.aws.CredentialAWS.collection_last'
     )
     def test_remove_last_used_for(self, collection_last):
         self.credential.remove_last_used_for("fake_group")
@@ -58,24 +43,15 @@ class TestCloudStackProvider(TestCase):
         })
 
     def test_collection_last(self):
-        self.credential._db = {"cloudstack_zones_last": "mocked_test"}
+        self.credential._db = {"ec2_zones_last": "mocked_test"}
         self.assertEqual(self.credential.collection_last, "mocked_test")
 
     def _force_content(self):
         self.credential._content = {
-            "zones": {
-                "first": {
-                    "active": True,
-                    "name": "first zone"
-                },
-                "second": {
-                    "active": True,
-                    "name": "second zone"
-                },
-                "third": {
-                    "active": True,
-                    "name": "third zone"
-                }
+            "subnets": {
+                "first": {'active': True, 'id': 'first', 'name': 'first_name'},
+                "second": {'active': True, 'id': 'second', 'name': 'second_name'},
+                "third": {'active': True, 'id': 'third', 'name': 'third_name'}
             }
         }
 
@@ -86,7 +62,7 @@ class TestCloudStackProvider(TestCase):
         self.assertEqual(self.credential.get_next_zone_from("third"), "first")
 
     @patch(
-        'host_provider.providers.cloudstack.CredentialCloudStack.collection_last'
+        'host_provider.providers.aws.CredentialAWS.collection_last'
     )
     def test_get_zone_environment(self, last_collection):
         self._force_content()
@@ -99,7 +75,7 @@ class TestCloudStackProvider(TestCase):
         self.assertEqual(self.credential._get_zone("new_group"), "third")
 
     @patch(
-        'host_provider.providers.cloudstack.CredentialCloudStack.collection_last'
+        'host_provider.providers.aws.CredentialAWS.collection_last'
     )
     def test_get_zone_infra(self, last_collection):
         self._force_content()

@@ -4,11 +4,11 @@ dev:
 
 
 run:
-	export FLASK_APP=./host_provider/main.py; python -m flask run
+	export DBAAS_AWS_PROXY=;export FLASK_APP=./host_provider/main.py; python -m flask run
 
 
 test:
-	coverage run --source=./ -m unittest discover --start-directory ./tests -p "*.py"
+	export DBAAS_AWS_PROXY=;coverage run --source=./ -m unittest discover --start-directory ./tests -p "*.py"
 
 
 test_report: test
