@@ -235,11 +235,15 @@ def create_credential(provider_name, env):
     try:
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, None)
-        success, credential_id = provider.credential_add(data)
+        success, resp = provider.credential_add(data)
     except Exception as e:
         return response_invalid_request(str(e))
     else:
-        return response_created(success=success, id=str(credential_id))
+        if not success:
+            return response_created(
+                status_code=422, success=success, reason=str(resp)
+            )
+        return response_created(success=success, id=str(resp))
 
 
 @app.route(

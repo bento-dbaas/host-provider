@@ -25,7 +25,7 @@ class TestAWSProvider(TestCase):
         self.fake_mongo.clear()
 
     def test_add_is_valid(self):
-        success, error = self.credential_add.is_valid()
+        success, error = self.credential_add.is_valid({})
         self.assertTrue(success)
         self.assertEqual(error, "")
 

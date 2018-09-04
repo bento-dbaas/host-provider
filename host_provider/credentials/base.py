@@ -96,5 +96,5 @@ class CredentialAdd(CredentialMongoDB):
             'provider': self.provider, 'environment': self.environment
         })
 
-    def is_valid(self):
+    def is_valid(self, content):
         raise NotImplementedError

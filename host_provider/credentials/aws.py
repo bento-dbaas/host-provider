@@ -106,6 +106,17 @@ class CredentialAWS(CredentialBase):
 class CredentialAddAWS(CredentialAdd):
 
     @classmethod
-    def is_valid(self):
-        # TODO Create validation here
+    def is_valid(self, content):
+        mim_of_subnets = int(content.get('mimOfSubnets', 0))
+        subnets = content.get('subnets', {})
+        active_subnets = len(list(filter(
+            lambda k, : subnets[k].get('active'),
+            content.get('subnets', [])
+        )))
+
+        if active_subnets < mim_of_subnets:
+            return False, "Must be {} active subnets at least".format(
+                mim_of_subnets
+            )
+
         return True, ""

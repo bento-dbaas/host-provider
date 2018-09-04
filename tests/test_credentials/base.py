@@ -20,10 +20,6 @@ class TestBaseProvider(TestCase):
     def tearDown(self):
         FakeMongoDB.clear()
 
-    def test_credential_add_not_implemented_methods(self):
-        credential = CredentialAdd(PROVIDER, ENVIRONMENT, "")
-        self.assertRaises(NotImplementedError, credential.is_valid)
-
     def test_base_content(self):
         credential_add = CredentialAddFake(
             PROVIDER, ENVIRONMENT, {"fake": "info"}

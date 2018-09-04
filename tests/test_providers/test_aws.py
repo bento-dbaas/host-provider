@@ -1,10 +1,11 @@
+from copy import deepcopy
 from unittest import TestCase
 from unittest.mock import Mock, patch, MagicMock
 from libcloud.compute.types import Provider
 from libcloud.compute.drivers.ec2 import EC2NodeDriver
 from host_provider.providers.aws import AWSProvider, OfferingNotFoundError
 from host_provider.credentials.aws import CredentialAddAWS
-from .fakes.ec2 import LIST_SIZES, FAKE_TAGS
+from .fakes.ec2 import LIST_SIZES, FAKE_TAGS, FAKE_CREDENTIAL
 
 
 ENVIRONMENT = "dev"
@@ -24,6 +25,16 @@ class TestCredentialAWS(TestCase):
         self.assertEqual(
             self.provider.get_credential_add(), CredentialAddAWS
         )
+
+    def test_validate_credential(self):
+        invalid_content = deepcopy(FAKE_CREDENTIAL)
+        invalid_content.update({'mimOfSubnets': "3"})
+
+        success, error = self.provider.credential_add(invalid_content)
+
+        self.assertFalse(success)
+        self.assertEqual(error, "Must be 3 active subnets at least")
+
 
     @patch(
         'host_provider.providers.aws.CredentialAWS.get_content'
@@ -103,33 +114,9 @@ class TestCredentialAWS(TestCase):
         self.create_host_tests(collection_last, create_node, credential_content, zone, has_tags=True)
 
     def build_credential_content(self, content, **kwargs):
-        values = {
-            'provider': 'ec2',
-            'environment': 'dev',
-            'region': 'sa-east-1',
-            'keyname': 'elesbom',
-            'security_group_id': 'fake_security_group_id',
-            'access_id': 'fake_access_id',
-            'secret_key': 'fake_secret_key',
-            'templates': {
-                'redis': 'fake_so_image_id'
-            },
-            'subnets': {
-                'fake_subnet_id_1': {
-                    'id': 'fake_subnet_id_1',
-                    'name': 'fake_subnet_name_1',
-                    'active': True
-                },
-                'fake_subnet_id_2': {
-                    'id': 'fake_subnet_id_2',
-                    'name': 'fake_subnet_name_2',
-                    'active': True
-                }
-            }
-        }
+        values = deepcopy(FAKE_CREDENTIAL)
         values.update(kwargs)
         content.return_value = values
-
 
     @patch(
         'host_provider.providers.aws.CredentialAWS.get_content',

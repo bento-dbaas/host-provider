@@ -57,7 +57,7 @@ class CredentialBaseFake(CredentialFakeDB, CredentialBase):
 
 class CredentialAddFake(CredentialFakeDB, CredentialAdd):
 
-    def is_valid(self):
+    def is_valid(self, content):
         if "fake" not in self.content:
             return False, "Should have fake field"
         return True, None

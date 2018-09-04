@@ -40,7 +40,7 @@ class ProviderBase(object):
             self.get_provider(), self.environment, content
         )
 
-        is_valid, error = credential.is_valid()
+        is_valid, error = credential.is_valid(content)
         if not is_valid:
             return False, error
 

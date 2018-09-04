@@ -125,6 +125,17 @@ class CredentialCloudStack(CredentialBase):
 class CredentialAddCloudStack(CredentialAdd):
 
     @classmethod
-    def is_valid(self):
-        # TODO Create validation here
+    def is_valid(self, content):
+        mim_of_zones = int(content.get('mimOfZones', 0))
+        zones = content.get('zones', {})
+        active_zones = len(list(filter(
+            lambda k, : zones[k].get('active'),
+            content.get('zones', [])
+        )))
+
+        if active_zones < mim_of_zones:
+            return False, "Must be {} active zones at least".format(
+                mim_of_zones
+            )
+
         return True, ""
