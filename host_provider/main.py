@@ -357,8 +357,6 @@ def list_zones(provider_name, env):
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, None)
         credential = provider.build_credential()
-        import pdb
-        pdb.set_trace()
         return make_response(
             json.dumps(
                 {'zones': [zone['name'] for zone in credential.all_zones.values()]},
