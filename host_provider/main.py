@@ -317,7 +317,6 @@ def update_credential(provider_name, uuid):
         provider = provider_cls(None, None)
         credential = provider.build_credential().credential
 
-        # remove _id from data
         data.get('_id') and data.pop('_id')
 
         return make_response(
@@ -348,6 +347,26 @@ def destroy_credential(provider_name, env):
         return response_not_found("{}-{}".format(provider_name, env))
 
     return response_ok()
+
+@app.route(
+    "/<string:provider_name>/<string:env>/zones", methods=['GET']
+)
+@auth.login_required
+def list_zones(provider_name, env):
+    try:
+        provider_cls = get_provider_to(provider_name)
+        provider = provider_cls(env, None)
+        credential = provider.build_credential()
+        import pdb
+        pdb.set_trace()
+        return make_response(
+            json.dumps(
+                {'zones': [zone['name'] for zone in credential.all_zones.values()]},
+                default=json_util.default
+            )
+        )
+    except Exception as e:
+        return response_invalid_request(str(e))
 
 
 def response_invalid_request(error, status_code=500):

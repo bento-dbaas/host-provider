@@ -45,6 +45,7 @@ class CredentialBase(CredentialMongoDB):
     def __init__(self, provider, environment, engine):
         super(CredentialBase, self).__init__(provider, environment)
         self.engine = engine
+        self._zone = None
 
     def get_content(self):
         content = self.credential.find_one({
@@ -69,6 +70,38 @@ class CredentialBase(CredentialMongoDB):
 
     def after_create_host(self, group):
         pass
+
+    @property
+    def _zones_field(self):
+        raise NotImplementedError
+
+    def __get_zones(self, **filters):
+        all_zones = self._zones_field
+        filtered_zones = {}
+        for zone_key in all_zones.keys():
+            zone_val = all_zones[zone_key]
+            valid = True
+            for key, value in filters.items():
+                if zone_val[key] != value:
+                    valid = False
+                    break
+
+            if valid:
+                filtered_zones[zone_key] = zone_val
+
+        return filtered_zones
+
+    @property
+    def all_zones(self):
+        return self.__get_zones()
+
+    @property
+    def zones(self):
+        return self.__get_zones(active=True)
+
+    @property
+    def zone(self):
+        return self._zone
 
 
 class CredentialAdd(CredentialMongoDB):

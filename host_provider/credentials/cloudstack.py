@@ -29,19 +29,8 @@ class CredentialCloudStack(CredentialBase):
         return templates[self.engine]
 
     @property
-    def zones(self):
-        all_zones = self.content['zones']
-        filtered_zones = {}
-        for zone_key in all_zones.keys():
-            zone_val = all_zones[zone_key]
-            if zone_val['active'] == True:
-                filtered_zones[zone_key] = zone_val
-
-        return filtered_zones
-
-    @property
-    def zone(self):
-        return self._zone
+    def _zones_field(self):
+        return self.content['zones']
 
     def before_create_host(self, group):
         self._zone = self._get_zone(group)
