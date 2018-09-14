@@ -97,7 +97,9 @@ class CredentialCloudStack(CredentialBase):
 
         zone = self.content['zones'][self.zone]
         if 'networks' not in zone:
-            raise NotImplementedError("Not network to zone {}".format(self.zone))
+            raise NotImplementedError(
+                "Not network to zone {}".format(self.zone)
+            )
 
         return [net['networkId'] for net in zone['networks'][self.engine]]
 
@@ -114,7 +116,7 @@ class CredentialCloudStack(CredentialBase):
 class CredentialAddCloudStack(CredentialAdd):
 
     @classmethod
-    def is_valid(self, content):
+    def is_valid(cls, content):
         mim_of_zones = int(content.get('mimOfZones', 0))
         zones = content.get('zones', {})
         active_zones = len(list(filter(

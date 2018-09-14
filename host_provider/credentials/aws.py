@@ -95,7 +95,7 @@ class CredentialAWS(CredentialBase):
 class CredentialAddAWS(CredentialAdd):
 
     @classmethod
-    def is_valid(self, content):
+    def is_valid(cls, content):
         mim_of_subnets = int(content.get('mimOfSubnets', 0))
         subnets = content.get('subnets', {})
         active_subnets = len(list(filter(
