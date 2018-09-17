@@ -57,7 +57,7 @@ def create_host(provider_name, env):
     host = Host(
         name=name, group=group, engine=engine, environment=env,
         cpu=cpu, memory=memory, provider=provider_name, identifier=node.id,
-        address=address
+        address=address, zone=provider.credential._zone
     )
     host.save()
 
@@ -359,7 +359,9 @@ def list_zones(provider_name, env):
         credential = provider.build_credential()
         return make_response(
             json.dumps(
-                {'zones': [zone['name'] for zone in credential.all_zones.values()]},
+                {'zones':
+                     [zone['name'] for zone in credential.all_zones.values()]
+                },
                 default=json_util.default
             )
         )
