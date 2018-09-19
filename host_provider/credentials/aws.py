@@ -31,19 +31,8 @@ class CredentialAWS(CredentialBase):
         return self.content['subnets']
 
     @property
-    def zones(self):
-        all_zones = self.subnets
-        filtered_zones = {}
-        for zone_key in all_zones.keys():
-            zone_val = all_zones[zone_key]
-            if zone_val['active'] == True:
-                filtered_zones[zone_key] = zone_val
-
-        return filtered_zones
-
-    @property
-    def zone(self):
-        return self._zone
+    def _zones_field(self):
+        return self.subnets
 
     def before_create_host(self, group):
         self._zone = self._get_zone(group)
@@ -106,7 +95,7 @@ class CredentialAWS(CredentialBase):
 class CredentialAddAWS(CredentialAdd):
 
     @classmethod
-    def is_valid(self, content):
+    def is_valid(cls, content):
         mim_of_subnets = int(content.get('mimOfSubnets', 0))
         subnets = content.get('subnets', {})
         active_subnets = len(list(filter(

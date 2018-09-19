@@ -32,6 +32,7 @@ class Host(BaseModel):
     provider = CharField()
     identifier = CharField()
     address = CharField()
+    zone = CharField(null=True)
 
     @property
     def to_dict(self):
