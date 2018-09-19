@@ -1,4 +1,5 @@
 import json
+import logging
 from traceback import print_exc
 from bson import json_util, ObjectId
 from flask import Flask, request, jsonify, make_response
@@ -138,6 +139,9 @@ def resize_host(provider_name, env):
     try:
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, host.engine)
+        if int(cpus) == host.cpu and int(memory) == host.memory:
+            logging.error("Notting to resize for host {}, offering already done".format(host.id))
+            return response_ok()
         provider.resize(host.identifier, cpus, memory)
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
