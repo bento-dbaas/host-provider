@@ -103,6 +103,11 @@ class CredentialBase(CredentialMongoDB):
     def zone(self):
         return self._zone
 
+    @zone.setter
+    def zone(self, zone):
+        zones = list(self.__get_zones(name=zone).keys())
+        self._zone = zones[0]
+
 
 class CredentialAdd(CredentialMongoDB):
 

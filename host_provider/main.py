@@ -36,6 +36,7 @@ def create_host(provider_name, env):
     engine = data.get("engine", None)
     cpu = data.get("cpu", None)
     memory = data.get("memory", None)
+    zone = data.get("zone", None)
     team_name = data.get("team_name", None)
 
     # TODO improve validation and response
@@ -48,7 +49,9 @@ def create_host(provider_name, env):
         extra_params = {
             'team_name': team_name
         }
-        node = provider.create_host(cpu, memory, name, group, **extra_params)
+        node = provider.create_host(
+            cpu, memory, name, group, zone, **extra_params
+        )
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
