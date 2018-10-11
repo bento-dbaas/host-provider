@@ -53,8 +53,6 @@ class ProviderBase(object):
 
     def create_host(self, cpu, memory, name, group, zone, *args, **kw):
         self.credential.before_create_host(group)
-        print(self.credential.zone)
-
         if zone:
             self.credential.zone = zone
 

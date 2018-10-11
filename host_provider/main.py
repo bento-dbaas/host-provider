@@ -225,7 +225,7 @@ def get_host(provider_name, env, host_id):
 
     try:
         host = Host.get(id=host_id, environment=env)
-        return response_created(**host.to_dict)
+        return response_ok(**host.to_dict)
     except Host.DoesNotExist:
         return response_not_found(host_id)
 
@@ -389,11 +389,15 @@ def response_created(status_code=201, **kwargs):
     return _response(status_code, **kwargs)
 
 
-def response_ok(message=None):
-    if not message:
+def response_ok(message=None, **kwargs):
+    if not message and not kwargs:
         message = "ok"
-
-    return _response(200, message=message)
+    response = {}
+    if message:
+        response['message'] = message
+    if kwargs:
+        response.update(**kwargs)
+    return _response(200, **response)
 
 
 def _response(status, **kwargs):
