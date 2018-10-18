@@ -1,8 +1,8 @@
+from copy import deepcopy
 from datetime import datetime
 from peewee import MySQLDatabase, Model, DateTimeField, CharField, \
     PrimaryKeyField, IntegerField
 from host_provider.settings import MYSQL_PARAMS
-import copy
 
 
 mysql_db = MySQLDatabase(**MYSQL_PARAMS)
@@ -36,11 +36,18 @@ class Host(BaseModel):
 
     @property
     def to_dict(self):
-        my_data = copy.deepcopy(self._data)
+        my_data = deepcopy(self._data)
         if 'password' in my_data:
             my_data.pop('password')
-
+        my_data['zone'] = self.credential.zone_by_id(self.zone)
         return my_data
+
+    @property
+    def credential(self):
+        from host_provider.providers import get_provider_to
+        provider_cls = get_provider_to(self.provider)
+        provider = provider_cls(self.environment, self.engine)
+        return provider.credential
 
 
 def initialize_database():

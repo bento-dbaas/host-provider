@@ -15,8 +15,8 @@ class CredentialAWS(CredentialBase):
         return self.content['templates'][engine]
 
     @property
-    def security_group_id(self):
-        return self.content['security_group_id']
+    def security_group_ids(self):
+        return [sg['id'] for sg in self.content['security_groups']]
 
     @property
     def access_id(self):
