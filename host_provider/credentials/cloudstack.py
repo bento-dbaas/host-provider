@@ -16,7 +16,6 @@ class CredentialCloudStack(CredentialBase):
         return self.content['secret_key']
 
     def offering_to(self, cpu, memory):
-
         return self.content['offerings']['{}c{}m'.format(cpu, memory)]['id']
 
     def template_to(self, engine):
