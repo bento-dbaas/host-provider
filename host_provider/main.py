@@ -366,8 +366,11 @@ def list_zones(provider_name, env):
         credential = provider.build_credential()
         return make_response(
             json.dumps(
-                {'zones':
-                     [zone['name'] for zone in credential.all_zones.values()]
+                {'zones': [
+                    {
+                        'name': zone['name'],
+                        'is_active': zone['active']
+                    } for zone in credential.all_zones.values()]
                 },
                 default=json_util.default
             )
