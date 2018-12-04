@@ -157,11 +157,11 @@ class TestCredentialAWS(TestCase):
         collection_last.find_one.return_value = []
         self.build_credential_content(content, **kwargs)
 
-        zone.__get__ = Mock(return_value="fake_subnet_id_2")
+        zone = "fake_subnet_id_2"
 
         name = "infra-01-123456"
         group = "infra123456"
-        self.provider.create_host(1, 1024, name, group)
+        self.provider.create_host(1, 1024, name, group, zone)
 
         project = content.return_value.get("projectid", None)
         if project:
