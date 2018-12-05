@@ -4,7 +4,7 @@ from libcloud.compute.types import Provider
 from host_provider.providers.base import ProviderBase
 from host_provider.credentials.aws import CredentialAWS, \
     CredentialAddAWS
-from host_provider.settings import AWS_PROXY
+from host_provider.settings import AWS_PROXY, HOST_EXTRA_TAGS
 from host_provider.clients.team import TeamClient
 
 
@@ -27,6 +27,9 @@ class AWSProxyNotSet(Exception):
 class AWSProvider(ProviderBase):
     BasicInfo = namedtuple("EC2BasicInfo", "id")
 
+    @property
+    def engine_name(self):
+        return self.engine.split('_')[0]
 
     def get_node(self, node_id):
         try:
@@ -74,6 +77,15 @@ class AWSProvider(ProviderBase):
             "Offering with {} cpu and {} of memory not found.".format(cpu, memory)
         )
 
+    def generate_tags(self, team_name, infra_name):
+        tags = TeamClient.make_tags(team_name, self.engine)
+        tags.update(HOST_EXTRA_TAGS)
+        tags.update({
+            'engine': self.engine_name,
+            'infra_name': infra_name
+        })
+        return tags
+
     def _create_host(self, cpu, memory, name, *args, **kw):
 
         return self.client.create_node(
@@ -83,7 +95,10 @@ class AWSProvider(ProviderBase):
             ex_keyname=self.credential.keyname,
             ex_security_group_ids=self.credential.security_group_ids,
             ex_subnet=self.BasicInfo(self.credential.zone),
-            ex_metadata=TeamClient.make_tags(kw.get('team_name'), self.engine)
+            ex_metadata=self.generate_tags(
+                team_name=kw.get('team_name'),
+                infra_name=kw.get('group')
+            )
         )
 
 

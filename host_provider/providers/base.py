@@ -52,6 +52,7 @@ class ProviderBase(object):
             return True, insert and insert.get('_id')
 
     def create_host(self, cpu, memory, name, group, zone, *args, **kw):
+        kw.update({'group': group})
         self.credential.before_create_host(group)
         if zone:
             self.credential.zone = zone

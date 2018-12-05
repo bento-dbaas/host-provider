@@ -5,13 +5,17 @@ from libcloud.compute.types import Provider
 from libcloud.compute.drivers.ec2 import EC2NodeDriver
 from host_provider.providers.aws import AWSProvider, OfferingNotFoundError
 from host_provider.credentials.aws import CredentialAddAWS
-from .fakes.ec2 import LIST_SIZES, FAKE_TAGS, FAKE_CREDENTIAL
+from .fakes.ec2 import LIST_SIZES, FAKE_TAGS, FAKE_CREDENTIAL, HOST_EXTRA_TAGS
 
 
 ENVIRONMENT = "dev"
 ENGINE = "redis"
 
 
+@patch.dict(
+    'host_provider.providers.aws.HOST_EXTRA_TAGS',
+    HOST_EXTRA_TAGS
+)
 class TestCredentialAWS(TestCase):
 
     def setUp(self):
@@ -171,6 +175,12 @@ class TestCredentialAWS(TestCase):
             self.provider.BasicInfo("net1"), self.provider.BasicInfo("net2")
         ]
 
+        expected_tags = FAKE_TAGS if kwargs.get('has_tags') else {}
+        expected_tags.update({
+            'origin': 'dbaas',
+            'infra_name': group,
+            'engine': 'redis'
+        })
         create_node.assert_called_once_with(
             name=name,
             image=self.provider.BasicInfo('fake_so_image_id'),
@@ -178,7 +188,7 @@ class TestCredentialAWS(TestCase):
             size=LIST_SIZES[1],
             ex_security_group_ids=['fake_security_group_id'],
             ex_subnet=self.provider.BasicInfo('fake_subnet_id_2'),
-            ex_metadata=FAKE_TAGS if kwargs.get('has_tags') else {}
+            ex_metadata=expected_tags
         )
 
     @patch(
