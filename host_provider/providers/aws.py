@@ -4,7 +4,7 @@ from libcloud.compute.types import Provider
 from host_provider.providers.base import ProviderBase
 from host_provider.credentials.aws import CredentialAWS, \
     CredentialAddAWS
-from host_provider.settings import AWS_PROXY, HOST_EXTRA_TAGS
+from host_provider.settings import AWS_PROXY, HOST_ORIGIN_TAG
 from host_provider.clients.team import TeamClient
 
 
@@ -79,7 +79,8 @@ class AWSProvider(ProviderBase):
 
     def generate_tags(self, team_name, infra_name):
         tags = TeamClient.make_tags(team_name, self.engine)
-        tags.update(HOST_EXTRA_TAGS)
+        if HOST_ORIGIN_TAG:
+            tags['origin'] = HOST_ORIGIN_TAG
         tags.update({
             'engine': self.engine_name,
             'infra_name': infra_name

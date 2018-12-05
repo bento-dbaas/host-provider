@@ -1,20 +1,20 @@
 from copy import deepcopy
 from unittest import TestCase
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 from libcloud.compute.types import Provider
 from libcloud.compute.drivers.ec2 import EC2NodeDriver
 from host_provider.providers.aws import AWSProvider, OfferingNotFoundError
 from host_provider.credentials.aws import CredentialAddAWS
-from .fakes.ec2 import LIST_SIZES, FAKE_TAGS, FAKE_CREDENTIAL, HOST_EXTRA_TAGS
+from .fakes.ec2 import LIST_SIZES, FAKE_TAGS, FAKE_CREDENTIAL
 
 
 ENVIRONMENT = "dev"
 ENGINE = "redis"
 
 
-@patch.dict(
-    'host_provider.providers.aws.HOST_EXTRA_TAGS',
-    HOST_EXTRA_TAGS
+@patch(
+    'host_provider.providers.aws.HOST_ORIGIN_TAG',
+    new=str('dbaas')
 )
 class TestCredentialAWS(TestCase):
 

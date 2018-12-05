@@ -43,5 +43,3 @@ FAKE_CREDENTIAL = {
         }
     }
 }
-
-HOST_EXTRA_TAGS = {"origin": "dbaas"}
