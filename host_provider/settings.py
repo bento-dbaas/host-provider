@@ -1,5 +1,6 @@
 from os import getenv
 import re
+import json
 
 
 LIBCLOUD_CA_CERTS_PATH = getenv("LIBCLOUD_CA_CERTS_PATH", None)
@@ -39,3 +40,4 @@ APP_PASSWORD = getenv("APP_PASSWORD", None)
 
 AWS_PROXY = getenv("DBAAS_AWS_PROXY", None)
 TEAM_API_URL = getenv("TEAM_API_URL", None)
+HOST_EXTRA_TAGS = json.loads(getenv('DBAAS_HOST_EXTRA_TAGS', '{}'))
