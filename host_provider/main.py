@@ -39,6 +39,7 @@ def create_host(provider_name, env):
     memory = data.get("memory", None)
     zone = data.get("zone", None)
     team_name = data.get("team_name", None)
+    database_name = data.get("database_name", "")
 
     # TODO improve validation and response
     if not(group and name and engine and cpu and memory):
@@ -48,7 +49,8 @@ def create_host(provider_name, env):
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, engine)
         extra_params = {
-            'team_name': team_name
+            'team_name': team_name,
+            'database_name': database_name
         }
         node = provider.create_host(
             cpu, memory, name, group, zone, **extra_params

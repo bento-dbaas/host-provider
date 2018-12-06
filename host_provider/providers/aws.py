@@ -77,13 +77,14 @@ class AWSProvider(ProviderBase):
             "Offering with {} cpu and {} of memory not found.".format(cpu, memory)
         )
 
-    def generate_tags(self, team_name, infra_name):
+    def generate_tags(self, team_name, infra_name, database_name):
         tags = TeamClient.make_tags(team_name, self.engine)
         if HOST_ORIGIN_TAG:
             tags['origin'] = HOST_ORIGIN_TAG
         tags.update({
             'engine': self.engine_name,
-            'infra_name': infra_name
+            'infra_name': infra_name,
+            'database_name': database_name or ''
         })
         return tags
 
@@ -98,7 +99,8 @@ class AWSProvider(ProviderBase):
             ex_subnet=self.BasicInfo(self.credential.zone),
             ex_metadata=self.generate_tags(
                 team_name=kw.get('team_name'),
-                infra_name=kw.get('group')
+                infra_name=kw.get('group'),
+                database_name=kw.get('database_name')
             )
         )
 
