@@ -66,18 +66,7 @@ class CredentialCloudStack(CredentialBase):
             "latestUsed": True, "environment": self.environment
         })
 
-    def get_next_zone_from(self, zone_name):
-        zones = list(self.zones.keys())
-        try:
-            base_index = zones.index(zone_name)
-        except ValueError:
-            next_index = 0
-        else:
-            next_index = base_index + 1
-            if next_index >= len(zones):
-                next_index = 0
 
-        return zones[next_index]
 
     def _get_zone(self, group):
         exist = self.exist_node(group)
