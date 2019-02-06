@@ -39,6 +39,7 @@ class Host(BaseModel):
         my_data = deepcopy(self._data)
         if 'password' in my_data:
             my_data.pop('password')
+        my_data['zone_id'] = self.zone
         my_data['zone'] = self.credential.zone_by_id(self.zone)
         return my_data
 
