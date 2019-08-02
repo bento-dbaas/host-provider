@@ -4,7 +4,7 @@ dev:
 
 
 run:
-	export DBAAS_AWS_PROXY=;export FLASK_APP=./host_provider/main.py; python -m flask run
+	export DBAAS_AWS_PROXY=;export FLASK_APP=./host_provider/main.py; python -m flask run --port 5002
 
 
 test:
