@@ -202,6 +202,7 @@ def destroy_host(provider_name, env, host_id):
     try:
         host = Host.get(id=host_id)
     except Host.DoesNotExist:
+        return response_ok()
         return response_not_found(host_id)
 
     try:
