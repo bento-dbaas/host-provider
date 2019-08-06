@@ -122,7 +122,9 @@ def start_host(provider_name, env):
     return response_ok()
 
 
-@app.route("/<string:provider_name>/<string:env>/host/resize", methods=['POST'])
+@app.route(
+    "/<string:provider_name>/<string:env>/host/resize", methods=['POST']
+)
 @auth.login_required
 def resize_host(provider_name, env):
     data = request.get_json()
@@ -145,7 +147,11 @@ def resize_host(provider_name, env):
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, host.engine)
         if int(cpus) == host.cpu and int(memory) == host.memory:
-            logging.error("Notting to resize for host {}, offering already done".format(host.id))
+            logging.error(
+                "Notting to resize for host {}, offering already done".format(
+                    host.id
+                )
+            )
             return response_ok()
         provider.resize(host.identifier, cpus, memory)
     except Exception as e:  # TODO What can get wrong here?
@@ -158,7 +164,9 @@ def resize_host(provider_name, env):
     return response_ok()
 
 
-@app.route("/<string:provider_name>/<string:env>/host/reinstall", methods=['POST'])
+@app.route(
+    "/<string:provider_name>/<string:env>/host/reinstall", methods=['POST']
+)
 @auth.login_required
 def reinstall_host(provider_name, env):
     data = request.get_json()
@@ -358,6 +366,7 @@ def destroy_credential(provider_name, env):
 
     return response_ok()
 
+
 @app.route(
     "/<string:provider_name>/<string:env>/zones", methods=['GET']
 )
@@ -369,11 +378,12 @@ def list_zones(provider_name, env):
         credential = provider.build_credential()
         return make_response(
             json.dumps(
-                {'zones': [
-                    {
-                        'name': zone['name'],
-                        'is_active': zone['active']
-                    } for zone in credential.all_zones.values()]
+                {
+                    'zones': [
+                        {
+                            'name': zone['name'],
+                            'is_active': zone['active']
+                        } for zone in credential.all_zones.values()]
                 },
                 default=json_util.default
             )

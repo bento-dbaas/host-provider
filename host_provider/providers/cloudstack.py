@@ -37,7 +37,8 @@ class CloudStackProvider(ProviderBase):
         if project:
             project = self.BasicInfo(project)
 
-        params = dict(name=name,
+        params = dict(
+            name=name,
             size=self.BasicInfo(self.credential.offering_to(cpu, memory)),
             image=self.BasicInfo(self.credential.template),
             location=self.BasicInfo(self.credential.zone),
