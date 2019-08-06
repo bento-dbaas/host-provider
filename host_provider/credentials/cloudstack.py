@@ -66,8 +66,6 @@ class CredentialCloudStack(CredentialBase):
             "latestUsed": True, "environment": self.environment
         })
 
-
-
     def _get_zone(self, group):
         exist = self.exist_node(group)
         if exist:

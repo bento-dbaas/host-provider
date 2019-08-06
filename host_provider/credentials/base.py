@@ -126,6 +126,7 @@ class CredentialBase(CredentialMongoDB):
 
         return zones[next_index]
 
+
 class CredentialAdd(CredentialMongoDB):
 
     def __init__(self, provider, environment, content):
