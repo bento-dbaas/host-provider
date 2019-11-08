@@ -1,9 +1,15 @@
+from os import getenv
 from collections import namedtuple
 from libcloud.compute.types import Provider
 from host_provider.providers.base import ProviderBase
 from host_provider.credentials.cloudstack import CredentialCloudStack, \
     CredentialAddCloudStack
 import logging
+
+
+if bool(int(getenv('VERIFY_SSL_CERT'))):
+    import libcloud.security
+    libcloud.security.VERIFY_SSL_CERT = False
 
 
 class CloudStackProvider(ProviderBase):
