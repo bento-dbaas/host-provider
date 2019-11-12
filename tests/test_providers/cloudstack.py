@@ -1,7 +1,6 @@
 from unittest import TestCase
 from copy import deepcopy
 from unittest.mock import Mock, patch, MagicMock, PropertyMock
-from collections import namedtuple
 
 from libcloud.compute.types import Provider
 from libcloud.compute.drivers.cloudstack import CloudStackNodeDriver
@@ -131,11 +130,13 @@ class TestBaseCredential(TestCase):
     @patch(
         'host_provider.providers.cloudstack.CredentialCloudStack.zone'
     )
-    @patch(
-        'host_provider.credentials.cloudstack.CredentialCloudStack.collection_last'
-    )
-    def test_create_host(self, collection_last, zone, create_node, credential_content):
-        self.create_host_tests(collection_last, create_node, credential_content, zone)
+    @patch(('host_provider.credentials.cloudstack.CredentialCloudStack'
+            '.collection_last'))
+    def test_create_host(self, collection_last, zone, create_node,
+                         credential_content):
+        self.create_host_tests(
+            collection_last, create_node, credential_content, zone
+        )
 
     @patch(
         'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
@@ -146,9 +147,8 @@ class TestBaseCredential(TestCase):
     @patch(
         'host_provider.providers.cloudstack.CredentialCloudStack.zone'
     )
-    @patch(
-        'host_provider.credentials.cloudstack.CredentialCloudStack.collection_last'
-    )
+    @patch(('host_provider.credentials.cloudstack.CredentialCloudStack'
+           '.collection_last'))
     def test_create_host_with_project(
         self, collection_last, zone, create_node, credential_content
     ):
@@ -231,9 +231,8 @@ class TestBaseCredential(TestCase):
     @patch(
         'host_provider.providers.cloudstack.CredentialCloudStack.get_content'
     )
-    @patch(
-        'host_provider.providers.cloudstack.CredentialCloudStack.collection_last'
-    )
+    @patch(('host_provider.providers.cloudstack.CredentialCloudStack'
+           '.collection_last'))
     def test_all_nodes_deleted(self, collection_last, content):
         self.build_credential_content(content)
         group = "fake123456"
@@ -248,9 +247,8 @@ class TestBaseCredential(TestCase):
     @patch(
         'host_provider.providers.cloudstack.CloudStackProvider._destroy'
     )
-    @patch(
-        'host_provider.providers.cloudstack.CloudStackProvider._all_node_destroyed'
-    )
+    @patch(('host_provider.providers.cloudstack.CloudStackProvider'
+           '._all_node_destroyed'))
     @patch(
         'host_provider.providers.base.Host'
     )

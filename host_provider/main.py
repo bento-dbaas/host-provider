@@ -306,9 +306,8 @@ def get_credential(provider_name, uuid):
         return response_invalid_request(str(e))
 
 
-@app.route(
-    "/<string:provider_name>/<string:env>/credential/<string:cpus>/<string:memory>", methods=['GET']
-)
+@app.route(("/<string:provider_name>/<string:env>/credential/<string:cpus>"
+           "/<string:memory>"), methods=['GET'])
 @auth.login_required
 def get_credential_by_offering(provider_name, env, cpus, memory):
     try:
