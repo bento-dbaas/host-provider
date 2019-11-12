@@ -7,7 +7,7 @@ from host_provider.credentials.cloudstack import CredentialCloudStack, \
 import logging
 
 
-if bool(int(getenv('VERIFY_SSL_CERT'))):
+if bool(int(getenv('VERIFY_SSL_CERT', '0'))):
     import libcloud.security
     libcloud.security.VERIFY_SSL_CERT = False
 
@@ -28,6 +28,30 @@ class CloudStackProvider(ProviderBase):
     @classmethod
     def get_provider(cls):
         return Provider.CLOUDSTACK
+
+    def get_cs_node(self, host):
+        return self.client.ex_get_node(
+            host.identifier,
+            self.BasicInfo(self.credential.project)
+        )
+
+    def get_network_from(self, host):
+        all_network_of_project = self.client.ex_list_networks(
+            self.BasicInfo(self.credential.project)
+        )
+        cs_node = self.get_cs_node(host)
+        host_network_id = cs_node.extra['nics:'][0]['networkid']
+
+        for network in all_network_of_project:
+            if network.id == host_network_id:
+                return network
+
+    def fqdn(self, host):
+        cs_node = self.get_cs_node(host)
+        network = self.get_network_from(host)
+        if not network:
+            return ''
+        return "{}.{}".format(cs_node.name, network.extra['network_domain'])
 
     def build_credential(self):
         return CredentialCloudStack(

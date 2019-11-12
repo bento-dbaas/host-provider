@@ -25,7 +25,6 @@ class PropertiesTestCase(TestCase):
 
         self.host._data['password'] = 123
 
-
         my_dict = self.to_dict
         self.assertIn('id', my_dict)
         self.assertIn('name', my_dict)

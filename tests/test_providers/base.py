@@ -1,15 +1,40 @@
 from unittest import TestCase
 from unittest.mock import patch
+from collections import namedtuple
+
 from libcloud import security
+
 from host_provider.providers.base import ProviderBase
-from host_provider.providers import base
-from tests.test_providers import FakeProvider
-from tests.test_credentials import FakeMongoDB
+from host_provider.providers import base, CloudStackProvider
+from ..test_credentials import FakeMongoDB
+from tests.test_credentials import CredentialAddFake
 
 
 ENVIRONMENT = "dev"
 ENGINE = "redis"
 FAKE_CERT_PATH = "/path/to/certs/"
+
+
+class FakeProvider(ProviderBase):
+
+    @classmethod
+    def get_provider(cls):
+        return "ProviderForTests"
+
+    def build_client(self):
+        return "FakeClient"
+
+    def build_credential(self):
+        return "FakeCredential"
+
+    def get_credential_add(self):
+        return CredentialAddFake
+
+
+class CloudStackBaseTestCase(TestCase):
+    def setUp(self):
+        self.provider = CloudStackProvider(ENVIRONMENT, ENGINE)
+        self.host = namedtuple('FakeHost', 'identifier')('fake_identifier')
 
 
 class TestBaseProvider(TestCase):

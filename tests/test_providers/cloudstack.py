@@ -1,15 +1,94 @@
 from unittest import TestCase
 from copy import deepcopy
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock, PropertyMock
+from collections import namedtuple
+
 from libcloud.compute.types import Provider
 from libcloud.compute.drivers.cloudstack import CloudStackNodeDriver
+
 from host_provider.providers.cloudstack import CloudStackProvider
 from host_provider.credentials.cloudstack import CredentialAddCloudStack
-from .fakes.cloudstack import FAKE_CREDENTIAL
+from .fakes.cloudstack import (FAKE_CREDENTIAL, FAKE_CS_NODE,
+                               FAKE_EX_LIST_NETWORKS)
+from .base import CloudStackBaseTestCase
 
 
 ENVIRONMENT = "dev"
 ENGINE = "redis"
+
+
+@patch(('libcloud.compute.drivers.cloudstack.CloudStackNodeDriver'
+        '.ex_get_node'))
+class CsHostDataTestCase(CloudStackBaseTestCase):
+    def test_get_node_called(self, get_node_mock):
+        self.provider.get_cs_node(self.host)
+        self.assertTrue(get_node_mock.called)
+
+    @patch('host_provider.credentials.cloudstack.CredentialCloudStack.project',
+           new=PropertyMock(return_value='fake_project_id'))
+    def test_get_node_params(self, get_node_mock):
+        self.provider.get_cs_node(self.host)
+        args = get_node_mock.call_args[0]
+        self.assertEqual('fake_identifier', args[0])
+        self.assertEqual(self.provider.BasicInfo('fake_project_id'), args[1])
+        self.assertEqual('fake_project_id', args[1].id)
+
+
+@patch(('libcloud.compute.drivers.cloudstack.CloudStackNodeDriver'
+        '.ex_list_networks'), new=MagicMock(
+            return_value=FAKE_EX_LIST_NETWORKS))
+class GetNetworkFromTestCase(CloudStackBaseTestCase):
+    @patch(('host_provider.providers.cloudstack.CloudStackProvider'
+           '.get_cs_node'), new=MagicMock(return_value=FAKE_CS_NODE))
+    def test_find_network_b(self):
+        network = self.provider.get_network_from(self.host)
+        self.assertEqual(
+            'fake_network_domain_b.globoi.com',
+            network.extra['network_domain']
+        )
+
+    @patch(('host_provider.providers.cloudstack.CloudStackProvider'
+           '.get_cs_node'))
+    def test_not_found(self, cs_host_mock):
+        cs_node = deepcopy(FAKE_CS_NODE)
+        cs_node.extra['nics:'][0].update({'networkid': 'fake_not_found'})
+        cs_host_mock.return_value = cs_node
+        network = self.provider.get_network_from(self.host)
+        self.assertEqual(None, network)
+
+
+class FqdnTestCase(CloudStackBaseTestCase):
+    @patch(('host_provider.providers.cloudstack.CloudStackProvider'
+           '.get_cs_node'))
+    @patch(('host_provider.providers.cloudstack.CloudStackProvider'
+           '.get_network_from'))
+    def test_get_cs_node_called(self, network_from_mock, cs_node_mock):
+        self.provider.fqdn(MagicMock())
+        self.assertTrue(network_from_mock.called)
+        self.assertTrue(cs_node_mock.called)
+
+    @patch(('host_provider.providers.cloudstack.CloudStackProvider'
+           '.get_cs_node'), new=MagicMock(return_value=FAKE_CS_NODE))
+    @patch(('libcloud.compute.drivers.cloudstack.CloudStackNodeDriver'
+            '.ex_list_networks'), new=MagicMock(
+                return_value=FAKE_EX_LIST_NETWORKS))
+    def test_fqdn(self):
+        fqdn = self.provider.fqdn(self.host)
+        self.assertEqual(
+            'fake_node_name.fake_network_domain_b.globoi.com', fqdn
+        )
+
+    @patch(('host_provider.providers.cloudstack.CloudStackProvider'
+           '.get_cs_node'), return_value=FAKE_CS_NODE)
+    @patch(('libcloud.compute.drivers.cloudstack.CloudStackNodeDriver'
+            '.ex_list_networks'), new=MagicMock(
+                return_value=FAKE_EX_LIST_NETWORKS))
+    def test_fqdn_network_not_found(self, get_node_mock):
+        cs_node = deepcopy(FAKE_CS_NODE)
+        cs_node.extra['nics:'][0].update({'networkid': 'fake_not_found'})
+        get_node_mock.return_value = cs_node
+        fqdn = self.provider.fqdn(self.host)
+        self.assertEqual('', fqdn)
 
 
 class TestBaseCredential(TestCase):
