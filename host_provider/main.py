@@ -239,7 +239,8 @@ def get_host(provider_name, env, host_id):
         database_host_metadata = host.to_dict
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, None)
-        database_host_metadata.update({'fqdn': provider.fqdn(host)})
+        if hasattr(provider, 'fqdn'):
+            database_host_metadata.update({'fqdn': provider.fqdn(host)})
         return response_ok(**database_host_metadata)
     except Host.DoesNotExist:
         return response_not_found(host_id)
