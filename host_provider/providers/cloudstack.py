@@ -1,6 +1,7 @@
 from os import getenv
 from collections import namedtuple
 from libcloud.compute.types import Provider
+from requests.exceptions import ConnectionError
 from host_provider.providers.base import ProviderBase
 from host_provider.credentials.cloudstack import CredentialCloudStack, \
     CredentialAddCloudStack
@@ -47,8 +48,11 @@ class CloudStackProvider(ProviderBase):
                 return network
 
     def fqdn(self, host):
-        cs_node = self.get_cs_node(host)
-        network = self.get_network_from(host)
+        try:
+            cs_node = self.get_cs_node(host)
+            network = self.get_network_from(host)
+        except ConnectionError:
+            return ''
         if not network:
             return ''
         return "{}.{}".format(cs_node.name, network.extra['network_domain'])

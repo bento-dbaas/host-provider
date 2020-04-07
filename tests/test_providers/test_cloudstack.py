@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch, MagicMock, PropertyMock
 
 from libcloud.compute.types import Provider
 from libcloud.compute.drivers.cloudstack import CloudStackNodeDriver
+from requests.exceptions import ConnectionError
 
 from host_provider.providers.cloudstack import CloudStackProvider
 from host_provider.credentials.cloudstack import CredentialAddCloudStack
@@ -87,6 +88,21 @@ class FqdnTestCase(CloudStackBaseTestCase):
         cs_node.extra['nics:'][0].update({'networkid': 'fake_not_found'})
         get_node_mock.return_value = cs_node
         fqdn = self.provider.fqdn(self.host)
+        self.assertEqual('', fqdn)
+
+    @patch(('host_provider.providers.cloudstack.CloudStackProvider'
+           '.get_cs_node'), return_value=FAKE_CS_NODE)
+    @patch(('libcloud.compute.drivers.cloudstack.CloudStackNodeDriver'
+            '.ex_list_networks'), new=MagicMock(
+                return_value=FAKE_EX_LIST_NETWORKS))
+    def test_fqdn_empty_when_connection_error(self, get_node_mock):
+        get_node_mock.side_effect = ConnectionError
+        try:
+            fqdn = self.provider.fqdn(self.host)
+        except ConnectionError:
+            self.fail(
+                ("provider.fqdn() raised ConnectionError unexpectedly!")
+            )
         self.assertEqual('', fqdn)
 
 
