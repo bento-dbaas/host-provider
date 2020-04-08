@@ -5,6 +5,7 @@ mysqlclient==1.3.12
 peewee==2.10.2
 Flask-Cors==3.0.4
 Flask-HTTPAuth==3.2.3
+werkzeug<1.0
 
 # production
 gunicorn==19.7.1
