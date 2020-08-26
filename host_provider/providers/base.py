@@ -89,9 +89,14 @@ class ProviderBase(object):
     def _all_node_destroyed(self, group):
         pass
 
-    def destroy(self, group, identifier):
+    def destroy(self, group, identifier, *args, **kw):
         self._destroy(identifier)
 
         quantity = len(Host.filter(group=group))
         if quantity:
             self._all_node_destroyed(group)
+
+    def edit_host(self, host_obj, **fields):
+        for k, v in fields.items():
+            setattr(host_obj, k, v)
+        host_obj.save()
