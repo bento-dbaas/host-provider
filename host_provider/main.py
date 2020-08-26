@@ -50,24 +50,20 @@ def create_host(provider_name, env):
         provider = provider_cls(env, engine)
         extra_params = {
             'team_name': team_name,
-            'database_name': database_name
+            'database_name': database_name,
+            'yaml_context': data.get('yaml_context', {}),
+            'node_ip': data.get('node_ip', ''),
         }
-        node = provider.create_host(
+        created_host_metadata = provider.create_host(
             cpu, memory, name, group, zone, **extra_params
         )
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
-
-    address = node.private_ips[0]
-    host = Host(
-        name=name, group=group, engine=engine, environment=env,
-        cpu=cpu, memory=memory, provider=provider_name, identifier=node.id,
-        address=address, zone=provider.credential._zone
+    host_obj = provider.create_host_object(
+        provider, data, env, created_host_metadata
     )
-    host.save()
-
-    return response_created(address=address, id=host.id)
+    return response_created(address=host_obj.address, id=host_obj.id)
 
 
 @app.route("/<string:provider_name>/<string:env>/host/stop", methods=['POST'])
@@ -216,12 +212,41 @@ def destroy_host(provider_name, env, host_id):
     try:
         provider_cls = get_provider_to(provider_name)
         provider = provider_cls(env, host.engine)
-        provider.destroy(host.group, host.identifier)
+        provider.destroy(
+            group=host.group,
+            identifier=host.identifier
+        )
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
 
     host.delete_instance()
+
+    return response_ok()
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/host/<host_id>", methods=['PATCH']
+)
+@auth.login_required
+def edit_host(provider_name, env, host_id):
+    # TODO improve validation and response
+    if not host_id:
+        return response_invalid_request("invalid data")
+
+    try:
+        host = Host.get(id=host_id)
+    except Host.DoesNotExist:
+        return response_not_found(host_id)
+
+    try:
+        provider_cls = get_provider_to(provider_name)
+        provider = provider_cls(env, host.engine)
+        data = request.get_json()
+        provider.edit_host(host, **data)
+    except Exception as e:  # TODO What can get wrong here?
+        print_exc()  # TODO Improve log
+        return response_invalid_request(str(e))
 
     return response_ok()
 
