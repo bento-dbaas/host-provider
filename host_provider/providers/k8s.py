@@ -1,21 +1,15 @@
-from os import getenv
 from host_provider.providers.base import ProviderBase
 from host_provider.credentials.k8s import CredentialK8s, \
     CredentialAddK8s
 import jinja2
 import yaml
 import logging
-from kubernetes import client, config
+from kubernetes.client import Configuration, ApiClient, CoreV1Api
 from host_provider.models import Host
 from time import sleep
 
 
 LOG = logging.getLogger(__name__)
-
-
-if bool(int(getenv('VERIFY_SSL_CERT', '0'))):
-    import libcloud.security
-    libcloud.security.VERIFY_SSL_CERT = False
 
 
 class K8sProvider(ProviderBase):
@@ -71,11 +65,8 @@ class K8sProvider(ProviderBase):
         )
 
     def wait_pod_ready(self, pod_name, namespace):
-        core_v1_client = self.build_client(
-            api_name='CoreV1Api'
-        )
         for attempt in range(self.retries):
-            pod_data = core_v1_client.read_namespaced_pod_status(
+            pod_data = self.client.read_namespaced_pod_status(
                 pod_name, namespace
             )
             for status_data in pod_data.status.conditions:
@@ -89,7 +80,7 @@ class K8sProvider(ProviderBase):
                 ))
 
             LOG.warning("Pod {} not ready.".format(pod_name))
-            LOG.info("Wating %i seconds to try again..." % (self.interval))
+            LOG.info("Wating {} seconds to try again...".format(self.interval))
             sleep(self.interval)
 
     def create_host_object(self, provider, payload, env,
