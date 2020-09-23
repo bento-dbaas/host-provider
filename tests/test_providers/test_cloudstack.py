@@ -17,8 +17,7 @@ ENVIRONMENT = "dev"
 ENGINE = "redis"
 
 
-@patch(('libcloud.compute.drivers.cloudstack.CloudStackNodeDriver'
-        '.ex_get_node'))
+@patch('libcloud.compute.drivers.cloudstack.CloudStackNodeDriver.ex_get_node')
 class CsHostDataTestCase(CloudStackBaseTestCase):
     def test_get_node_called(self, get_node_mock):
         self.provider.get_cs_node(self.host)
