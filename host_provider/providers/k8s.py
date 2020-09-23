@@ -29,15 +29,18 @@ class K8sProvider(ProviderBase):
         )
         return yaml.safe_load(yaml_file)
 
-    def build_client(self, api_name='AppsV1beta1Api'):
-        config.load_kube_config(
-            self.credential.kube_config_path
-        )
+    def build_client(self):
+        configuration = Configuration()
+        configuration.api_key['authorization'] = "Bearer {}".format(self.auth_info['K8S-Token'])
+        configuration.host = self.auth_info['K8S-Endpoint']
+        configuration.verify_ssl = self._verify_ssl
+        api_client = ApiClient(configuration)
+        return CoreV1Api(api_client)
 
-        conf = client.configuration.Configuration()
-        conf.verify_ssl = False
-
-        return getattr(client, api_name)(client.ApiClient(conf))
+    @property
+    def _verify_ssl(self):
+        verify_ssl = self.auth_info.get("K8S-Verify-Ssl", 'false')
+        return verify_ssl != 'false' and verify_ssl != 0
 
     @classmethod
     def get_provider(cls):
@@ -50,7 +53,7 @@ class K8sProvider(ProviderBase):
 
     def create_host(self, *args, **kw):
         return self.client.create_namespaced_stateful_set(
-            kw.get('namespace', 'default'),
+            self.auth_info.get('K8S-Namespace', 'default'),
             self.yaml_file(kw['yaml_context'])
         )
 
@@ -60,7 +63,7 @@ class K8sProvider(ProviderBase):
     def destroy(self, identifier, *args, **kw):
         self.client.delete_namespaced_stateful_set(
             identifier,
-            kw.get('namespace', 'default'),
+            self.auth_info.get('K8S-Namespace', 'default'),
             orphan_dependents=False
         )
 
