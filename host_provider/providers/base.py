@@ -6,11 +6,12 @@ from host_provider.settings import LIBCLOUD_CA_CERTS_PATH
 
 class ProviderBase(object):
 
-    def __init__(self, environment, engine):
+    def __init__(self, environment, engine, auth_info=None):
         self.environment = environment
         self.engine = engine
         self._client = None
         self._credential = None
+        self.auth_info = auth_info
 
         if LIBCLOUD_CA_CERTS_PATH is not None:
             security.CA_CERTS_PATH = LIBCLOUD_CA_CERTS_PATH
