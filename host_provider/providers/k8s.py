@@ -4,7 +4,7 @@ from host_provider.credentials.k8s import CredentialK8s, \
 import jinja2
 import yaml
 import logging
-from kubernetes.client import Configuration, ApiClient, CoreV1Api
+from kubernetes.client import Configuration, ApiClient, AppsV1beta1Api
 from host_provider.models import Host
 from time import sleep
 
@@ -35,7 +35,7 @@ class K8sProvider(ProviderBase):
         configuration.host = self.auth_info['K8S-Endpoint']
         configuration.verify_ssl = self._verify_ssl
         api_client = ApiClient(configuration)
-        return CoreV1Api(api_client)
+        return AppsV1beta1Api(api_client)
 
     @property
     def _verify_ssl(self):
