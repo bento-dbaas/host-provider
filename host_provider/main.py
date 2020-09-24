@@ -274,9 +274,6 @@ def get_host(provider_name, env, host_id):
 @auth.login_required
 def create_credential(provider_name, env):
     data = request.get_json()
-    if not data:
-        return response_invalid_request("No data".format(data))
-
     try:
         provider = build_provider(provider_name, env, None)
         success, resp = provider.credential_add(data)

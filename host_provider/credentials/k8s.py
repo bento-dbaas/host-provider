@@ -1,20 +1,12 @@
-from host_provider.credentials.base import CredentialBase
+from host_provider.credentials.base import CredentialAdd, CredentialBase
 
 
 class CredentialK8s(CredentialBase):
-
-    @property
-    def kube_config_path(self):
-        return self.content['kube_config_path']
-
-    @property
-    def kube_config_content(self):
-        return self.content['kube_config_content']
+    pass
 
 
-class CredentialAddK8s(CredentialBase):
+class CredentialAddK8s(CredentialAdd):
 
     @classmethod
     def is_valid(cls, content):
-
         return True, ""
