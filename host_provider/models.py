@@ -47,7 +47,7 @@ class Host(BaseModel):
     def credential(self):
         from host_provider.providers import get_provider_to
         provider_cls = get_provider_to(self.provider)
-        provider = provider_cls(self.environment, self.engine)
+        provider = provider_cls(self.environment, self.engine, None)
         return provider.credential
 
 

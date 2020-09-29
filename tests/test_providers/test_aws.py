@@ -179,7 +179,8 @@ class TestCredentialAWS(TestCase):
         expected_tags.update({
             'origin': 'dbaas',
             'infra_name': group,
-            'engine': 'redis'
+            'engine': 'redis',
+            'database_name': ''
         })
         create_node.assert_called_once_with(
             name=name,

@@ -6,6 +6,7 @@ from host_provider.providers.base import ProviderBase
 from host_provider.credentials.cloudstack import CredentialCloudStack, \
     CredentialAddCloudStack
 import logging
+from host_provider.models import Host
 
 
 if bool(int(getenv('VERIFY_SSL_CERT', '0'))):
@@ -124,3 +125,16 @@ class CloudStackProvider(ProviderBase):
         offering = self.BasicInfo(self.credential.offering_to(cpus, memory))
 
         return self.client.ex_change_node_size(node, offering)
+
+    def create_host_object(self, provider, payload, env,
+                           created_host_metadata):
+        address = created_host_metadata.private_ips[0]
+        host = Host(
+            name=payload['name'], group=payload['group'],
+            engine=payload['engine'], environment=env, cpu=payload['cpu'],
+            memory=payload['memory'], provider=provider.credential.provider,
+            identifier=created_host_metadata.id, address=address,
+            zone=provider.credential._zone
+        )
+        host.save()
+        return host

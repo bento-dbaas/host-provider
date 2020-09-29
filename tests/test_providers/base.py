@@ -6,8 +6,7 @@ from libcloud import security
 
 from host_provider.providers.base import ProviderBase
 from host_provider.providers import base, CloudStackProvider
-from ..test_credentials import FakeMongoDB
-from tests.test_credentials import CredentialAddFake
+from tests.test_credentials import CredentialAddFake, FakeMongoDB
 
 
 ENVIRONMENT = "dev"

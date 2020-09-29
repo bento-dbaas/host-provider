@@ -28,6 +28,11 @@ def verify_password(username, password):
     return True
 
 
+def build_provider(provider_name, env, engine):
+    provider_cls = get_provider_to(provider_name)
+    return provider_cls(env, engine, dict(request.headers))
+
+
 @app.route("/<string:provider_name>/<string:env>/host/new", methods=['POST'])
 @auth.login_required
 def create_host(provider_name, env):
@@ -46,28 +51,23 @@ def create_host(provider_name, env):
         return response_invalid_request("invalid data {}".format(data))
 
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(env, engine)
+        provider = build_provider(provider_name, env, engine)
         extra_params = {
             'team_name': team_name,
-            'database_name': database_name
+            'database_name': database_name,
+            'yaml_context': data.get('yaml_context', {}),
+            'node_ip': data.get('node_ip', ''),
         }
-        node = provider.create_host(
+        created_host_metadata = provider.create_host(
             cpu, memory, name, group, zone, **extra_params
         )
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
-
-    address = node.private_ips[0]
-    host = Host(
-        name=name, group=group, engine=engine, environment=env,
-        cpu=cpu, memory=memory, provider=provider_name, identifier=node.id,
-        address=address, zone=provider.credential._zone
+    host_obj = provider.create_host_object(
+        provider, data, env, created_host_metadata
     )
-    host.save()
-
-    return response_created(address=address, id=host.id)
+    return response_created(address=host_obj.address, id=host_obj.id)
 
 
 @app.route("/<string:provider_name>/<string:env>/host/stop", methods=['POST'])
@@ -86,8 +86,7 @@ def stop_host(provider_name, env):
         return response_not_found(host_id)
 
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(env, host.engine)
+        provider = build_provider(provider_name, env, host.engine)
         provider.stop(host.identifier)
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
@@ -112,8 +111,7 @@ def start_host(provider_name, env):
         return response_not_found(host_id)
 
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(env, host.engine)
+        provider = build_provider(provider_name, env, host.engine)
         provider.start(host.identifier)
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
@@ -144,8 +142,7 @@ def resize_host(provider_name, env):
         return response_not_found(host_id)
 
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(env, host.engine)
+        provider = build_provider(provider_name, env, host.engine)
         if int(cpus) == host.cpu and int(memory) == host.memory:
             logging.error(
                 "Notting to resize for host {}, offering already done".format(
@@ -185,8 +182,7 @@ def reinstall_host(provider_name, env):
         return response_not_found(host_id)
 
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(env, host.engine)
+        provider = build_provider(provider_name, env, host.engine)
         provider.restore(host.identifier, engine)
         if engine and engine != host.engine:
             host.engine = engine
@@ -214,14 +210,41 @@ def destroy_host(provider_name, env, host_id):
         return response_not_found(host_id)
 
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(env, host.engine)
-        provider.destroy(host.group, host.identifier)
+        provider = build_provider(provider_name, env, host.engine)
+        provider.destroy(
+            group=host.group,
+            identifier=host.identifier
+        )
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
 
     host.delete_instance()
+
+    return response_ok()
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/host/<host_id>", methods=['PATCH']
+)
+@auth.login_required
+def edit_host(provider_name, env, host_id):
+    # TODO improve validation and response
+    if not host_id:
+        return response_invalid_request("invalid data")
+
+    try:
+        host = Host.get(id=host_id)
+    except Host.DoesNotExist:
+        return response_not_found(host_id)
+
+    try:
+        provider = build_provider(provider_name, env, host.engine)
+        data = request.get_json()
+        provider.edit_host(host, **data)
+    except Exception as e:  # TODO What can get wrong here?
+        print_exc()  # TODO Improve log
+        return response_invalid_request(str(e))
 
     return response_ok()
 
@@ -237,8 +260,7 @@ def get_host(provider_name, env, host_id):
     try:
         host = Host.get(id=host_id, environment=env)
         database_host_metadata = host.to_dict
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(env, None)
+        provider = build_provider(provider_name, env, None)
         if hasattr(provider, 'fqdn'):
             database_host_metadata.update({'fqdn': provider.fqdn(host)})
         return response_ok(**database_host_metadata)
@@ -252,12 +274,8 @@ def get_host(provider_name, env, host_id):
 @auth.login_required
 def create_credential(provider_name, env):
     data = request.get_json()
-    if not data:
-        return response_invalid_request("No data".format(data))
-
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(env, None)
+        provider = build_provider(provider_name, env, None)
         success, resp = provider.credential_add(data)
     except Exception as e:
         return response_invalid_request(str(e))
@@ -275,8 +293,7 @@ def create_credential(provider_name, env):
 @auth.login_required
 def get_all_credential(provider_name):
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(None, None)
+        provider = build_provider(provider_name, None, None)
         credential = provider.build_credential().credential
         return make_response(
             json.dumps(
@@ -294,8 +311,7 @@ def get_all_credential(provider_name):
 @auth.login_required
 def get_credential(provider_name, uuid):
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(None, None)
+        provider = build_provider(provider_name, None, None)
         credential = provider.build_credential().credential
         return make_response(
             json.dumps(
@@ -312,8 +328,7 @@ def get_credential(provider_name, uuid):
 @auth.login_required
 def get_credential_by_offering(provider_name, env, cpus, memory):
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(env, None)
+        provider = build_provider(provider_name, env, None)
         credential = provider.build_credential()
         return make_response(
             json.dumps(
@@ -335,8 +350,7 @@ def update_credential(provider_name, uuid):
         return response_invalid_request("No data".format(data))
 
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(None, None)
+        provider = build_provider(provider_name, None, None)
         credential = provider.build_credential().credential
 
         data.get('_id') and data.pop('_id')
@@ -377,8 +391,7 @@ def destroy_credential(provider_name, env):
 @auth.login_required
 def list_zones(provider_name, env):
     try:
-        provider_cls = get_provider_to(provider_name)
-        provider = provider_cls(env, None)
+        provider = build_provider(provider_name, env, None)
         credential = provider.build_credential()
         return make_response(
             json.dumps(
