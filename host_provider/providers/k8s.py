@@ -68,8 +68,9 @@ class K8sProvider(ProviderBase):
         )
 
     def _is_ready(self, host):
+        ## This -0 should be removed, future work
         pod_data = self.client.read_namespaced_pod_status(
-            host.name, self.auth_info.get('K8S-Namespace', 'default'),
+            host.name + "-0", self.auth_info.get('K8S-Namespace', 'default'),
         )
         for status_data in pod_data.status.conditions:
             if status_data.type == 'Ready':
