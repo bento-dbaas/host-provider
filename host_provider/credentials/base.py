@@ -109,6 +109,8 @@ class CredentialBase(CredentialMongoDB):
         self._zone = zones[0]
 
     def zone_by_id(self, zone_id):
+        if not zone_id:
+            return None
         zones = self.__get_zones(id=zone_id)
         zone_id, values = zones.popitem()
         return values['name']
