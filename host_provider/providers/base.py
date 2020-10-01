@@ -111,8 +111,3 @@ class ProviderBase(object):
 
     def _refresh_metadata(self, host):
         pass
-
-    def edit_host(self, host_obj, **fields):
-        for k, v in fields.items():
-            setattr(host_obj, k, v)
-        host_obj.save()

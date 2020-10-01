@@ -207,7 +207,6 @@ def destroy_host(provider_name, env, host_id):
         host = Host.get(id=host_id)
     except Host.DoesNotExist:
         return response_ok()
-        return response_not_found(host_id)
 
     try:
         provider = build_provider(provider_name, env, host.engine)
@@ -220,31 +219,6 @@ def destroy_host(provider_name, env, host_id):
         return response_invalid_request(str(e))
 
     host.delete_instance()
-
-    return response_ok()
-
-
-@app.route(
-    "/<string:provider_name>/<string:env>/host/<host_id>", methods=['PATCH']
-)
-@auth.login_required
-def edit_host(provider_name, env, host_id):
-    # TODO improve validation and response
-    if not host_id:
-        return response_invalid_request("invalid data")
-
-    try:
-        host = Host.get(id=host_id)
-    except Host.DoesNotExist:
-        return response_not_found(host_id)
-
-    try:
-        provider = build_provider(provider_name, env, host.engine)
-        data = request.get_json()
-        provider.edit_host(host, **data)
-    except Exception as e:  # TODO What can get wrong here?
-        print_exc()  # TODO Improve log
-        return response_invalid_request(str(e))
 
     return response_ok()
 
@@ -265,6 +239,7 @@ def _host_info(provider_name, env, host_id, refresh=False):
     except Host.DoesNotExist:
         return response_not_found(host_id)
 
+
 @app.route(
     "/<string:provider_name>/<string:env>/host/<host_id>", methods=['GET']
 )
@@ -272,12 +247,14 @@ def _host_info(provider_name, env, host_id, refresh=False):
 def get_host(provider_name, env, host_id):
     return _host_info(provider_name, env, host_id)
 
+
 @app.route(
     "/<string:provider_name>/<string:env>/host/<host_id>/refresh", methods=['GET']
 )
 @auth.login_required
 def get_host_refresh(provider_name, env, host_id):
     return _host_info(provider_name, env, host_id, True)
+
 
 @app.route(
     "/<string:provider_name>/<string:env>/status/<host_id>", methods=['GET']
