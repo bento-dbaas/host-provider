@@ -90,6 +90,14 @@ class ProviderBase(object):
     def _all_node_destroyed(self, group):
         pass
 
+    def get_status(self, host):
+        if self._is_ready(host):
+            return "READY"
+        return "NOT READY"
+
+    def _is_ready(self, host):
+        raise NotImplementedError
+
     def destroy(self, group, identifier, *args, **kw):
         self._destroy(identifier)
 

@@ -1,20 +1,20 @@
-from host_provider.providers.base import ProviderBase
-from host_provider.credentials.k8s import CredentialK8s, \
-    CredentialAddK8s
 import jinja2
 import yaml
 import logging
-from kubernetes.client import Configuration, ApiClient, AppsV1beta1Api
+from kubernetes.client import Configuration, ApiClient, AppsV1beta1Api, CoreV1Api
 from host_provider.models import Host
-from time import sleep
+from host_provider.credentials.k8s import CredentialK8s, CredentialAddK8s
+from host_provider.providers.base import ProviderBase
 
 
 LOG = logging.getLogger(__name__)
 
 
+class K8sClient(AppsV1beta1Api, CoreV1Api):
+    pass
+
+
 class K8sProvider(ProviderBase):
-    retries = 30
-    interval = 10
 
     def render_to_string(self, template_contenxt):
         env = jinja2.Environment(
@@ -35,7 +35,7 @@ class K8sProvider(ProviderBase):
         configuration.host = self.auth_info['K8S-Endpoint']
         configuration.verify_ssl = self._verify_ssl
         api_client = ApiClient(configuration)
-        return AppsV1beta1Api(api_client)
+        return K8sClient(api_client)
 
     @property
     def _verify_ssl(self):
@@ -67,24 +67,16 @@ class K8sProvider(ProviderBase):
             orphan_dependents=False
         )
 
-    def wait_pod_ready(self, pod_name, namespace):
-        for attempt in range(self.retries):
-            pod_data = self.client.read_namespaced_pod_status(
-                pod_name, namespace
-            )
-            for status_data in pod_data.status.conditions:
-                if status_data.type == 'Ready':
-                    if status_data.status == 'True':
-                        return True
-            if attempt == self.retries - 1:
-                LOG.error("Maximum number of login attempts.")
-                raise EnvironmentError('POD {} is not ready'.format(
-                    pod_name
-                ))
-
-            LOG.warning("Pod {} not ready.".format(pod_name))
-            LOG.info("Wating {} seconds to try again...".format(self.interval))
-            sleep(self.interval)
+    def _is_ready(self, host):
+        ## This -0 should be removed, future work
+        pod_data = self.client.read_namespaced_pod_status(
+            host.name + "-0", self.auth_info.get('K8S-Namespace', 'default'),
+        )
+        for status_data in pod_data.status.conditions:
+            if status_data.type == 'Ready':
+                if status_data.status == 'True':
+                    return True
+                return False
 
     def create_host_object(self, provider, payload, env,
                            created_host_metadata):

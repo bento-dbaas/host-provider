@@ -269,6 +269,22 @@ def get_host(provider_name, env, host_id):
 
 
 @app.route(
+    "/<string:provider_name>/<string:env>/status/<host_id>", methods=['GET']
+)
+@auth.login_required
+def status_host(provider_name, env, host_id):
+    if not host_id:
+        return response_invalid_request("Missing parameter host_id")
+
+    try:
+        host = Host.get(id=host_id, environment=env)
+        provider = build_provider(provider_name, env, host.engine)
+        return response_ok(host_status=provider.get_status(host))
+    except Host.DoesNotExist:
+        return response_not_found(host_id)
+
+
+@app.route(
     "/<string:provider_name>/<string:env>/credential/new", methods=['POST']
 )
 @auth.login_required
