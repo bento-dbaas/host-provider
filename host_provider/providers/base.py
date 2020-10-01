@@ -105,6 +105,13 @@ class ProviderBase(object):
         if quantity:
             self._all_node_destroyed(group)
 
+    def refresh_metadata(self, host):
+        self._refresh_metadata(host)
+        host.save()
+
+    def _refresh_metadata(self, host):
+        pass
+
     def edit_host(self, host_obj, **fields):
         for k, v in fields.items():
             setattr(host_obj, k, v)

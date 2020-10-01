@@ -249,24 +249,35 @@ def edit_host(provider_name, env, host_id):
     return response_ok()
 
 
-@app.route(
-    "/<string:provider_name>/<string:env>/host/<host_id>", methods=['GET']
-)
-@auth.login_required
-def get_host(provider_name, env, host_id):
+def _host_info(provider_name, env, host_id, refresh=False):
     if not host_id:
         return response_invalid_request("Missing parameter host_id")
 
     try:
         host = Host.get(id=host_id, environment=env)
+        provider = build_provider(provider_name, env, host.engine)
+        if refresh:
+            provider.refresh_metadata(host)
         database_host_metadata = host.to_dict
-        provider = build_provider(provider_name, env, None)
         if hasattr(provider, 'fqdn'):
             database_host_metadata.update({'fqdn': provider.fqdn(host)})
         return response_ok(**database_host_metadata)
     except Host.DoesNotExist:
         return response_not_found(host_id)
 
+@app.route(
+    "/<string:provider_name>/<string:env>/host/<host_id>", methods=['GET']
+)
+@auth.login_required
+def get_host(provider_name, env, host_id):
+    return _host_info(provider_name, env, host_id)
+
+@app.route(
+    "/<string:provider_name>/<string:env>/host/<host_id>/refresh", methods=['GET']
+)
+@auth.login_required
+def get_host_refresh(provider_name, env, host_id):
+    return _host_info(provider_name, env, host_id, True)
 
 @app.route(
     "/<string:provider_name>/<string:env>/status/<host_id>", methods=['GET']

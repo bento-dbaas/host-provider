@@ -78,6 +78,13 @@ class K8sProvider(ProviderBase):
                     return True
                 return False
 
+    def _refresh_metadata(self, host):
+        ## This -0 should be removed, future work
+        pod_metadata = self.client.read_namespaced_pod(
+            host.name + "-0", self.auth_info.get('K8S-Namespace', 'default'),
+        )
+        host.address = pod_metadata.status.pod_ip
+
     def create_host_object(self, provider, payload, env,
                            created_host_metadata):
         host = Host(
