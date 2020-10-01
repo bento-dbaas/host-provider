@@ -76,6 +76,9 @@ class ProviderBase(object):
         if quantity:
             self._all_node_destroyed(group)
 
+    def clean(self, name):
+        pass
+
     def refresh_metadata(self, host):
         self._refresh_metadata(host)
         host.save()

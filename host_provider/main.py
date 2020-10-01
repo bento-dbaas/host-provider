@@ -245,6 +245,23 @@ def destroy_host(provider_name, env, host_id):
     return response_ok()
 
 
+@app.route(
+    "/<string:provider_name>/<string:env>/clean/<name>", methods=['DELETE']
+)
+@auth.login_required
+def clean(provider_name, env, name):
+    if not name:
+        return response_invalid_request("invalid data")
+
+    try:
+        provider = build_provider(provider_name, env, None)
+        provider.clean(name)
+    except Exception as e:
+        print_exc()
+        return response_invalid_request(str(e))
+    return response_ok()
+
+
 def _host_info(provider_name, env, host_id, refresh=False):
     if not host_id:
         return response_invalid_request("Missing parameter host_id")
