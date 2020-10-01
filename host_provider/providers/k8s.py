@@ -16,25 +16,6 @@ class K8sClient(AppsV1beta1Api, CoreV1Api):
 
 class K8sProvider(ProviderBase):
 
-    def start(self, identifier):
-        # TODO
-        pass
-
-    def stop(self, identifier):
-        # TODO
-        pass
-
-    def _create_host(self, cpu, memory, name, *args, **kw):
-        # TODO
-        pass
-
-    def _destroy(self, identifier):
-        self.client.delete_namespaced_stateful_set(
-            identifier,
-            self.auth_info.get('K8S-Namespace', 'default'),
-            orphan_dependents=False
-        )
-
     @staticmethod
     def render_to_string(path, template_context):
         env = Environment(
@@ -43,8 +24,8 @@ class K8sProvider(ProviderBase):
         template = env.get_template(path)
         return template.render(**template_context)
 
-    def yaml_file(self, context):
-        yaml_file = self.render_to_string('statefulset.yaml', context)
+    def yaml_file(self, path, context):
+        yaml_file = self.render_to_string(path, context)
         return safe_load(yaml_file)
 
     def build_client(self):
@@ -72,11 +53,59 @@ class K8sProvider(ProviderBase):
     def create_host(self, *args, **kw):
         return self.client.create_namespaced_stateful_set(
             self.auth_info.get('K8S-Namespace', 'default'),
-            self.yaml_file(kw['yaml_context'])
+            self.yaml_file('statefulset.yaml', kw['yaml_context'])
         )
 
     def get_credential_add(self):
         return CredentialAddK8s
+
+    def start(self, identifier):
+        # TODO
+        pass
+
+    def stop(self, identifier):
+        # TODO
+        pass
+
+    def _create_host(self, cpu, memory, name, *args, **kw):
+        # TODO
+        pass
+
+    def create_host_object(self, provider, payload, env,
+                           created_host_metadata):
+        host = Host(
+            name=payload['name'], group=payload['group'],
+            engine=payload['engine'], environment=env, cpu=payload['cpu'],
+            memory=payload['memory'], provider=provider.credential.provider,
+            identifier=created_host_metadata.metadata.name,
+            address=created_host_metadata.metadata.name, zone=''
+        )
+        host.save()
+        return host
+
+    def _destroy(self, identifier):
+        self.client.delete_namespaced_stateful_set(
+            identifier,
+            self.auth_info.get('K8S-Namespace', 'default'),
+            orphan_dependents=False
+        )
+
+    def prepare(self, name, group, engine):
+        context = {
+            'SERVICE_NAME': name,
+            'LABEL_NAME': group,
+            'PORTS': self.credential.ports,
+        }
+        self.client.create_namespaced_service(
+            self.auth_info.get('K8S-Namespace', 'default'),
+            self.yaml_file('service.yaml', context)
+        )
+
+    def clean(self, name):
+        self.client.delete_namespaced_service(
+            name,
+            self.auth_info.get('K8S-Namespace', 'default'),
+        )
 
     def _is_ready(self, host):
         ## This -0 should be removed, future work
@@ -95,15 +124,3 @@ class K8sProvider(ProviderBase):
             host.name + "-0", self.auth_info.get('K8S-Namespace', 'default'),
         )
         host.address = pod_metadata.status.pod_ip
-
-    def create_host_object(self, provider, payload, env,
-                           created_host_metadata):
-        host = Host(
-            name=payload['name'], group=payload['group'],
-            engine=payload['engine'], environment=env, cpu=payload['cpu'],
-            memory=payload['memory'], provider=provider.credential.provider,
-            identifier=created_host_metadata.metadata.name,
-            address=created_host_metadata.metadata.name, zone=''
-        )
-        host.save()
-        return host

@@ -7,5 +7,7 @@ spec:
   selector:
     name: {{ LABEL_NAME }}
   ports:
-  - port: {{ INSTANCE_PORT }}
-    targetPort: {{ INSTANCE_PORT }}
+    {% for port in PORTS %}
+    - port: {{ port }}
+      targetPort: {{ port }}
+    {% endfor %}

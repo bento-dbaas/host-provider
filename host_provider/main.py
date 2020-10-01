@@ -33,6 +33,28 @@ def build_provider(provider_name, env, engine):
     return provider_cls(env, engine, dict(request.headers))
 
 
+@app.route(
+    "/<string:provider_name>/<string:env>/prepare", methods=['POST']
+)
+@auth.login_required
+def prepare(provider_name, env):
+    data = request.get_json()
+    group = data.get("group", None)
+    name = data.get("name", None)
+    engine = data.get("engine", None)
+
+    if not(group and name and engine):
+        return response_invalid_request("invalid data {}".format(data))
+
+    try:
+        provider = build_provider(provider_name, env, engine)
+        provider.prepare(name, group, engine)
+    except Exception as e:
+        print_exc()
+        return response_invalid_request(str(e))
+    return response_created()
+
+
 @app.route("/<string:provider_name>/<string:env>/host/new", methods=['POST'])
 @auth.login_required
 def create_host(provider_name, env):
