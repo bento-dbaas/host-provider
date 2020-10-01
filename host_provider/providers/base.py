@@ -98,9 +98,8 @@ class ProviderBase(object):
     def _is_ready(self, host):
         raise NotImplementedError
 
-    def destroy(self, group, identifier, *args, **kw):
+    def destroy(self, group, identifier):
         self._destroy(identifier)
-
         quantity = len(Host.filter(group=group))
         if quantity:
             self._all_node_destroyed(group)

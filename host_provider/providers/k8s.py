@@ -1,5 +1,5 @@
-import jinja2
-import yaml
+from jinja2 import Environment, PackageLoader
+from yaml import safe_load
 import logging
 from kubernetes.client import Configuration, ApiClient, AppsV1beta1Api, CoreV1Api
 from host_provider.models import Host
@@ -16,18 +16,36 @@ class K8sClient(AppsV1beta1Api, CoreV1Api):
 
 class K8sProvider(ProviderBase):
 
-    def render_to_string(self, template_contenxt):
-        env = jinja2.Environment(
-            loader=jinja2.PackageLoader('host_provider', 'templates')
+    def start(self, identifier):
+        # TODO
+        pass
+
+    def stop(self, identifier):
+        # TODO
+        pass
+
+    def _create_host(self, cpu, memory, name, *args, **kw):
+        # TODO
+        pass
+
+    def _destroy(self, identifier):
+        self.client.delete_namespaced_stateful_set(
+            identifier,
+            self.auth_info.get('K8S-Namespace', 'default'),
+            orphan_dependents=False
         )
-        template = env.get_template('k8s/yamls/statefulset.yaml')
-        return template.render(**template_contenxt)
+
+    @staticmethod
+    def render_to_string(path, template_context):
+        env = Environment(
+            loader=PackageLoader('host_provider', 'templates/k8s/yamls/')
+        )
+        template = env.get_template(path)
+        return template.render(**template_context)
 
     def yaml_file(self, context):
-        yaml_file = self.render_to_string(
-            context
-        )
-        return yaml.safe_load(yaml_file)
+        yaml_file = self.render_to_string('statefulset.yaml', context)
+        return safe_load(yaml_file)
 
     def build_client(self):
         configuration = Configuration()
@@ -59,13 +77,6 @@ class K8sProvider(ProviderBase):
 
     def get_credential_add(self):
         return CredentialAddK8s
-
-    def destroy(self, identifier, *args, **kw):
-        self.client.delete_namespaced_stateful_set(
-            identifier,
-            self.auth_info.get('K8S-Namespace', 'default'),
-            orphan_dependents=False
-        )
 
     def _is_ready(self, host):
         ## This -0 should be removed, future work
