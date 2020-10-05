@@ -262,6 +262,43 @@ def clean(provider_name, env, name):
     return response_ok()
 
 
+@app.route(
+    "/<string:provider_name>/<string:env>/host/configure", methods=['POST']
+)
+@auth.login_required
+def configure(provider_name, env):
+    data = request.get_json()
+    host = data.get("host", None)
+    group = data.get("group", None)
+    engine = data.get("engine", None)
+    configuration = data.get("configuration", None)
+    if not host or not group or not engine or not configuration:
+        return response_invalid_request(
+            "host, group, engine and configuration required. Payload: {}".format(data)
+        )
+    try:
+        provider = build_provider(provider_name, env, engine)
+        provider.configure(host, group, configuration)
+    except Exception as e:
+        print_exc()
+        return response_invalid_request(str(e))
+    return response_ok()
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/host/configure/<string:host>", methods=['DELETE']
+)
+@auth.login_required
+def configure_delete(provider_name, env, host):
+    try:
+        provider = build_provider(provider_name, env, None)
+        provider.remove_configuration(host)
+    except Exception as e:
+        print_exc()
+        return response_invalid_request(str(e))
+    return response_ok()
+
+
 def _host_info(provider_name, env, host_id, refresh=False):
     if not host_id:
         return response_invalid_request("Missing parameter host_id")
