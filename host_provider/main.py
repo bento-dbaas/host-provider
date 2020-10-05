@@ -246,7 +246,7 @@ def destroy_host(provider_name, env, host_id):
 
 
 @app.route(
-    "/<string:provider_name>/<string:env>/clean/<name>", methods=['DELETE']
+    "/<string:provider_name>/<string:env>/clean/<string:name>", methods=['DELETE']
 )
 @auth.login_required
 def clean(provider_name, env, name):

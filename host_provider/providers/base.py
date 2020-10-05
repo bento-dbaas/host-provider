@@ -55,6 +55,12 @@ class ProviderBase(object):
     def prepare(self, name, group, engine):
         pass
 
+    def configure(self, name, group, configuration):
+        pass
+
+    def remove_configuration(self, host):
+        pass
+
     def create_host(self, cpu, memory, name, group, zone, *args, **kw):
         kw.update({'group': group})
         self.credential.before_create_host(group)

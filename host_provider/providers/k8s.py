@@ -107,6 +107,26 @@ class K8sProvider(ProviderBase):
             self.auth_info.get('K8S-Namespace', 'default'),
         )
 
+    def configure(self, name, group, configuration):
+        context = {
+            'CONFIG_MAP_NAME': f"configmap-{name}",
+            'CONFIG_MAP_LABEL': group,
+            'CONFIG_FILE_NAME': self.credential.configuration_file,
+            'CONFIG_CONTENT': 'config_content'
+        }
+        yaml_file = self.yaml_file('config_map.yaml', context)
+        yaml_file['data'][self.credential.configuration_file] = configuration
+        self.client.create_namespaced_config_map(
+            self.auth_info.get('K8S-Namespace', 'default'),
+            yaml_file
+        )
+
+    def remove_configuration(self, name):
+        self.client.delete_namespaced_config_map(
+            f"configmap-{name}",
+            self.auth_info.get('K8S-Namespace', 'default'),
+        )
+
     def _is_ready(self, host):
         ## This -0 should be removed, future work
         pod_data = self.client.read_namespaced_pod_status(

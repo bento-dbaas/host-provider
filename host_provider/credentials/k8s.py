@@ -9,10 +9,18 @@ class CredentialK8s(CredentialBase):
             "mongodb_4_2_3": [27017]
         }
     }
+    CONFIGURATION_FILES = {
+            "mongodb_4_2_3": "mongodb.conf"
+
+    }
 
     @property
     def ports(self):
         return self.PORTS[self.environment][self.engine]
+
+    @property
+    def configuration_file(self):
+        return self.CONFIGURATION_FILES[self.engine]
 
     @property
     def _zones_field(self):
