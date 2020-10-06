@@ -318,7 +318,7 @@ def _host_info(provider_name, env, host_id, refresh=False):
 
 
 @app.route(
-    "/<string:provider_name>/<string:env>/host/<host_id>", methods=['GET']
+    "/<string:provider_name>/<string:env>/host/<host_id>/", methods=['GET']
 )
 @auth.login_required
 def get_host(provider_name, env, host_id):
