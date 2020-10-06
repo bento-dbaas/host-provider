@@ -326,7 +326,7 @@ def get_host(provider_name, env, host_id):
 
 
 @app.route(
-    "/<string:provider_name>/<string:env>/host/<host_id>/refresh", methods=['GET']
+    "/<string:provider_name>/<string:env>/host/<host_id>/refresh/", methods=['GET']
 )
 @auth.login_required
 def get_host_refresh(provider_name, env, host_id):
