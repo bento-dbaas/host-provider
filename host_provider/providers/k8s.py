@@ -152,9 +152,8 @@ class K8sProvider(ProviderBase):
         )
 
     def _is_ready(self, host):
-        ## This -0 should be removed, future work
         pod_data = self.client.read_namespaced_pod_status(
-            host.name + "-0", self.auth_info.get('K8S-Namespace', 'default'),
+            host.name, self.auth_info.get('K8S-Namespace', 'default'),
         )
         for status_data in pod_data.status.conditions:
             if status_data.type == 'Ready':
@@ -163,8 +162,7 @@ class K8sProvider(ProviderBase):
                 return False
 
     def _refresh_metadata(self, host):
-        ## This -0 should be removed, future work
         pod_metadata = self.client.read_namespaced_pod(
-            host.name + "-0", self.auth_info.get('K8S-Namespace', 'default'),
+            host.name, self.auth_info.get('K8S-Namespace', 'default'),
         )
         host.address = pod_metadata.status.pod_ip
