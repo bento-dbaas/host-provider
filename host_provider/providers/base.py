@@ -52,6 +52,15 @@ class ProviderBase(object):
         else:
             return True, insert and insert.get('_id')
 
+    def prepare(self, name, group, engine, ports):
+        pass
+
+    def configure(self, name, group, configuration):
+        pass
+
+    def remove_configuration(self, host):
+        pass
+
     def create_host(self, cpu, memory, name, group, zone, *args, **kw):
         kw.update({'group': group})
         self.credential.before_create_host(group)
@@ -61,6 +70,24 @@ class ProviderBase(object):
         result = self._create_host(cpu, memory, name, *args, **kw)
         self.credential.after_create_host(group)
         return result
+
+    def get_status(self, host):
+        if self._is_ready(host):
+            return "READY"
+        return "NOT READY"
+
+    def destroy(self, group, identifier):
+        self._destroy(identifier)
+        quantity = len(Host.filter(group=group))
+        if quantity:
+            self._all_node_destroyed(group)
+
+    def clean(self, name):
+        pass
+
+    def refresh_metadata(self, host):
+        self._refresh_metadata(host)
+        host.save()
 
     @classmethod
     def get_provider(cls):
@@ -90,22 +117,8 @@ class ProviderBase(object):
     def _all_node_destroyed(self, group):
         pass
 
-    def get_status(self, host):
-        if self._is_ready(host):
-            return "READY"
-        return "NOT READY"
-
     def _is_ready(self, host):
         raise NotImplementedError
 
-    def destroy(self, group, identifier, *args, **kw):
-        self._destroy(identifier)
-
-        quantity = len(Host.filter(group=group))
-        if quantity:
-            self._all_node_destroyed(group)
-
-    def edit_host(self, host_obj, **fields):
-        for k, v in fields.items():
-            setattr(host_obj, k, v)
-        host_obj.save()
+    def _refresh_metadata(self, host):
+        pass

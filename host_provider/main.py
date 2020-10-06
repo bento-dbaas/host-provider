@@ -33,6 +33,29 @@ def build_provider(provider_name, env, engine):
     return provider_cls(env, engine, dict(request.headers))
 
 
+@app.route(
+    "/<string:provider_name>/<string:env>/prepare", methods=['POST']
+)
+@auth.login_required
+def prepare(provider_name, env):
+    data = request.get_json()
+    group = data.get("group", None)
+    name = data.get("name", None)
+    engine = data.get("engine", None)
+    ports = data.get("ports", [])
+
+    if not(group and name and engine):
+        return response_invalid_request("invalid data {}".format(data))
+
+    try:
+        provider = build_provider(provider_name, env, engine)
+        provider.prepare(name, group, engine, ports)
+    except Exception as e:
+        print_exc()
+        return response_invalid_request(str(e))
+    return response_created()
+
+
 @app.route("/<string:provider_name>/<string:env>/host/new", methods=['POST'])
 @auth.login_required
 def create_host(provider_name, env):
@@ -207,7 +230,6 @@ def destroy_host(provider_name, env, host_id):
         host = Host.get(id=host_id)
     except Host.DoesNotExist:
         return response_ok()
-        return response_not_found(host_id)
 
     try:
         provider = build_provider(provider_name, env, host.engine)
@@ -225,28 +247,74 @@ def destroy_host(provider_name, env, host_id):
 
 
 @app.route(
-    "/<string:provider_name>/<string:env>/host/<host_id>", methods=['PATCH']
+    "/<string:provider_name>/<string:env>/clean/<string:name>", methods=['DELETE']
 )
 @auth.login_required
-def edit_host(provider_name, env, host_id):
-    # TODO improve validation and response
-    if not host_id:
+def clean(provider_name, env, name):
+    if not name:
         return response_invalid_request("invalid data")
 
     try:
-        host = Host.get(id=host_id)
-    except Host.DoesNotExist:
-        return response_not_found(host_id)
+        provider = build_provider(provider_name, env, None)
+        provider.clean(name)
+    except Exception as e:
+        print_exc()
+        return response_invalid_request(str(e))
+    return response_ok()
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/host/configure", methods=['POST']
+)
+@auth.login_required
+def configure(provider_name, env):
+    data = request.get_json()
+    host = data.get("host", None)
+    group = data.get("group", None)
+    engine = data.get("engine", None)
+    configuration = data.get("configuration", None)
+    if not host or not group or not engine or not configuration:
+        return response_invalid_request(
+            "host, group, engine and configuration required. Payload: {}".format(data)
+        )
+    try:
+        provider = build_provider(provider_name, env, engine)
+        provider.configure(host, group, configuration)
+    except Exception as e:
+        print_exc()
+        return response_invalid_request(str(e))
+    return response_ok()
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/host/configure/<string:host>", methods=['DELETE']
+)
+@auth.login_required
+def configure_delete(provider_name, env, host):
+    try:
+        provider = build_provider(provider_name, env, None)
+        provider.remove_configuration(host)
+    except Exception as e:
+        print_exc()
+        return response_invalid_request(str(e))
+    return response_ok()
+
+
+def _host_info(provider_name, env, host_id, refresh=False):
+    if not host_id:
+        return response_invalid_request("Missing parameter host_id")
 
     try:
+        host = Host.get(id=host_id, environment=env)
         provider = build_provider(provider_name, env, host.engine)
-        data = request.get_json()
-        provider.edit_host(host, **data)
-    except Exception as e:  # TODO What can get wrong here?
-        print_exc()  # TODO Improve log
-        return response_invalid_request(str(e))
-
-    return response_ok()
+        if refresh:
+            provider.refresh_metadata(host)
+        database_host_metadata = host.to_dict
+        if hasattr(provider, 'fqdn'):
+            database_host_metadata.update({'fqdn': provider.fqdn(host)})
+        return response_ok(**database_host_metadata)
+    except Host.DoesNotExist:
+        return response_not_found(host_id)
 
 
 @app.route(
@@ -254,18 +322,15 @@ def edit_host(provider_name, env, host_id):
 )
 @auth.login_required
 def get_host(provider_name, env, host_id):
-    if not host_id:
-        return response_invalid_request("Missing parameter host_id")
+    return _host_info(provider_name, env, host_id)
 
-    try:
-        host = Host.get(id=host_id, environment=env)
-        database_host_metadata = host.to_dict
-        provider = build_provider(provider_name, env, None)
-        if hasattr(provider, 'fqdn'):
-            database_host_metadata.update({'fqdn': provider.fqdn(host)})
-        return response_ok(**database_host_metadata)
-    except Host.DoesNotExist:
-        return response_not_found(host_id)
+
+@app.route(
+    "/<string:provider_name>/<string:env>/host/<host_id>/refresh/", methods=['GET']
+)
+@auth.login_required
+def get_host_refresh(provider_name, env, host_id):
+    return _host_info(provider_name, env, host_id, True)
 
 
 @app.route(
