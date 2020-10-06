@@ -90,11 +90,11 @@ class K8sProvider(ProviderBase):
             orphan_dependents=False
         )
 
-    def prepare(self, name, group, engine):
+    def prepare(self, name, group, engine, ports):
         context = {
             'SERVICE_NAME': name,
             'LABEL_NAME': group,
-            'PORTS': self.credential.ports,
+            'PORTS': ports,
         }
         self.client.create_namespaced_service(
             self.auth_info.get('K8S-Namespace', 'default'),

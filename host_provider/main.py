@@ -42,13 +42,14 @@ def prepare(provider_name, env):
     group = data.get("group", None)
     name = data.get("name", None)
     engine = data.get("engine", None)
+    ports = data.get("ports", [])
 
     if not(group and name and engine):
         return response_invalid_request("invalid data {}".format(data))
 
     try:
         provider = build_provider(provider_name, env, engine)
-        provider.prepare(name, group, engine)
+        provider.prepare(name, group, engine, ports)
     except Exception as e:
         print_exc()
         return response_invalid_request(str(e))

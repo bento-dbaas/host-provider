@@ -52,7 +52,7 @@ class ProviderBase(object):
         else:
             return True, insert and insert.get('_id')
 
-    def prepare(self, name, group, engine):
+    def prepare(self, name, group, engine, ports):
         pass
 
     def configure(self, name, group, configuration):
