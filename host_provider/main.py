@@ -78,7 +78,8 @@ def create_host(provider_name, env):
         extra_params = {
             'team_name': team_name,
             'database_name': database_name,
-            'yaml_context': data.get('yaml_context', {}),
+            'port': data.get('port', None),
+            'volume_name': data.get('volume_name', None),
             'node_ip': data.get('node_ip', ''),
         }
         created_host_metadata = provider.create_host(
