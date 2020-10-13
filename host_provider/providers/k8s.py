@@ -154,6 +154,26 @@ class K8sProvider(ProviderBase):
             self.auth_info.get('K8S-Namespace', 'default'),
         )
 
+    def resize(self, host, cpus, memory):
+        namespace = self.auth_info.get('K8S-Namespace', 'default')
+        pod_data = self.client.read_namespaced_pod_status(
+            host.name, namespace,
+        )
+        volume_name = pod_data.spec.volumes[0].persistent_volume_claim.claim_name
+        volume_name = volume_name.replace(namespace + ":", "")
+        pod_port = pod_data.spec.containers[0].ports[0].container_port
+        yaml = self._build_stateful_set(
+            cpus, memory, host.identifier, host.group, pod_port, volume_name
+        )
+        stateful = self.client.replace_namespaced_stateful_set(
+            host.identifier, namespace, yaml,
+        )
+        # Force redeploy
+        self.client.delete_namespaced_pod(
+            host.name, namespace
+        )
+        return stateful
+
     def _is_ready(self, host):
         pod_data = self.client.read_namespaced_pod_status(
             host.name, self.auth_info.get('K8S-Namespace', 'default'),
