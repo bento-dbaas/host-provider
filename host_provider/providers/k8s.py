@@ -61,11 +61,11 @@ class K8sProvider(ProviderBase):
         # TODO
         pass
 
-    def _create_host(self, cpu, memory, name, *args, **kw):
+    def _build_stateful_set(self, cpu, memory, name, group, port, volume_name):
         context = {
             'STATEFULSET_NAME': name,
             'POD_NAME': name,
-            'LABEL_NAME': kw["group"],
+            'LABEL_NAME': group,
             'SERVICE_NAME': f'service-{name}',
             'INIT_CONTAINER_CREATE_CONFIG_COMMANDS': (
                 'cp /mnt/config-map/{config_file} /data; chown mongodb:mongodb /data/{config_file}'.format(
@@ -75,7 +75,7 @@ class K8sProvider(ProviderBase):
             'CONFIG_MAP_MOUNT_PATH': '/mnt/config-map',
             'IMAGE_NAME': self.credential.image_name,
             'IMAGE_TAG': self.credential.image_version,
-            'CONTAINER_PORT': kw["port"],
+            'CONTAINER_PORT': port,
             'VOLUME_NAME': 'data-volume',
             'VOLUME_PATH_ROOT': '/data',
             'VOLUME_PATH_DB': '/data/db',
@@ -84,16 +84,19 @@ class K8sProvider(ProviderBase):
             'CPU_LIMIT': cpu * 1000,
             'MEMORY': memory,
             'MEMORY_LIMIT': memory,
-            'VOLUME_CLAIM_NAME': kw["volume_name"],
+            'VOLUME_CLAIM_NAME': volume_name,
             'CONFIG_MAP_NAME': f"configmap-{name}",
             'DATABASE_CONFIG_FULL_PATH': f"/data/{self.credential.configuration_file}",
             'CONFIG_FILE_NAME': self.credential.configuration_file,
             'DATABASE_LOG_DIR': "/data/logs",
             'DATABASE_LOG_FULL_PATH': f"/data/logs/{self.credential.log_file}"
         }
+        return self.yaml_file('statefulset.yaml', context)
+
+    def _create_host(self, cpu, memory, name, *args, **kw):
+        yaml = self._build_stateful_set(cpu, memory, name, kw["group"], kw["port"], kw["volume_name"])
         return self.client.create_namespaced_stateful_set(
-            self.auth_info.get('K8S-Namespace', 'default'),
-            self.yaml_file('statefulset.yaml', context)
+            self.auth_info.get('K8S-Namespace', 'default'), yaml
         )
 
     def create_host_object(self, provider, payload, env, created_host_metadata):
