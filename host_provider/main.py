@@ -174,7 +174,7 @@ def resize_host(provider_name, env):
                 )
             )
             return response_ok()
-        provider.resize(host.identifier, cpus, memory)
+        provider.resize(host, cpus, memory)
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
         return response_invalid_request(str(e))

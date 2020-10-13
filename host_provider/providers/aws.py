@@ -144,8 +144,8 @@ class AWSProvider(ProviderBase):
     def _all_node_destroyed(self, group):
         self.credential.remove_last_used_for(group)
 
-    def resize(self, identifier, cpus, memory):
-        node = self.get_node(identifier)
+    def resize(self, host, cpus, memory):
+        node = self.get_node(host.identifier)
         offering = self.offering_to(int(cpus), int(memory))
 
         return self.client.ex_change_node_size(node, offering)
