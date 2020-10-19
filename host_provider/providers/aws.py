@@ -124,10 +124,10 @@ class AWSProvider(ProviderBase):
             "It was expected state: {} got: {}".format(state, node_state)
         )
 
-    def start(self, identifier):
-        node = self.BasicInfo(identifier)
+    def start(self, host):
+        node = self.BasicInfo(host.identifier)
         resp = self.client.ex_start_node(node)
-        self.wait_state(identifier, 'running')
+        self.wait_state(host.identifier, 'running')
         return resp
 
 

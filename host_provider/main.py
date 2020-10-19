@@ -136,7 +136,7 @@ def start_host(provider_name, env):
 
     try:
         provider = build_provider(provider_name, env, host.engine)
-        provider.start(host.identifier)
+        provider.start(host)
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
         return response_invalid_request(str(e))

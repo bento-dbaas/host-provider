@@ -57,12 +57,13 @@ class K8sProvider(ProviderBase):
     def get_credential_add(self):
         return CredentialAddK8s
 
-    def start(self, identifier):
-        # TODO
+    def _pod_metadata(self, host):
+        return self.client.read_namespaced_pod_status(host.name, self.namespace)
+
+    def start(self, host):
         pass
 
     def stop(self, identifier):
-        # TODO
         pass
 
     def _build_stateful_set(self, cpu, memory, name, group, port, volume_name):
@@ -145,9 +146,7 @@ class K8sProvider(ProviderBase):
         self.client.delete_namespaced_config_map(f"configmap-{name}", self.namespace)
 
     def resize(self, host, cpus, memory):
-        pod_data = self.client.read_namespaced_pod_status(
-            host.name, self.namespace,
-        )
+        pod_data = self._pod_metadata(host)
         volume_name = pod_data.spec.volumes[0].persistent_volume_claim.claim_name
         volume_name = volume_name.replace(self.namespace + ":", "")
         pod_port = pod_data.spec.containers[0].ports[0].container_port
@@ -162,12 +161,12 @@ class K8sProvider(ProviderBase):
         return stateful
 
     def _is_ready(self, host):
-        pod_data = self.client.read_namespaced_pod_status(host.name, self.namespace)
+        pod_data = self._pod_metadata(host)
         for status_data in pod_data.status.conditions:
             if status_data.type == 'Ready':
                 if status_data.status == 'True':
-                    return True
-                return False
+                    return True, pod_data.metadata.uid
+                return False, None
 
     def _refresh_metadata(self, host):
         pod_metadata = self.client.read_namespaced_pod(host.name, self.namespace)

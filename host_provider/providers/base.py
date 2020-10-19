@@ -105,7 +105,7 @@ class ProviderBase(object):
     def get_credential_add(self):
         raise NotImplementedError
 
-    def start(self, identifier):
+    def start(self, host):
         raise NotImplementedError
 
     def stop(self, identifier):

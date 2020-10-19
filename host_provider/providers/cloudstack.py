@@ -93,8 +93,8 @@ class CloudStackProvider(ProviderBase):
     def get_credential_add(self):
         return CredentialAddCloudStack
 
-    def start(self, identifier):
-        node = self.BasicInfo(identifier)
+    def start(self, host):
+        node = self.BasicInfo(host.identifier)
         return self.client.ex_start(node)
 
     def stop(self, identifier):
