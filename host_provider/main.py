@@ -345,7 +345,8 @@ def status_host(provider_name, env, host_id):
     try:
         host = Host.get(id=host_id, environment=env)
         provider = build_provider(provider_name, env, host.engine)
-        return response_ok(host_status=provider.get_status(host))
+        host_status, version_id = provider.get_status(host)
+        return response_ok(host_status=host_status, version_id=version_id)
     except Host.DoesNotExist:
         return response_not_found(host_id)
 
