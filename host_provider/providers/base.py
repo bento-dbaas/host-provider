@@ -72,9 +72,10 @@ class ProviderBase(object):
         return result
 
     def get_status(self, host):
-        if self._is_ready(host):
-            return "READY"
-        return "NOT READY"
+        is_ready, version_id = self._is_ready(host)
+        if is_ready:
+            return "READY", version_id
+        return "NOT READY", None
 
     def destroy(self, group, identifier):
         self._destroy(identifier)
@@ -105,7 +106,7 @@ class ProviderBase(object):
     def get_credential_add(self):
         raise NotImplementedError
 
-    def start(self, identifier):
+    def start(self, host):
         raise NotImplementedError
 
     def stop(self, identifier):

@@ -136,7 +136,7 @@ def start_host(provider_name, env):
 
     try:
         provider = build_provider(provider_name, env, host.engine)
-        provider.start(host.identifier)
+        provider.start(host)
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
@@ -174,7 +174,7 @@ def resize_host(provider_name, env):
                 )
             )
             return response_ok()
-        provider.resize(host.identifier, cpus, memory)
+        provider.resize(host, cpus, memory)
     except Exception as e:  # TODO What can get wrong here?
         print_exc()  # TODO Improve log
         return response_invalid_request(str(e))
@@ -345,7 +345,8 @@ def status_host(provider_name, env, host_id):
     try:
         host = Host.get(id=host_id, environment=env)
         provider = build_provider(provider_name, env, host.engine)
-        return response_ok(host_status=provider.get_status(host))
+        host_status, version_id = provider.get_status(host)
+        return response_ok(host_status=host_status, version_id=version_id)
     except Host.DoesNotExist:
         return response_not_found(host_id)
 

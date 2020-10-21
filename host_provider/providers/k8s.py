@@ -41,6 +41,10 @@ class K8sProvider(ProviderBase):
         verify_ssl = self.auth_info.get("K8S-Verify-Ssl", 'false')
         return verify_ssl != 'false' and verify_ssl != 0
 
+    @property
+    def namespace(self):
+        return self.auth_info.get('K8S-Namespace', 'default')
+
     @classmethod
     def get_provider(cls):
         return "k8s"
@@ -53,19 +57,20 @@ class K8sProvider(ProviderBase):
     def get_credential_add(self):
         return CredentialAddK8s
 
-    def start(self, identifier):
-        # TODO
+    def _pod_metadata(self, host):
+        return self.client.read_namespaced_pod_status(host.name, self.namespace)
+
+    def start(self, host):
         pass
 
     def stop(self, identifier):
-        # TODO
         pass
 
-    def _create_host(self, cpu, memory, name, *args, **kw):
+    def _build_stateful_set(self, cpu, memory, name, group, port, volume_name):
         context = {
             'STATEFULSET_NAME': name,
             'POD_NAME': name,
-            'LABEL_NAME': kw["group"],
+            'LABEL_NAME': group,
             'SERVICE_NAME': f'service-{name}',
             'INIT_CONTAINER_CREATE_CONFIG_COMMANDS': (
                 'cp /mnt/config-map/{config_file} /data; chown mongodb:mongodb /data/{config_file}'.format(
@@ -75,7 +80,7 @@ class K8sProvider(ProviderBase):
             'CONFIG_MAP_MOUNT_PATH': '/mnt/config-map',
             'IMAGE_NAME': self.credential.image_name,
             'IMAGE_TAG': self.credential.image_version,
-            'CONTAINER_PORT': kw["port"],
+            'CONTAINER_PORT': port,
             'VOLUME_NAME': 'data-volume',
             'VOLUME_PATH_ROOT': '/data',
             'VOLUME_PATH_DB': '/data/db',
@@ -84,17 +89,18 @@ class K8sProvider(ProviderBase):
             'CPU_LIMIT': cpu * 1000,
             'MEMORY': memory,
             'MEMORY_LIMIT': memory,
-            'VOLUME_CLAIM_NAME': kw["volume_name"],
+            'VOLUME_CLAIM_NAME': volume_name,
             'CONFIG_MAP_NAME': f"configmap-{name}",
             'DATABASE_CONFIG_FULL_PATH': f"/data/{self.credential.configuration_file}",
             'CONFIG_FILE_NAME': self.credential.configuration_file,
             'DATABASE_LOG_DIR': "/data/logs",
             'DATABASE_LOG_FULL_PATH': f"/data/logs/{self.credential.log_file}"
         }
-        return self.client.create_namespaced_stateful_set(
-            self.auth_info.get('K8S-Namespace', 'default'),
-            self.yaml_file('statefulset.yaml', context)
-        )
+        return self.yaml_file('statefulset.yaml', context)
+
+    def _create_host(self, cpu, memory, name, *args, **kw):
+        yaml = self._build_stateful_set(cpu, memory, name, kw["group"], kw["port"], kw["volume_name"])
+        return self.client.create_namespaced_stateful_set(self.namespace, yaml)
 
     def create_host_object(self, provider, payload, env, created_host_metadata):
         host = Host(
@@ -109,9 +115,7 @@ class K8sProvider(ProviderBase):
 
     def _destroy(self, identifier):
         self.client.delete_namespaced_stateful_set(
-            identifier,
-            self.auth_info.get('K8S-Namespace', 'default'),
-            orphan_dependents=False
+            identifier, self.namespace, orphan_dependents=False
         )
 
     def prepare(self, name, group, engine, ports):
@@ -121,15 +125,11 @@ class K8sProvider(ProviderBase):
             'PORTS': ports,
         }
         self.client.create_namespaced_service(
-            self.auth_info.get('K8S-Namespace', 'default'),
-            self.yaml_file('service.yaml', context)
+            self.namespace, self.yaml_file('service.yaml', context)
         )
 
     def clean(self, name):
-        self.client.delete_namespaced_service(
-            name,
-            self.auth_info.get('K8S-Namespace', 'default'),
-        )
+        self.client.delete_namespaced_service(name, self.namespace)
 
     def configure(self, name, group, configuration):
         context = {
@@ -140,29 +140,34 @@ class K8sProvider(ProviderBase):
         }
         yaml_file = self.yaml_file('config_map.yaml', context)
         yaml_file['data'][self.credential.configuration_file] = configuration
-        self.client.create_namespaced_config_map(
-            self.auth_info.get('K8S-Namespace', 'default'),
-            yaml_file
-        )
+        self.client.create_namespaced_config_map(self.namespace, yaml_file)
 
     def remove_configuration(self, name):
-        self.client.delete_namespaced_config_map(
-            f"configmap-{name}",
-            self.auth_info.get('K8S-Namespace', 'default'),
+        self.client.delete_namespaced_config_map(f"configmap-{name}", self.namespace)
+
+    def resize(self, host, cpus, memory):
+        pod_data = self._pod_metadata(host)
+        volume_name = pod_data.spec.volumes[0].persistent_volume_claim.claim_name
+        volume_name = volume_name.replace(self.namespace + ":", "")
+        pod_port = pod_data.spec.containers[0].ports[0].container_port
+        yaml = self._build_stateful_set(
+            cpus, memory, host.identifier, host.group, pod_port, volume_name
         )
+        stateful = self.client.replace_namespaced_stateful_set(
+            host.identifier, self.namespace, yaml,
+        )
+        # Force redeploy
+        self.client.delete_namespaced_pod(host.name, self.namespace)
+        return stateful
 
     def _is_ready(self, host):
-        pod_data = self.client.read_namespaced_pod_status(
-            host.name, self.auth_info.get('K8S-Namespace', 'default'),
-        )
+        pod_data = self._pod_metadata(host)
         for status_data in pod_data.status.conditions:
             if status_data.type == 'Ready':
                 if status_data.status == 'True':
-                    return True
-                return False
+                    return True, pod_data.metadata.uid
+                return False, None
 
     def _refresh_metadata(self, host):
-        pod_metadata = self.client.read_namespaced_pod(
-            host.name, self.auth_info.get('K8S-Namespace', 'default'),
-        )
+        pod_metadata = self.client.read_namespaced_pod(host.name, self.namespace)
         host.address = pod_metadata.status.pod_ip
