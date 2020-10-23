@@ -132,7 +132,7 @@ spec:
 
                     touch /data/create_user_script.lock
 
-                    sleep 30
+                    sleep 60
 
                     echo "mongo admin -u${MONGO_INITDB_ROOT_USERNAME} -p${MONGO_INITDB_ROOT_PASSWORD}<< EOF" > /data/create_user_script.sh
                     echo "db.createUser({" >> /data/create_user_script.sh
@@ -181,7 +181,7 @@ spec:
 
                     chmod u+x /data/create_user_script.sh
 
-                    /data/create_user_script.sh
+                    /data/create_user_script.sh > /data/create_user_script.log
                     rm /data/create_user_script.sh
 
                   fi
