@@ -9,3 +9,9 @@ test_report: test
 
 shell:
 	export LIBCLOUD_CA_CERTS_PATH=""; export FLASK_DEBUG=1; export VERIFY_SSL_CERT=1; export DBAAS_AWS_PROXY=; PYTHONPATH=. ipython
+
+deploy_dev:
+	tsuru app-deploy -a host-provider-dev .
+
+deploy_prod:
+	tsuru app-deploy -a host-provider .
