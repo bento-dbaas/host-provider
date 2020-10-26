@@ -74,7 +74,7 @@ class CloudStackProvider(ProviderBase):
 
         params = dict(
             name=name,
-            size=self.BasicInfo(self.credential.offering_to(cpu, memory)),
+            size=self.BasicInfo(self.credential.offering_to(int(cpu), memory)),
             image=self.BasicInfo(self.credential.template),
             location=self.BasicInfo(self.credential.zone),
             networks=networks,
@@ -83,7 +83,7 @@ class CloudStackProvider(ProviderBase):
         logging.error("Creating VM with params {}".format(params))
         return self.client.create_node(
             name=name,
-            size=self.BasicInfo(self.credential.offering_to(cpu, memory)),
+            size=self.BasicInfo(self.credential.offering_to(int(cpu), memory)),
             image=self.BasicInfo(self.credential.template),
             location=self.BasicInfo(self.credential.zone),
             networks=networks,
@@ -122,7 +122,7 @@ class CloudStackProvider(ProviderBase):
 
     def resize(self, host, cpus, memory):
         node = self.BasicInfo(host.identifier)
-        offering = self.BasicInfo(self.credential.offering_to(cpus, memory))
+        offering = self.BasicInfo(self.credential.offering_to(int(cpus), memory))
 
         return self.client.ex_change_node_size(node, offering)
 

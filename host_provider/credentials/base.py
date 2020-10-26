@@ -26,7 +26,6 @@ class CredentialMongoDB(object):
             else:
                 client = MongoClient(MONGO_ENDPOINT, **params)
             self._db = client[MONGODB_DB]
-
         return self._db
 
     @property
