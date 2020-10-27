@@ -44,65 +44,29 @@ spec:
             - containerPort: {{ CONTAINER_PORT }}
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_ADMIN_USER
+              value: {{ INIT_USER }}
             - name: MONGO_INITDB_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_ADMIN_PASSWORD
+              value: {{ INIT_PASSWORD }}
             - name: MONGODB_ADMINDBAAS_USER
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_ADMINDBAAS_USER
+              value: admindbaas
             - name: MONGODB_ADMINDBAAS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_ADMINDBAAS_PASSWORD
+              value: a
             - name: MONGODB_BACKUP_USER
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_BACKUP_USER
+              value: backup
             - name: MONGODB_BACKUP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_BACKUP_PASSWORD
+              value: a
             - name: MONGODB_DB_ARQ_USER
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_DB_ARQ_USER
+              value: db_arq
             - name: MONGODB_DB_ARQ_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_DB_ARQ_PASSWORD
+              value: a
             - name: MONGODB_ZABBIX_USER
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_ZABBIX_USER
+              value: usr_zabbix
             - name: MONGODB_ZABBIX__PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_ZABBIX__PASSWORD
+              value: a
             - name: MONGODB_TELEGRAF_USER
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_TELEGRAF_USER
+              value: usr_telegraf
             - name: MONGODB_TELEGRAF_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-users-secrets
-                  key: MONGODB_TELEGRAF_PASSWORD
+              value: a
           volumeMounts:
             - name: {{ VOLUME_NAME }}
               mountPath: {{ VOLUME_PATH_ROOT }}
