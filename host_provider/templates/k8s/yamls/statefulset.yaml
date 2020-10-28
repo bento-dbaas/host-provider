@@ -50,23 +50,23 @@ spec:
             - name: MONGODB_ADMINDBAAS_USER
               value: admindbaas
             - name: MONGODB_ADMINDBAAS_PASSWORD
-              value: a
+              value: TemporaryInitialPassword
             - name: MONGODB_BACKUP_USER
               value: backup
             - name: MONGODB_BACKUP_PASSWORD
-              value: a
+              value: TemporaryInitialPassword
             - name: MONGODB_DB_ARQ_USER
               value: db_arq
             - name: MONGODB_DB_ARQ_PASSWORD
-              value: a
+              value: TemporaryInitialPassword
             - name: MONGODB_ZABBIX_USER
               value: usr_zabbix
             - name: MONGODB_ZABBIX__PASSWORD
-              value: a
+              value: TemporaryInitialPassword
             - name: MONGODB_TELEGRAF_USER
               value: usr_telegraf
             - name: MONGODB_TELEGRAF_PASSWORD
-              value: a
+              value: TemporaryInitialPassword
           volumeMounts:
             - name: {{ VOLUME_NAME }}
               mountPath: {{ VOLUME_PATH_ROOT }}
