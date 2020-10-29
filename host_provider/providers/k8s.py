@@ -66,7 +66,10 @@ class K8sProvider(ProviderBase):
     def stop(self, identifier):
         pass
 
-    def _build_stateful_set(self, cpu, memory, name, group, port, volume_name):
+    def _build_stateful_set(
+            self, cpu, memory, name, group, port,
+            volume_name, init_user, init_password
+        ):
         context = {
             'STATEFULSET_NAME': name,
             'POD_NAME': name,
@@ -94,12 +97,23 @@ class K8sProvider(ProviderBase):
             'DATABASE_CONFIG_FULL_PATH': f"/data/{self.credential.configuration_file}",
             'CONFIG_FILE_NAME': self.credential.configuration_file,
             'DATABASE_LOG_DIR': "/data/logs",
-            'DATABASE_LOG_FULL_PATH': f"/data/logs/{self.credential.log_file}"
+            'DATABASE_LOG_FULL_PATH': f"/data/logs/{self.credential.log_file}",
+            'INIT_USER': init_user,
+            'INIT_PASSWORD': init_password,
         }
         return self.yaml_file('statefulset.yaml', context)
 
     def _create_host(self, cpu, memory, name, *args, **kw):
-        yaml = self._build_stateful_set(cpu, memory, name, kw["group"], kw["port"], kw["volume_name"])
+        yaml = self._build_stateful_set(
+            cpu,
+            memory,
+            name,
+            kw["group"],
+            kw["port"],
+            kw["volume_name"],
+            kw["init_user"],
+            kw["init_password"],
+        )
         return self.client.create_namespaced_stateful_set(self.namespace, yaml)
 
     def create_host_object(self, provider, payload, env, created_host_metadata):

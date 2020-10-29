@@ -81,6 +81,8 @@ def create_host(provider_name, env):
             'port': data.get('port', None),
             'volume_name': data.get('volume_name', None),
             'node_ip': data.get('node_ip', ''),
+            'init_user': data.get('init_user' , ''),
+            'init_password': data.get('init_password' , ''),
         }
         created_host_metadata = provider.create_host(
             cpu, memory, name, group, zone, **extra_params
