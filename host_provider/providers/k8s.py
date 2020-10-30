@@ -1,7 +1,7 @@
 from jinja2 import Environment, PackageLoader
 from yaml import safe_load
 import logging
-from kubernetes.client import Configuration, ApiClient, AppsV1beta1Api, CoreV1Api
+from kubernetes.client import Configuration, ApiClient, AppsV1beta1Api, CoreV1Api, V1Namespace
 from host_provider.models import Host
 from host_provider.credentials.k8s import CredentialK8s, CredentialAddK8s
 from host_provider.providers.base import ProviderBase
@@ -43,7 +43,7 @@ class K8sProvider(ProviderBase):
 
     @property
     def namespace(self):
-        return self.auth_info.get('K8S-Namespace', 'default')
+        return self.auth_info.get('K8S-Namespace')
 
     @classmethod
     def get_provider(cls):
@@ -132,7 +132,25 @@ class K8sProvider(ProviderBase):
             identifier, self.namespace, orphan_dependents=False
         )
 
+    @property
+    def _namespace_exists(self):
+        for namespace in self.client.list_namespace().items:
+            if namespace.metadata.name == self.namespace:
+                return True
+        return False
+
+    def _create_namespace(self):
+        if self._namespace_exists:
+            return
+        context = {
+            'NAME': self.namespace,
+            'PROJECT_ID': "TODO",
+        }
+        yaml_file = self.yaml_file('namespace.yaml', context)
+        self.client.create_namespace(yaml_file)
+
     def prepare(self, name, group, engine, ports):
+        self._create_namespace()
         context = {
             'SERVICE_NAME': name,
             'LABEL_NAME': group,
@@ -144,6 +162,7 @@ class K8sProvider(ProviderBase):
 
     def clean(self, name):
         self.client.delete_namespaced_service(name, self.namespace)
+        self.client.delete_namespace(self.namespace)
 
     def configure(self, name, group, configuration):
         context = {
