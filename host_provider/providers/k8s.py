@@ -144,7 +144,7 @@ class K8sProvider(ProviderBase):
             return
         context = {
             'NAME': self.namespace,
-            'PROJECT_ID': "TODO",
+            'PROJECT_ID': self.auth_info['K8S-Cluster-Id'],
         }
         yaml_file = self.yaml_file('namespace.yaml', context)
         self.client.create_namespace(yaml_file)
