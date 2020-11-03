@@ -1,7 +1,8 @@
 from jinja2 import Environment, PackageLoader
 from yaml import safe_load
 import logging
-from kubernetes.client import Configuration, ApiClient, AppsV1beta1Api, CoreV1Api, V1Namespace
+from kubernetes.client import Configuration, ApiClient, AppsV1beta1Api, CoreV1Api
+from kubernetes.client.rest import ApiException
 from host_provider.models import Host
 from host_provider.credentials.k8s import CredentialK8s, CredentialAddK8s
 from host_provider.providers.base import ProviderBase
@@ -161,7 +162,28 @@ class K8sProvider(ProviderBase):
         )
 
     def clean(self, name):
-        self.client.delete_namespaced_service(name, self.namespace)
+        try:
+            self.client.delete_namespaced_service(name, self.namespace)
+        except ApiException as e:
+            if e.status != 404:
+                raise e
+
+        methods = [
+            "list_namespaced_config_map",
+            "list_namespaced_endpoints",
+            "list_namespaced_limit_range",
+            "list_namespaced_persistent_volume_claim",
+            "list_namespaced_pod",
+            "list_namespaced_pod_template",
+            "list_namespaced_replication_controller",
+            "list_namespaced_resource_quota",
+            "list_namespaced_service",
+        ]
+        for method_name in methods:
+            method = getattr(self.client, method_name)
+            result = method(self.namespace)
+            if result.items:
+                Exception(f"{method_name}:{result}")
         self.client.delete_namespace(self.namespace)
 
     def configure(self, name, group, configuration):
