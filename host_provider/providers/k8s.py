@@ -217,11 +217,13 @@ class K8sProvider(ProviderBase):
 
     def _is_ready(self, host):
         pod_data = self._pod_metadata(host)
+        if not pod_data.status.conditions:
+            return False, None
         for status_data in pod_data.status.conditions:
             if status_data.type == 'Ready':
                 if status_data.status == 'True':
                     return True, pod_data.metadata.uid
-                return False, None
+        return False, None
 
     def _refresh_metadata(self, host):
         pod_metadata = self.client.read_namespaced_pod(host.name, self.namespace)
