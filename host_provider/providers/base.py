@@ -22,6 +22,10 @@ class ProviderBase(object):
         return get_driver(self.get_provider())
 
     @property
+    def create_attempts(self):
+        return 1
+
+    @property
     def client(self):
         if not self._client:
             self._client = self.build_client()

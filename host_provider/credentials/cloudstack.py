@@ -1,7 +1,12 @@
 from host_provider.credentials.base import CredentialBase, CredentialAdd
+from host_provider.models import Host
 
 
 class CredentialCloudStack(CredentialBase):
+
+    def __init__(self, provider, environment, engine):
+        super(CredentialCloudStack, self).__init__(provider, environment, engine)
+        self._zone_increment = 0
 
     @property
     def endpoint(self):
@@ -24,15 +29,28 @@ class CredentialCloudStack(CredentialBase):
     @property
     def template(self):
         templates = self.content['templates']
-
         return templates[self.engine]
 
     @property
     def _zones_field(self):
         return self.content['zones']
 
+    @property
+    def create_attempts(self):
+        return len(self.zones)
+
     def before_create_host(self, group):
-        self._zone = self._get_zone(group)
+        hosts = Host.filter(group=group)
+        used_zones = (host.zone for host in hosts)
+        available_zones = self.zones
+        while True:
+            self._zone_increment += 1
+            zone = self._get_zone(group)
+            if len(used_zones) >= len(available_zones):
+                break
+            if zone not in used_zones:
+                break
+        self._zone = zone
 
     def after_create_host(self, group):
         existing = self.exist_node(group)
@@ -69,14 +87,14 @@ class CredentialCloudStack(CredentialBase):
     def _get_zone(self, group):
         exist = self.exist_node(group)
         if exist:
-            return self.get_next_zone_from(exist["zone"])
+            return self.get_next_zone_from(exist["zone"], self._zone_increment)
 
         latest_used = self.last_used_zone()
         if latest_used:
-            return self.get_next_zone_from(latest_used["zone"])
+            return self.get_next_zone_from(latest_used["zone"], self._zone_increment)
 
-        resp = list(self.zones.keys())
-        return resp[0]
+        zones = list(self.zones.keys())
+        return self.get_next_zone_from(zones[-1], self._zone_increment)
 
     @property
     def networks(self):
