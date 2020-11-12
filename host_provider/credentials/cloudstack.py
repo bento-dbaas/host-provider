@@ -49,9 +49,9 @@ class CredentialCloudStack(CredentialBase):
     def before_create_host(self, group):
         used_zones = set([host.zone for host in Host.filter(group=group)])
         while True:
-            zone = self._get_zone(group)
             if self.already_tried_all_zones:
-                break
+                raise Exception("No zone available")
+            zone = self._get_zone(group)
             if self._used_all_available_zones(used_zones):
                 break
             if not self._zone_already_used(zone, used_zones):
