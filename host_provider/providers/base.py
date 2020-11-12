@@ -70,7 +70,6 @@ class ProviderBase(object):
         self.credential.before_create_host(group)
         if zone:
             self.credential.zone = zone
-
         result = self._create_host(cpu, memory, name, *args, **kw)
         self.credential.after_create_host(group)
         return result

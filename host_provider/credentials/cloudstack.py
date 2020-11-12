@@ -36,20 +36,27 @@ class CredentialCloudStack(CredentialBase):
         return self.content['zones']
 
     @property
-    def create_attempts(self):
-        return len(self.zones)
+    def already_tried_all_zones(self):
+        return self._zone_increment >= len(self.zones)
+
+    def _used_all_available_zones(self, used_zones):
+        return len(used_zones) >= len(self.zones)
+
+    @staticmethod
+    def _zone_already_used(zone, used_zones):
+        return zone in used_zones
 
     def before_create_host(self, group):
-        hosts = Host.filter(group=group)
-        used_zones = (host.zone for host in hosts)
-        available_zones = self.zones
+        used_zones = set([host.zone for host in Host.filter(group=group)])
         while True:
-            self._zone_increment += 1
             zone = self._get_zone(group)
-            if len(used_zones) >= len(available_zones):
+            if self.already_tried_all_zones:
                 break
-            if zone not in used_zones:
+            if self._used_all_available_zones(used_zones):
                 break
+            if not self._zone_already_used(zone, used_zones):
+                break
+            self._zone_increment += 1
         self._zone = zone
 
     def after_create_host(self, group):
@@ -98,7 +105,6 @@ class CredentialCloudStack(CredentialBase):
 
     @property
     def networks(self):
-
         zone = self.content['zones'][self.zone]
         if 'networks' not in zone:
             raise NotImplementedError(

@@ -84,10 +84,8 @@ class CredentialBase(CredentialMongoDB):
                 if zone_val[key] != value:
                     valid = False
                     break
-
             if valid:
                 filtered_zones[zone_key] = zone_val
-
         return filtered_zones
 
     @property
