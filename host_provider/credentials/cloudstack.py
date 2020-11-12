@@ -57,6 +57,7 @@ class CredentialCloudStack(CredentialBase):
             if not self._zone_already_used(zone, used_zones):
                 break
             self._zone_increment += 1
+        self._zone_increment += 1
         self._zone = zone
 
     def after_create_host(self, group):
