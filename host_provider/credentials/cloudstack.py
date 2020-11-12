@@ -101,7 +101,7 @@ class CredentialCloudStack(CredentialBase):
             return self.get_next_zone_from(latest_used["zone"], self._zone_increment)
 
         zones = list(self.zones.keys())
-        return self.get_next_zone_from(zones[-1], self._zone_increment)
+        return self.get_next_zone_from(zones[0], self._zone_increment)
 
     @property
     def networks(self):
