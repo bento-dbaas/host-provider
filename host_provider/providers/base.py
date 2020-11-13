@@ -22,6 +22,10 @@ class ProviderBase(object):
         return get_driver(self.get_provider())
 
     @property
+    def create_attempts(self):
+        return 1
+
+    @property
     def client(self):
         if not self._client:
             self._client = self.build_client()
@@ -66,7 +70,6 @@ class ProviderBase(object):
         self.credential.before_create_host(group)
         if zone:
             self.credential.zone = zone
-
         result = self._create_host(cpu, memory, name, *args, **kw)
         self.credential.after_create_host(group)
         return result

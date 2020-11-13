@@ -27,6 +27,10 @@ class CloudStackProvider(ProviderBase):
             secure=self.credential.secure
         )
 
+    @property
+    def create_attempts(self):
+        return len(self.credential.zones)
+
     @classmethod
     def get_provider(cls):
         return Provider.CLOUDSTACK

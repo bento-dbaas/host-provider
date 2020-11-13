@@ -1,7 +1,12 @@
 from host_provider.credentials.base import CredentialBase, CredentialAdd
+from host_provider.models import Host
 
 
 class CredentialCloudStack(CredentialBase):
+
+    def __init__(self, provider, environment, engine):
+        super(CredentialCloudStack, self).__init__(provider, environment, engine)
+        self._zone_increment = 0
 
     @property
     def endpoint(self):
@@ -24,15 +29,36 @@ class CredentialCloudStack(CredentialBase):
     @property
     def template(self):
         templates = self.content['templates']
-
         return templates[self.engine]
 
     @property
     def _zones_field(self):
         return self.content['zones']
 
+    @property
+    def already_tried_all_zones(self):
+        return self._zone_increment >= len(self.zones)
+
+    def _used_all_available_zones(self, used_zones):
+        return len(used_zones) >= len(self.zones)
+
+    @staticmethod
+    def _zone_already_used(zone, used_zones):
+        return zone in used_zones
+
     def before_create_host(self, group):
-        self._zone = self._get_zone(group)
+        used_zones = set([host.zone for host in Host.filter(group=group)])
+        while True:
+            if self.already_tried_all_zones:
+                raise Exception("No zone available")
+            zone = self._get_zone(group)
+            if self._used_all_available_zones(used_zones):
+                break
+            if not self._zone_already_used(zone, used_zones):
+                break
+            self._zone_increment += 1
+        self._zone_increment += 1
+        self._zone = zone
 
     def after_create_host(self, group):
         existing = self.exist_node(group)
@@ -69,18 +95,17 @@ class CredentialCloudStack(CredentialBase):
     def _get_zone(self, group):
         exist = self.exist_node(group)
         if exist:
-            return self.get_next_zone_from(exist["zone"])
+            return self.get_next_zone_from(exist["zone"], self._zone_increment)
 
         latest_used = self.last_used_zone()
         if latest_used:
-            return self.get_next_zone_from(latest_used["zone"])
+            return self.get_next_zone_from(latest_used["zone"], self._zone_increment)
 
-        resp = list(self.zones.keys())
-        return resp[0]
+        zones = list(self.zones.keys())
+        return self.get_next_zone_from(zones[0], self._zone_increment)
 
     @property
     def networks(self):
-
         zone = self.content['zones'][self.zone]
         if 'networks' not in zone:
             raise NotImplementedError(

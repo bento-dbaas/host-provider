@@ -84,10 +84,8 @@ class CredentialBase(CredentialMongoDB):
                 if zone_val[key] != value:
                     valid = False
                     break
-
             if valid:
                 filtered_zones[zone_key] = zone_val
-
         return filtered_zones
 
     @property
@@ -114,17 +112,16 @@ class CredentialBase(CredentialMongoDB):
         zone_id, values = zones.popitem()
         return values['name']
 
-    def get_next_zone_from(self, zone_name):
+    def get_next_zone_from(self, zone_name, increment=0):
         zones = list(self.zones.keys())
         try:
             base_index = zones.index(zone_name)
         except ValueError:
-            next_index = 0
+            next_index = increment
         else:
-            next_index = base_index + 1
+            next_index = base_index + increment + 1
             if next_index >= len(zones):
-                next_index = 0
-
+                next_index = next_index - len(zones)
         return zones[next_index]
 
 

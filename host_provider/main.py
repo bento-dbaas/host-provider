@@ -73,27 +73,29 @@ def create_host(provider_name, env):
     if not(group and name and engine and cpu and memory):
         return response_invalid_request("invalid data {}".format(data))
 
-    try:
-        provider = build_provider(provider_name, env, engine)
-        extra_params = {
-            'team_name': team_name,
-            'database_name': database_name,
-            'port': data.get('port', None),
-            'volume_name': data.get('volume_name', None),
-            'node_ip': data.get('node_ip', ''),
-            'init_user': data.get('init_user' , ''),
-            'init_password': data.get('init_password' , ''),
-        }
-        created_host_metadata = provider.create_host(
-            cpu, memory, name, group, zone, **extra_params
-        )
-    except Exception as e:  # TODO What can get wrong here?
-        print_exc()  # TODO Improve log
-        return response_invalid_request(str(e))
-    host_obj = provider.create_host_object(
-        provider, data, env, created_host_metadata
-    )
-    return response_created(address=host_obj.address, id=host_obj.id)
+    provider = build_provider(provider_name, env, engine)
+    extra_params = {
+        'team_name': team_name,
+        'database_name': database_name,
+        'port': data.get('port', None),
+        'volume_name': data.get('volume_name', None),
+        'node_ip': data.get('node_ip', ''),
+        'init_user': data.get('init_user', ''),
+        'init_password': data.get('init_password', ''),
+    }
+    for attempt in range(provider.create_attempts):
+        try:
+            created_host_metadata = provider.create_host(
+                cpu, memory, name, group, zone, **extra_params
+            )
+            host_obj = provider.create_host_object(
+                provider, data, env, created_host_metadata
+            )
+            return response_created(address=host_obj.address, id=host_obj.id)
+        except Exception as e:
+            print_exc()
+            if attempt == provider.create_attempts - 1:
+                return response_invalid_request(str(e))
 
 
 @app.route("/<string:provider_name>/<string:env>/host/stop", methods=['POST'])
