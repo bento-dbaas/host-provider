@@ -1,7 +1,7 @@
 from jinja2 import Environment, PackageLoader
 from yaml import safe_load
 import logging
-from kubernetes.client import Configuration, ApiClient, AppsV1beta1Api, CoreV1Api
+from kubernetes.client import Configuration, ApiClient, AppsV1Api, CoreV1Api
 from kubernetes.client.rest import ApiException
 from host_provider.models import Host
 from host_provider.credentials.k8s import CredentialK8s, CredentialAddK8s
@@ -11,7 +11,7 @@ from host_provider.providers.base import ProviderBase
 LOG = logging.getLogger(__name__)
 
 
-class K8sClient(AppsV1beta1Api, CoreV1Api):
+class K8sClient(AppsV1Api, CoreV1Api):
     pass
 
 
