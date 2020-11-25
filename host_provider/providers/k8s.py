@@ -156,6 +156,7 @@ class K8sProvider(ProviderBase):
             'SERVICE_NAME': name,
             'LABEL_NAME': group,
             'PORTS': ports,
+            'DOMAIN': self.auth_info['K8S-Domain'],
         }
         self.client.create_namespaced_service(
             self.namespace, self.yaml_file('service.yaml', context)
