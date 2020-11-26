@@ -11,10 +11,10 @@ class CredentialK8s(CredentialBase):
             "mongodb_4_2_3": "mongodb.log"
     }
     IMAGE_NAMES = {
-            "mongodb_4_2_3": "mongo"
+            "mongodb_4_2_3": "docker.artifactory.globoi.com/dbdev/mongo"
     }
     IMAGE_VERSIONS = {
-            "mongodb_4_2_3": "4.2"
+            "mongodb_4_2_3": "4.2.11"
     }
 
     @property
