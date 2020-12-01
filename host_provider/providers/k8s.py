@@ -69,7 +69,7 @@ class K8sProvider(ProviderBase):
 
     def _build_stateful_set(
             self, cpu, memory, name, group, port,
-            volume_name, init_user, init_password
+            volume_name, init_user=None, init_password=None
         ):
         context = {
             'STATEFULSET_NAME': name,
