@@ -65,7 +65,7 @@ class CredentialAzure(CredentialBase):
 
     @property
     def collection_last(self):
-        return self.db["ec2_zones_last"]
+        return self.db["azure_zones_last"]
 
     def exist_node(self, group):
         return self.collection_last.find_one({
