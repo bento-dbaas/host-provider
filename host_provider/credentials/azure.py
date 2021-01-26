@@ -1,4 +1,4 @@
-from host_provider.credentials.base import CredentialBase, CredentialAdd
+from host_provider.credentials.base import CredentialAdd, CredentialBase
 
 
 class CredentialAzure(CredentialBase):
