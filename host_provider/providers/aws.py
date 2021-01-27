@@ -104,7 +104,6 @@ class AWSProvider(ProviderBase):
             )
         )
 
-
     def get_credential_add(self):
         return CredentialAddAWS
 

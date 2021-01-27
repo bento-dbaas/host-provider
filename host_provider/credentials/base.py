@@ -64,6 +64,9 @@ class CredentialBase(CredentialMongoDB):
             self._content = self.get_content()
         return super(CredentialBase, self).content
 
+    def offering_to(self, cpu, memory):
+        return self.content['offerings']['{}c{}m'.format(cpu, memory)]['id']
+
     def before_create_host(self, group):
         pass
 
