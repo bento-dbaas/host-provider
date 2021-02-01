@@ -1,6 +1,5 @@
 
 workflows:
-  - ./host_provider/workflow/examples
   - ./host_provider/workflow/steps
 
 libraries: []
