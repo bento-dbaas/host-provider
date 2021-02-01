@@ -5,7 +5,7 @@ from host_provider.models import Host
 from host_provider.providers import ProviderBase
 from host_provider.settings import HOST_ORIGIN_TAG
 from libcloud.compute.types import Provider
-import inspect
+from host_provider.clients.team import TeamClient
 
 
 class AzureProvider(ProviderBase):
@@ -120,6 +120,13 @@ class AzureProvider(ProviderBase):
         resp = self.client.ex_stop_node(node)
         self.wait_state(identifier, 'stopped')
         return resp
+
+    def _destroy(self, identifier):
+        node = self.get_node(identifier)
+        return self.client.destroy_node(node)
+
+    def _all_node_destroyed(self, group):
+        self.credential.remove_last_used_for(group) 
 
     @property
     def engine_name(self):
