@@ -1,10 +1,7 @@
 from msal import ConfidentialClientApplication
 from msal import SerializableTokenCache
-# from host_provider.settings import MONGODB_DB, MONGODB_HOST, MONGODB_PORT, \
-    # MONGODB_USER, MONGODB_PWD, MONGO_ENDPOINT
 from host_provider.credentials.azure import CredentialAzure
 from host_provider.providers.azure import AzureProvider
-import inspect
 
 class AzureClientApplication(object):
     __credential_cls = CredentialAzure
@@ -40,20 +37,8 @@ class AzureClientApplication(object):
         authority = str(url+credentials.tenant_id)
         return ConfidentialClientApplication(client_id, authority=authority, client_credential=client_credential)
 
-    def _load_cache(self):
-        pass
-    
-    def _save_cache(self):
-        pass
-
-    def _get_token_from_cache(self):
-        pass
-
     def get_token_for_client(self, scopes=None):
         if not scopes:
             scopes = self.scopes
         app = self.__build_msal_app()
         return app.acquire_token_for_client(scopes=scopes)
-
-
-app = AzureClientApplication()
