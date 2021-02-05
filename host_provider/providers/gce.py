@@ -99,14 +99,14 @@ class GceProvider(ProviderBase):
             # internet.
             'networkInterfaces': [{
                 "subnetwork": self.credential.content['subnetwork'],
-                "accessConfigs": [
-                    {
-                        "kind": "compute#accessConfig",
-                        "name": "External NAT",
-                        "type": "ONE_TO_ONE_NAT",
-                        "networkTier": "STANDARD"
-                    }
-                ],
+                #"accessConfigs": [
+                #    {
+                #        "kind": "compute#accessConfig",
+                #        "name": "External NAT",
+                #        "type": "ONE_TO_ONE_NAT",
+                #        "networkTier": "STANDARD"
+                #    }
+                #],
                 "aliasIpRanges": []
             }],
 
