@@ -1,14 +1,17 @@
 import logging
-
+from time import sleep
 import googleapiclient.discovery
 from google.oauth2 import service_account
 
 from host_provider.credentials.gce import CredentialGce, CredentialAddGce
 from host_provider.providers.base import ProviderBase
+from host_provider.models import Host
 
 
 LOG = logging.getLogger(__name__)
 
+class WrongStatusError(Exception):
+    pass
 
 class GceProvider(ProviderBase):
 
@@ -20,7 +23,7 @@ class GceProvider(ProviderBase):
         credentials = service_account.Credentials.from_service_account_info(
             service_account_data
         )
-        credentials
+        #credentials
         return googleapiclient.discovery.build(
             'compute', 'v1', credentials=credentials
         )
@@ -44,13 +47,16 @@ class GceProvider(ProviderBase):
         pass
 
     def _create_host(self, cpu, memory, name, *args, **kw):
-        image_response = self.client.images().getFromFamily(
-            project='debian-cloud', family='debian-9'
+
+        image_response = self.client.images().get(
+            project=self.credential.project,
+            image=self.credential.template_to(self.engine),
         ).execute()
+
         source_disk_image = image_response['selfLink']
         offering = self.credential.offering_to(int(cpu), memory)
         zone = self.credential.zone
-    # Configure the machine
+
         machine_type = "zones/{}/machineTypes/{}".format(zone, offering)
         # startup_script = open(
         #     os.path.join(
@@ -117,18 +123,20 @@ class GceProvider(ProviderBase):
             #     }]
             # }
         }
-        self.credential.zone
-        return self.client.instances().insert(
+        #self.credential.zone
+        instance = self.client.instances().insert(
             project=self.credential.project,
             zone=zone,
             body=config
         ).execute()
+        return instance
 
-    def _destroy(self, name):
+    def _destroy(self, identifier):
+        host = Host.get(identifier=identifier)
         return self.client.instances().delete(
             project=self.credential.project,
-            zone=self.credential.zone,
-            instance=name
+            zone=host.zone,
+            instance=host.name
         ).execute()
 
     def clean(self, name):
@@ -142,3 +150,69 @@ class GceProvider(ProviderBase):
 
     def _is_ready(self, host):
         pass
+
+    def create_host_object(self, provider, payload, env,
+                           created_host_metadata):
+
+        project = provider.credential.project
+        zone = provider.credential._zone
+        instance_name = payload['name']
+
+        self.wait_status(project, zone, instance_name, status='RUNNING')
+
+        instance = self.get_instance(project, zone, instance_name)
+        address = instance['networkInterfaces'][0]['networkIP']
+
+        host = Host(
+            name=payload['name'], group=payload['group'],
+            engine=payload['engine'], environment=env, cpu=payload['cpu'],
+            memory=payload['memory'], provider=provider.credential.provider,
+            identifier=created_host_metadata['id'], address=address,
+            zone=zone
+        )
+        host.save()
+        return host
+
+    def get_instance(self, project, zone, instance_name):
+        return self.client.instances().get(
+            project=project,
+            zone=zone,
+            instance=instance_name
+        ).execute()
+
+    def wait_status(self, project, zone, instance_name, status):
+        attempts = 1
+        while attempts <= 15:
+
+            instance = self.get_instance(project, zone, instance_name)
+            vm_status = instance['status']
+            if vm_status == status:
+                return True
+
+            attempts += 1
+            sleep(5)
+
+        raise WrongStatusError(
+            "It was expected status: {} got: {}".format(state, vm_status)
+        )
+
+
+        '''
+    provider: <host_provider.providers.gce.GceProvider object at 0x11313a4e0> payload: {'engine': 'mongodb_4_2_3', 'group': 'test01161222692366', 'name': 'test01-01-161222692366', 'database_name': 'test01', 'memory': 1024, 'team_name': 'dbaas', 'cpu': 1.0}
+    env: gcp-lab
+    created_host_metadata: {'id': '5945271361285200033', 'name': 'operation-1612228173282-5ba501f90bb86-d03f8a4a-f909a27a', 'zone': 'https://www.googleapis.com/compute/v1/projects/gglobo-dbaas-dev-dev-qa/zones/southamerica-east1-a', 'operationType': 'insert', 'targetLink': 'https://www.googleapis.com/compute/v1/projects/gglobo-dbaas-dev-dev-qa/zones/southamerica-east1-a/instances/test01-01-161222692366', 'targetId': '1333087839616047266', 'status': 'RUNNING', 'user': '398728514298-compute@developer.gserviceaccount.com', 'progress': 0, 'insertTime': '2021-02-01T17:09:34.432-08:00', 'startTime': '2021-02-01T17:09:34.435-08:00', 'selfLink': 'https://www.googleapis.com/compute/v1/projects/gglobo-dbaas-dev-dev-qa/zones/southamerica-east1-a/operations/operation-1612228173282-5ba501f90bb86-d03f8a4a-f909a27a', 'kind': 'compute#operation'}
+    '''
+
+
+        '''
+        address = created_host_metadata.private_ips[0]
+        host = Host(
+            name=payload['name'], group=payload['group'],
+            engine=payload['engine'], environment=env, cpu=payload['cpu'],
+            memory=payload['memory'], provider=provider.credential.provider,
+            identifier=created_host_metadata.id, address=address,
+            zone=provider.credential._zone
+        )
+        host.save()
+        return host
+        '''

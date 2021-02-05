@@ -17,6 +17,9 @@ class CredentialGce(CredentialBase):
     def before_create_host(self, group):
         self._zone = self._get_zone(group)
 
+    def template_to(self, engine):
+        return self.content['templates'][engine]
+
     @property
     def collection_last(self):
         return self.db["gcp_zones_last"]
