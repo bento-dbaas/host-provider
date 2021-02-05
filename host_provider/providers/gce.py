@@ -40,19 +40,32 @@ class GceProvider(ProviderBase):
         return CredentialAddGce
 
     def start(self, host):
-        return self.client.instances().start(
-            project=self.credential.project,
-            zone=host.zone,
-            instance=host.name
+        project = self.credential.project
+        zone = host.zone
+        instance_name = host.name
+
+        self.client.instances().start(
+            project=project,
+            zone=zone,
+            instance=instance_name
         ).execute()
+
+        self.wait_status(project, zone, instance_name, status='RUNNING')
 
     def stop(self, identifier):
         host = Host.get(identifier=identifier)
-        return self.client.instances().stop(
-            project=self.credential.project,
-            zone=host.zone,
-            instance=host.name
+
+        project = self.credential.project
+        zone = host.zone
+        instance_name = host.name
+
+        self.client.instances().stop(
+            project=project,
+            zone=zone,
+            instance=instance_name
         ).execute()
+
+        self.wait_status(project, zone, instance_name, status='TERMINATED')
 
     def _create_host(self, cpu, memory, name, *args, **kw):
 
@@ -177,7 +190,7 @@ class GceProvider(ProviderBase):
 
     def wait_status(self, project, zone, instance_name, status):
         attempts = 1
-        while attempts <= 15:
+        while attempts <= 60:
 
             instance = self.get_instance(project, zone, instance_name)
             vm_status = instance['status']
@@ -188,6 +201,6 @@ class GceProvider(ProviderBase):
             sleep(5)
 
         raise WrongStatusError(
-            "It was expected status: {} got: {}".format(state, vm_status)
+            "It was expected status: {} got: {}".format(status, vm_status)
         )
 
