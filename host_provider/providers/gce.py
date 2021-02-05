@@ -23,7 +23,6 @@ class GceProvider(ProviderBase):
         credentials = service_account.Credentials.from_service_account_info(
             service_account_data
         )
-        #credentials
         return googleapiclient.discovery.build(
             'compute', 'v1', credentials=credentials
         )
@@ -67,11 +66,6 @@ class GceProvider(ProviderBase):
         zone = self.credential.zone
 
         machine_type = "zones/{}/machineTypes/{}".format(zone, offering)
-        # startup_script = open(
-        #     os.path.join(
-        #         os.path.dirname(__file__), 'startup-script.sh'), 'r').read()
-        # image_url = "http://storage.googleapis.com/gce-demo-input/photo.jpg"
-        # image_caption = "Ready for dessert?"
 
         config = {
             'name': name,
@@ -112,26 +106,8 @@ class GceProvider(ProviderBase):
                 ]
             }],
 
-            # Metadata is readable from the instance and allows you to
-            # pass configuration from deployment scripts to instances.
-            # 'metadata': {
-            #     'items': [{
-            #         # Startup script is automatically executed by the
-            #         # instance upon startup.
-            #         'key': 'startup-script',
-            #         'value': startup_script
-            #     }, {
-            #         'key': 'url',
-            #         'value': image_url
-            #     }, {
-            #         'key': 'text',
-            #         'value': image_caption
-            #     }, {
-            #         'key': 'bucket',
-            #         'value': bucket
-            #     }]
-            # }
         }
+
         #self.credential.zone
         instance = self.client.instances().insert(
             project=self.credential.project,
@@ -215,23 +191,3 @@ class GceProvider(ProviderBase):
             "It was expected status: {} got: {}".format(state, vm_status)
         )
 
-
-        '''
-    provider: <host_provider.providers.gce.GceProvider object at 0x11313a4e0> payload: {'engine': 'mongodb_4_2_3', 'group': 'test01161222692366', 'name': 'test01-01-161222692366', 'database_name': 'test01', 'memory': 1024, 'team_name': 'dbaas', 'cpu': 1.0}
-    env: gcp-lab
-    created_host_metadata: {'id': '5945271361285200033', 'name': 'operation-1612228173282-5ba501f90bb86-d03f8a4a-f909a27a', 'zone': 'https://www.googleapis.com/compute/v1/projects/gglobo-dbaas-dev-dev-qa/zones/southamerica-east1-a', 'operationType': 'insert', 'targetLink': 'https://www.googleapis.com/compute/v1/projects/gglobo-dbaas-dev-dev-qa/zones/southamerica-east1-a/instances/test01-01-161222692366', 'targetId': '1333087839616047266', 'status': 'RUNNING', 'user': '398728514298-compute@developer.gserviceaccount.com', 'progress': 0, 'insertTime': '2021-02-01T17:09:34.432-08:00', 'startTime': '2021-02-01T17:09:34.435-08:00', 'selfLink': 'https://www.googleapis.com/compute/v1/projects/gglobo-dbaas-dev-dev-qa/zones/southamerica-east1-a/operations/operation-1612228173282-5ba501f90bb86-d03f8a4a-f909a27a', 'kind': 'compute#operation'}
-    '''
-
-
-        '''
-        address = created_host_metadata.private_ips[0]
-        host = Host(
-            name=payload['name'], group=payload['group'],
-            engine=payload['engine'], environment=env, cpu=payload['cpu'],
-            memory=payload['memory'], provider=provider.credential.provider,
-            identifier=created_host_metadata.id, address=address,
-            zone=provider.credential._zone
-        )
-        host.save()
-        return host
-        '''
