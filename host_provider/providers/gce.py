@@ -41,10 +41,19 @@ class GceProvider(ProviderBase):
         return CredentialAddGce
 
     def start(self, host):
-        pass
+        return self.client.instances().start(
+            project=self.credential.project,
+            zone=host.zone,
+            instance=host.name
+        ).execute()
 
     def stop(self, identifier):
-        pass
+        host = Host.get(identifier=identifier)
+        return self.client.instances().stop(
+            project=self.credential.project,
+            zone=host.zone,
+            instance=host.name
+        ).execute()
 
     def _create_host(self, cpu, memory, name, *args, **kw):
 
@@ -146,7 +155,17 @@ class GceProvider(ProviderBase):
         pass
 
     def resize(self, host, cpus, memory):
-        pass
+        offering = self.credential.offering_to(int(cpus), memory)
+        machine_type = "zones/{}/machineTypes/{}".format(host.zone, offering)
+        config = {
+            'machineType': machine_type,
+        }
+        return self.client.instances().setMachineType(
+            project=self.credential.project,
+            zone=host.zone,
+            instance=host.name,
+            body=config
+        ).execute()
 
     def _is_ready(self, host):
         pass
