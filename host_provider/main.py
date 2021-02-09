@@ -91,7 +91,11 @@ def create_host(provider_name, env):
             host_obj = provider.create_host_object(
                 provider, data, env, created_host_metadata
             )
-            return response_created(address=host_obj.address, id=host_obj.id)
+            return response_created(
+                    address=host_obj.address,
+                    id=host_obj.id,
+                    zone=host_obj.zone
+                   )
         except Exception as e:
             print_exc()
             if attempt == provider.create_attempts - 1:
