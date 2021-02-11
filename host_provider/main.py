@@ -94,7 +94,7 @@ def create_host(provider_name, env):
             return response_created(
                     address=host_obj.address,
                     id=host_obj.id)
-                    
+
         except Exception as e:
             print_exc()
             if attempt == provider.create_attempts - 1:
@@ -324,26 +324,12 @@ def _host_info(provider_name, env, host_id, refresh=False):
     except Host.DoesNotExist:
         return response_not_found(host_id)
 
-def _host_zone(provider_name, env, host_id, refresh=False):
-    if not host_id:
-        return response_invalid_request("Missing parameter host_id")
-
-    host = Host.get(id=host_id, environment=env)
-    return response_ok(**{"zone": host.zone})
-
 @app.route(
     "/<string:provider_name>/<string:env>/host/<host_id>/", methods=['GET']
 )
 @auth.login_required
 def get_host(provider_name, env, host_id):
     return _host_info(provider_name, env, host_id)
-
-@app.route(
-    "/<string:provider_name>/<string:env>/host-zone/<host_id>/", methods=['GET']
-)
-@auth.login_required
-def get_host_zone(provider_name, env, host_id):
-    return _host_zone(provider_name, env, host_id)
 
 @app.route(
     "/<string:provider_name>/<string:env>/host/<host_id>/refresh/", methods=['GET']
