@@ -288,7 +288,8 @@ def destroy_host(provider_name, env, host_id):
 
 
 @app.route(
-    "/<string:provider_name>/<string:env>/clean/<string:name>", methods=['DELETE']
+    "/<string:provider_name>/<string:env>/clean/<string:name>",
+    methods=['DELETE']
 )
 @auth.login_required
 def clean(provider_name, env, name):
@@ -316,7 +317,8 @@ def configure(provider_name, env):
     configuration = data.get("configuration", None)
     if not host or not group or not engine or not configuration:
         return response_invalid_request(
-            "host, group, engine and configuration required. Payload: {}".format(data)
+            ("host, group, engine and configuration required. "
+             "Payload: {}").format(data)
         )
     try:
         provider = build_provider(provider_name, env, engine)
@@ -328,7 +330,8 @@ def configure(provider_name, env):
 
 
 @app.route(
-    "/<string:provider_name>/<string:env>/host/configure/<string:host>", methods=['DELETE']
+    "/<string:provider_name>/<string:env>/host/configure/<string:host>",
+    methods=['DELETE']
 )
 @auth.login_required
 def configure_delete(provider_name, env, host):
@@ -357,6 +360,7 @@ def _host_info(provider_name, env, host_id, refresh=False):
     except Host.DoesNotExist:
         return response_not_found(host_id)
 
+
 @app.route(
     "/<string:provider_name>/<string:env>/host/<host_id>/", methods=['GET']
 )
@@ -364,8 +368,10 @@ def _host_info(provider_name, env, host_id, refresh=False):
 def get_host(provider_name, env, host_id):
     return _host_info(provider_name, env, host_id)
 
+
 @app.route(
-    "/<string:provider_name>/<string:env>/host/<host_id>/refresh/", methods=['GET']
+    "/<string:provider_name>/<string:env>/host/<host_id>/refresh/",
+    methods=['GET']
 )
 @auth.login_required
 def get_host_refresh(provider_name, env, host_id):
