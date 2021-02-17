@@ -1,7 +1,7 @@
 from copy import deepcopy
 from datetime import datetime
 from peewee import MySQLDatabase, Model, DateTimeField, CharField, \
-    PrimaryKeyField, IntegerField
+    PrimaryKeyField, IntegerField, ForeignKeyField
 from host_provider.settings import MYSQL_PARAMS
 
 
@@ -51,6 +51,18 @@ class Host(BaseModel):
         return provider.credential
 
 
+class IP(BaseModel):
+    id = PrimaryKeyField()
+    name = CharField()
+    group = CharField()
+    host = ForeignKeyField(Host, null=True)
+    address = CharField()
+
+    @property
+    def to_dict(self):
+        return self._data
+
+
 def initialize_database():
     mysql_db.get_conn()
-    mysql_db.create_tables([Host])
+    mysql_db.create_tables([Host, IP])
