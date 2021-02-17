@@ -11,6 +11,14 @@ class CredentialGce(CredentialBase):
         return self.content['availability_zones']
 
     @property
+    def region(self):
+        return self.content['region']
+
+    @property
+    def subnetwork(self):
+        return self.content['subnetwork']
+
+    @property
     def _zones_field(self):
         return self.availability_zones
 
