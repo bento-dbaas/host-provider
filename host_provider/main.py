@@ -68,6 +68,7 @@ def create_host(provider_name, env):
     zone = data.get("zone", None)
     team_name = data.get("team_name", None)
     database_name = data.get("database_name", "")
+    static_ip_id = data.get("static_ip_id", "")
 
     # TODO improve validation and response
     if not(group and name and engine and cpu and memory):
@@ -82,6 +83,7 @@ def create_host(provider_name, env):
         'node_ip': data.get('node_ip', ''),
         'init_user': data.get('init_user', ''),
         'init_password': data.get('init_password', ''),
+        'static_ip_id': static_ip_id
     }
     for attempt in range(provider.create_attempts):
         try:
@@ -89,16 +91,47 @@ def create_host(provider_name, env):
                 cpu, memory, name, group, zone, **extra_params
             )
             host_obj = provider.create_host_object(
-                provider, data, env, created_host_metadata
+                provider, data, env, created_host_metadata, static_ip_id
             )
-            return response_created(
-                    address=host_obj.address,
-                    id=host_obj.id)
-
+            provider.associate_ip_with_host(host_obj, static_ip_id)
+            return response_created(address=host_obj.address, id=host_obj.id)
         except Exception as e:
             print_exc()
             if attempt == provider.create_attempts - 1:
                 return response_invalid_request(str(e))
+
+
+@app.route("/<string:provider_name>/<string:env>/ip/", methods=['POST'])
+@auth.login_required
+def create_ip(provider_name, env):
+    data = request.get_json()
+    group = data.get("group", None)
+    name = data.get("name", None)
+    engine = data.get("engine", None)
+
+    # TODO improve validation and response
+    if not(group and name and engine):
+        return response_invalid_request("invalid data {}".format(data))
+
+    provider = build_provider(provider_name, env, engine)
+
+    ip = provider.create_static_ip(group, name)
+    return response_created(
+        address=ip.address,
+        identifier=ip.name,
+        id=ip.id
+    )
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/ip/<string:ip_name>/",
+    methods=['DELETE']
+)
+@auth.login_required
+def destroy_ip(provider_name, env, ip_name):
+    provider = build_provider(provider_name, env, "")
+    provider.destroy_static_ip(ip_name)
+    return response_ok()
 
 
 @app.route("/<string:provider_name>/<string:env>/host/stop", methods=['POST'])
