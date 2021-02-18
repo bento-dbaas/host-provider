@@ -8,7 +8,7 @@ from flask_httpauth import HTTPBasicAuth
 from host_provider.settings import APP_USERNAME, APP_PASSWORD
 from host_provider.credentials.base import CredentialAdd
 from host_provider.providers import get_provider_to
-from host_provider.models import Host
+from host_provider.models import Host, IP
 # TODO: remove duplicate code and write more tests
 
 
@@ -116,21 +116,25 @@ def create_ip(provider_name, env):
     provider = build_provider(provider_name, env, engine)
 
     ip = provider.create_static_ip(group, name)
-    return response_created(
-        address=ip.address,
-        identifier=ip.name,
-        id=ip.id
-    )
+    if ip:
+        return response_created(
+            address=ip.address,
+            identifier=ip.name,
+            id=ip.id
+        )
+    return response_ok()
 
 
 @app.route(
-    "/<string:provider_name>/<string:env>/ip/<string:ip_name>/",
+    "/<string:provider_name>/<string:env>/ip/<string:ip_name>",
     methods=['DELETE']
 )
 @auth.login_required
 def destroy_ip(provider_name, env, ip_name):
     provider = build_provider(provider_name, env, "")
     provider.destroy_static_ip(ip_name)
+    ip = IP.get(name=ip_name)
+    ip.delete_instance()
     return response_ok()
 
 
