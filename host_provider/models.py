@@ -55,7 +55,7 @@ class IP(BaseModel):
     id = PrimaryKeyField()
     name = CharField()
     group = CharField()
-    host = ForeignKeyField(Host, null=True)
+    host = ForeignKeyField(Host, null=True, on_delete='SET NULL')
     address = CharField()
 
     @property
