@@ -122,7 +122,7 @@ def create_ip(provider_name, env):
             identifier=ip.name,
             id=ip.id
         )
-    return response_ok()
+    return response_empty_content()
 
 
 @app.route(
@@ -562,6 +562,10 @@ def response_ok(message=None, **kwargs):
     if kwargs:
         response.update(**kwargs)
     return _response(200, **response)
+
+
+def response_empty_content():
+    return _response(200, **{})
 
 
 def _response(status, **kwargs):
