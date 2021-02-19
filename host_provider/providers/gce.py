@@ -205,7 +205,7 @@ class GceProvider(ProviderBase):
         ip.save()
 
     def create_host_object(self, provider, payload, env,
-                           created_host_metadata, static_ip_id):
+                           created_host_metadata, static_ip_id, **kw):
 
         zone = provider.credential.zone
         instance_name = payload['name']

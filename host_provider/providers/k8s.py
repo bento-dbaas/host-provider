@@ -118,9 +118,11 @@ class K8sProvider(ProviderBase):
         )
         return self.client.create_namespaced_stateful_set(self.namespace, yaml)
 
-    def create_host_object(self, provider, payload, env, created_host_metadata):
+    def create_host_object(self, provider, payload, env,
+                           created_host_metadata, **kw):
         host = Host(
-            name=f"{created_host_metadata.metadata.name}-0", group=payload['group'],
+            name=f"{created_host_metadata.metadata.name}-0",
+            group=payload['group'],
             engine=payload['engine'], environment=env, cpu=payload['cpu'],
             memory=payload['memory'], provider=provider.credential.provider,
             identifier=created_host_metadata.metadata.name,
