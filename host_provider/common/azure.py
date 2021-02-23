@@ -3,6 +3,7 @@ from msal import SerializableTokenCache
 from host_provider.credentials.azure import CredentialAzure
 from host_provider.providers.azure import AzureProvider
 
+
 class AzureClientApplication(object):
     __credential_cls = CredentialAzure
     __cache_cls = SerializableTokenCache
@@ -16,6 +17,14 @@ class AzureClientApplication(object):
         if not self.scopes:
             self.scopes = "https://management.azure.com/.default"
     
+    @property
+    def scopes(self):
+        return self.scopes
+
+    @scopes.setter
+    def scopes(self, scope):
+        self.scopes = scope
+
     def _build_credentials(self, provider=None, environment=None, engine=None):
         if not provider:
             provider = self.provider
@@ -34,11 +43,15 @@ class AzureClientApplication(object):
         credentials = self._build_credentials()
         client_id = credentials.access_id
         client_credential = credentials.secret_key
-        authority = str(url+credentials.tenant_id)
-        return ConfidentialClientApplication(client_id, authority=authority, client_credential=client_credential)
-
-    def get_token_for_client(self, scopes=None):
+        authority = str(url + credentials.tenant_id)
+        return ConfidentialClientApplication(
+            client_id, authority=authority, client_credential=client_credential
+        )
+    @classmethod
+    def token(cls, scopes=None):
         if not scopes:
-            scopes = self.scopes
+            scopes = cls.scopes
         app = self.__build_msal_app()
         return app.acquire_token_for_client(scopes=scopes)
+
+
