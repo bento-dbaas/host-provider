@@ -8,14 +8,12 @@ class AzureClientApplication(object):
     __credential_cls = CredentialAzure
     __cache_cls = SerializableTokenCache
 
-    def __init__(self, scopes=None):
-        self.scopes = scopes
+    def __init__(self, engine="mssql", provider="azure_arm", **kwargs):
+        self.engine = engine
+        self.provider = provider
+        self.environment = kwargs.get("environment", "dev")
+        self.scopes = kwargs.get("scopes", "https://management.azure.com/.default")
         self._credentials = None
-        self.provider = "azure_arm"
-        self.environment = "dev"
-        self.engine = "mssql"
-        if not self.scopes:
-            self.scopes = "https://management.azure.com/.default"
     
     @property
     def scopes(self):
@@ -47,11 +45,10 @@ class AzureClientApplication(object):
         return ConfidentialClientApplication(
             client_id, authority=authority, client_credential=client_credential
         )
+
     @classmethod
     def token(cls, scopes=None):
         if not scopes:
             scopes = cls.scopes
         app = self.__build_msal_app()
         return app.acquire_token_for_client(scopes=scopes)
-
-

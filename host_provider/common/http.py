@@ -1,5 +1,6 @@
 import requests
 from requests.auth import AuthBase
+from urllib.parse import urlparse
 from host_provider.common.azure import AzureClientApplication
 from host_provider.settings import HTTP_AZURE_PROXY
 
@@ -36,7 +37,6 @@ class AzureAccessToken(AuthBase):
 
 class BaseConnection(object):
     session = None
-    self.token = None
 
     def __init__(self):
         self.session = requests.Session()
@@ -57,13 +57,14 @@ class Connection(BaseConnection):
         BaseConnection.__init__()
         self.session.timeout = kwargs.get('timeout', 60)
 
-    def get_token_from_client(self, *kwargs):
+    def get_token_from_client(self):
         client = self.client_cls()
         try:
             token = client.get_token()
         except Exception as ex:
             raise AzureClientApplicationException(ex)
-        self.token = token
+        self.access_token = token
+        return self.access_token
 
     def add_default_headers(self, headers):
         headers["Content-Type"] = "application/json"
@@ -80,8 +81,7 @@ class Connection(BaseConnection):
             data=body,
             headers=headers,
             allow_redirects=ALLOW_REDIRECTS,
-            stream=stream,
-            verify=self.verification
+            stream=stream
         )
 
     def prepared_request(self, method, url, body=None,
@@ -92,12 +92,8 @@ class Connection(BaseConnection):
                                data=body, headers=headers)
 
         prepped = self.session.prepare_request(req)
-
         prepped.body = body
-
-        self.response = self.session.send(
-            prepped,
-            stream=raw)
+        self.response = self.session.send( prepped, stream=raw)
 
     def getresponse(self):
         return self.response
