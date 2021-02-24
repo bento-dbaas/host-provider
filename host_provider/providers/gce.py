@@ -59,7 +59,7 @@ class GceProvider(ProviderBase):
             instance=instance_name
         ).execute()
 
-        self.wait_status(project, zone, instance_name, status='RUNNING')
+        self.wait_status_of_instance(instance_name, status='RUNNING')
 
     def stop(self, identifier):
         host = Host.get(identifier=identifier)
@@ -74,7 +74,9 @@ class GceProvider(ProviderBase):
             instance=instance_name
         ).execute()
 
-        self.wait_status(project, zone, instance_name, status='TERMINATED')
+        self.wait_status_of_instance(
+            instance_name, status='TERMINATED'
+        )
 
     def _create_host(self, cpu, memory, name, *args, **kw):
 
