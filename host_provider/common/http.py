@@ -2,8 +2,11 @@ import requests
 from requests.auth import AuthBase
 from urllib.parse import urlparse
 from host_provider.common.azure import AzureClientApplication
-from host_provider.settings import HTTP_AZURE_PROXY
 
+try:
+    from host_provider.settings import HTTP_AZURE_PROXY
+except ImportError:
+    pass
 
 __all__ = [
     'BaseConnection',
@@ -11,28 +14,6 @@ __all__ = [
 ]
 
 ALLOW_REDIRECTS = 1
-
-
-class AzureClientApplicationException(Exception):
-    pass
-
-
-class AzureAccessToken(AuthBase):
-
-    def __init__(self, token=None):
-        self.token = token
-
-    def get_or_update_token(self):
-        if self.token == None:
-            try:
-                self.token = AzureClientApplication.token()
-            except Exception as ex:
-                raise AzureClientApplicationException(ex)
-        self.client = client_cls
-
-    def __call__(self, req):
-        req.headers["Authorization"] = f"{self.token}"
-        return req
 
 
 class BaseConnection(object):
@@ -43,7 +24,6 @@ class BaseConnection(object):
 
 
 class Connection(BaseConnection):
-    client_cls = AzureClientApplication
     response = None
 
     def __init__(self, host, port, secure=None, **kwargs):
@@ -56,19 +36,6 @@ class Connection(BaseConnection):
 
         BaseConnection.__init__()
         self.session.timeout = kwargs.get('timeout', 60)
-
-    def get_token_from_client(self):
-        client = self.client_cls()
-        try:
-            token = client.get_token()
-        except Exception as ex:
-            raise AzureClientApplicationException(ex)
-        self.access_token = token
-        return self.access_token
-
-    def add_default_headers(self, headers):
-        headers["Content-Type"] = "application/json"
-        headers["Authorization"] = "Bearer %s" % self.access_token
 
     def request(self, method, url, body=None, headers=None, raw=False,
                 stream=False):
@@ -93,7 +60,7 @@ class Connection(BaseConnection):
 
         prepped = self.session.prepare_request(req)
         prepped.body = body
-        self.response = self.session.send( prepped, stream=raw)
+        self.response = self.session.send(prepped, stream=raw)
 
     def getresponse(self):
         return self.response
@@ -114,3 +81,6 @@ class Connection(BaseConnection):
                 headers[key] = str(value)
 
         return headers
+
+    def connect(self, host=None, port=None, base_url=None, **kwargs):
+        pass

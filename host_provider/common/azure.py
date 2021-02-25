@@ -1,7 +1,11 @@
-from msal import ConfidentialClientApplication
-from msal import SerializableTokenCache
+from host_provider.common.http import Connection
 from host_provider.credentials.azure import CredentialAzure
 from host_provider.providers.azure import AzureProvider
+from msal import ConfidentialClientApplication, SerializableTokenCache
+
+
+class AzureClientApplicationException(Exception):
+    pass
 
 
 class AzureClientApplication(object):
@@ -52,3 +56,42 @@ class AzureClientApplication(object):
             scopes = cls.scopes
         app = self.__build_msal_app()
         return app.acquire_token_for_client(scopes=scopes)
+
+
+class AzureAccessToken(AuthBase):
+
+    def __init__(self, token=None):
+        self.token = token
+
+    def get_or_update_token(self):
+        if self.token == None:
+            try:
+                self.token = AzureClientApplication.token()
+            except Exception as ex:
+                raise AzureClientApplicationException(ex)
+        self.client = client_cls
+
+    def __call__(self, req):
+        req.headers["Authorization"] = f"{self.token}"
+        return req
+
+
+class AzureConnection(Connection):
+    client_cls = AzureClientApplication    
+
+    def add_default_headers(self, headers):
+        headers['Content-Type'] = "application/json"
+        headers['Authorization'] = "Bearer %s" % self.access_token
+        return headers     
+
+    def get_token_from_client(self):
+        client = self.client_cls()
+        try:
+            token = client.get_token()
+        except Exception as ex:
+            raise AzureClientApplicationException(ex)
+        self.access_token = token
+        return self.access_token
+
+    def connect(self, **kwargs):
+        pass
