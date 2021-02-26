@@ -78,14 +78,17 @@ class GceProvider(ProviderBase):
             instance_name, status='TERMINATED'
         )
 
-    def _create_host(self, cpu, memory, name, *args, **kw):
-
+    @property
+    def disk_image_link(self):
         image_response = self.client.images().get(
             project=self.credential.project,
             image=self.credential.template_to(self.engine),
         ).execute()
 
-        source_disk_image = image_response['selfLink']
+        return image_response['selfLink']
+
+    def _create_host(self, cpu, memory, name, *args, **kw):
+
         offering = self.credential.offering_to(int(cpu), memory)
         zone = self.credential.zone
         static_ip_id = kw.get('static_ip_id')
@@ -113,7 +116,7 @@ class GceProvider(ProviderBase):
                     'boot': True,
                     'autoDelete': True,
                     'initializeParams': {
-                        'sourceImage': source_disk_image,
+                        'sourceImage': self.disk_image_link,
                     }
                 }
             ],
