@@ -1,3 +1,4 @@
+from requests.auth import AuthBase
 from host_provider.common.http import Connection
 from host_provider.credentials.azure import CredentialAzure
 from host_provider.providers.azure import AzureProvider
@@ -34,7 +35,6 @@ class AzureClientApplication(object):
             environment = self.environment
         if not engine:
             engine = self.engine
-
         if not self._credentials:
             self._credentials = self.__credential_cls(provider, environment, engine)
         return self._credentials
@@ -58,7 +58,7 @@ class AzureClientApplication(object):
         return app.acquire_token_for_client(scopes=scopes)
 
 
-class AzureAccessToken(AuthBase):
+class AzureAuth(AuthBase):
 
     def __init__(self, token=None):
         self.token = token
@@ -77,7 +77,8 @@ class AzureAccessToken(AuthBase):
 
 
 class AzureConnection(Connection):
-    client_cls = AzureClientApplication    
+    client_cls = AzureClientApplication
+    response_cls = Response
 
     def add_default_headers(self, headers):
         headers['Content-Type'] = "application/json"

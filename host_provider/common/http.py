@@ -1,5 +1,5 @@
 import requests
-from requests.auth import AuthBase
+import json
 from urllib.parse import urlparse
 from host_provider.common.azure import AzureClientApplication
 
@@ -18,6 +18,7 @@ ALLOW_REDIRECTS = 1
 
 class BaseConnection(object):
     session = None
+    response_cls = Response
 
     def __init__(self):
         self.session = requests.Session()
@@ -64,7 +65,7 @@ class Connection(BaseConnection):
 
     def getresponse(self):
         return self.response
-            
+
     @property
     def status(self):
         return self.response.status_code
@@ -84,3 +85,25 @@ class Connection(BaseConnection):
 
     def connect(self, host=None, port=None, base_url=None, **kwargs):
         pass
+
+
+class Response(object):
+    object = None
+    body = None
+    headers = {}
+
+    def __init__(self, connection, response=None):
+        self.connection = connection
+        self._response = response
+        self.object = self.parse_body
+
+    @property
+    def body(self):
+        return self._response.content
+
+    def parse_body(self):
+        body = json.loads(self.body)
+        return self.body
+
+    def get_token_from_response(self):
+        return self._response['access_token']
