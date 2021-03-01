@@ -1,98 +1,115 @@
-from requests.auth import AuthBase
-from host_provider.common.http import Connection
+import json
+import time
+from urllib.parse import urlencode
+
+from host_provider.common.http import Connection, ProviderConnection, Response, JsonResponse
 from host_provider.credentials.azure import CredentialAzure
 from host_provider.providers.azure import AzureProvider
-from msal import ConfidentialClientApplication, SerializableTokenCache
-
-
-class AzureClientApplicationException(Exception):
-    pass
-
-
-class AzureClientApplication(object):
-    __credential_cls = CredentialAzure
-    __cache_cls = SerializableTokenCache
-
-    def __init__(self, engine="mssql", provider="azure_arm", **kwargs):
-        self.engine = engine
-        self.provider = provider
-        self.environment = kwargs.get("environment", "dev")
-        self.scopes = kwargs.get("scopes", "https://management.azure.com/.default")
-        self._credentials = None
-    
-    @property
-    def scopes(self):
-        return self.scopes
-
-    @scopes.setter
-    def scopes(self, scope):
-        self.scopes = scope
-
-    def _build_credentials(self, provider=None, environment=None, engine=None):
-        if not provider:
-            provider = self.provider
-        if not environment:
-            environment = self.environment
-        if not engine:
-            engine = self.engine
-        if not self._credentials:
-            self._credentials = self.__credential_cls(provider, environment, engine)
-        return self._credentials
-
-    def __build_msal_app(self, url=None):
-        if not url:
-            url = "https://login.microsoftonline.com/"
-        credentials = self._build_credentials()
-        client_id = credentials.access_id
-        client_credential = credentials.secret_key
-        authority = str(url + credentials.tenant_id)
-        return ConfidentialClientApplication(
-            client_id, authority=authority, client_credential=client_credential
-        )
-
-    @classmethod
-    def token(cls, scopes=None):
-        if not scopes:
-            scopes = cls.scopes
-        app = self.__build_msal_app()
-        return app.acquire_token_for_client(scopes=scopes)
-
-
-class AzureAuth(AuthBase):
-
-    def __init__(self, token=None):
-        self.token = token
-
-    def get_or_update_token(self):
-        if self.token == None:
-            try:
-                self.token = AzureClientApplication.token()
-            except Exception as ex:
-                raise AzureClientApplicationException(ex)
-        self.client = client_cls
-
-    def __call__(self, req):
-        req.headers["Authorization"] = f"{self.token}"
-        return req
 
 
 class AzureConnection(Connection):
-    client_cls = AzureClientApplication
-    response_cls = Response
+    credential_cls = CredentialAzure
+    conn_cls = ProviderConnection
+    response_cls = JsonResponse
+
+    def __init__(self, engine="mssql", provider="azure_arm"):
+        self.engine = engine
+        self.provider = provider
+        self.environment = 'dev'
+        self.__login_host = None
+        self.__key = None
+        self.__secret = None
+        self.__tenant_id = None
+        self.__login_resource = None
+        self.__subscription_id = None
+
+    @property
+    def subscription_id(self):
+        return self.__subscription_id
+        
+    @subscription_id.setter
+    def subscription_id(self, subscription_id):
+        self.__subscription_id = subscription_id
+
+    @property
+    def key(self):
+        return self.__key
+        
+    @key.setter
+    def key(self, key):
+        self.__key = key
+
+    @property
+    def secret(self):
+        return self.__secret
+        
+    @secret.setter
+    def secret(self, secret):
+        self.__secret = secret
+
+    @property
+    def tenant_id(self):
+        return self.__tenant_id        
+
+    @tenant_id.setter
+    def tenant_id(self, tenant_id):
+        self.__tenant_id = tenant_id
+
+    @property
+    def login_host(self):
+        return self.__login_host
+    
+    @login_host.setter
+    def login_host(self, host):
+        self.__login_host = host
+
+    @property
+    def login_resource(self):
+        return self.__login_resource
+    
+    @login_resource.setter
+    def login_resource(self, login_resource):
+        self.__login_resource = login_resource
+        
+    def _build_credentials(self):
+        credentials = self.credential_cls(self.provider, self.environment, self.engine)
+        self.key = credentials.access_id
+        self.secret = credentials.secret_key
+        self.tenant_id = credentials.tenant_id
+        self.subscription_id = credentials.subscription_id
+        self.login_resource = "https://management.azure.com/.default"
+        self.login_host = "login.microsoftonline.com"
+
+    def get_token_from_credentials(self):
+        self._build_credentials()
+        conn = self.conn_cls(self.login_host, 443, timeout=self.timeout)
+        conn.connect()
+        params = urlencode({
+            "grant_type": "client_credentials",
+            "client_id": self.key,
+            "client_secret": self.secret,
+            "scope": self.login_resource
+        })
+        headers = {"Content-type": "application/x-www-form-urlencoded"}
+        conn.request("POST", "/%s/oauth2/v2.0/token" % self.tenant_id, params, headers)
+        resp = self.response_cls(conn.getresponse(), conn)
+        self.access_token = resp.object["access_token"]
+        self.expires_in = resp.object["expires_in"]
 
     def add_default_headers(self, headers):
         headers['Content-Type'] = "application/json"
         headers['Authorization'] = "Bearer %s" % self.access_token
-        return headers     
-
-    def get_token_from_client(self):
-        client = self.client_cls()
-        try:
-            token = client.get_token()
-        except Exception as ex:
-            raise AzureClientApplicationException(ex)
-        self.access_token = token
-        return self.access_token
-
+        return headers
+    
+    def encode_data(self, data):
+        return json.dumps(data)
+    
     def connect(self, **kwargs):
-        pass
+        self.get_token_from_credentials()
+        return super(AzureConnection, self).connect(**kwargs)
+
+    def request(self, action, params=None, data=None, headers=None, method='GET', raw=False):
+        if (time.time() + 300) >= int(self.expires_in):
+            self.get_token_from_credentials()
+
+        return super(AzureConnection, self).request(action, params=params, data=data, headers=headers, method=method, raw=raw)
