@@ -1,14 +1,12 @@
 from unittest import TestCase
 from unittest.mock import patch
 from collections import namedtuple
-from copy import deepcopy
 
 from libcloud import security
 
 from host_provider.providers.base import ProviderBase
-from host_provider.providers import base, CloudStackProvider, GceProvider
+from host_provider.providers import base, CloudStackProvider
 from tests.test_credentials import CredentialAddFake, FakeMongoDB
-from .fakes.gce import FAKE_GCE_CREDENTIAL, FAKE_HOST
 
 
 ENVIRONMENT = "dev"
@@ -42,17 +40,6 @@ class CloudStackBaseTestCase(TestCase):
     def setUp(self):
         self.provider = CloudStackProvider(ENVIRONMENT, ENGINE)
         self.host = namedtuple('FakeHost', 'identifier')('fake_identifier')
-
-
-class GCPBaseTestCase(TestCase):
-    def setUp(self):
-        self.provider = GceProvider(ENVIRONMENT, ENGINE)
-        self.host = FAKE_HOST
-
-    def build_credential_content(self, content, **kwargs):
-        values = deepcopy(FAKE_GCE_CREDENTIAL)
-        values.update(kwargs)
-        content.return_value = values
 
 
 class TestBaseProvider(TestCase):

@@ -20,6 +20,9 @@ class CredentialCloudStack(CredentialBase):
     def secret_key(self):
         return self.content['secret_key']
 
+    def offering_to(self, cpu, memory):
+        return self.content['offerings']['{}c{}m'.format(cpu, memory)]['id']
+
     def template_to(self, engine):
         return self.content['templates'][engine]
 
