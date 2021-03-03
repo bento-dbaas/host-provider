@@ -316,3 +316,4 @@ class Connection(object):
 
     def encode_data(self, data):
         return json.dumps(data)
+
