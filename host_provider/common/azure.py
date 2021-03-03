@@ -12,10 +12,10 @@ class AzureConnection(Connection):
     conn_cls = ProviderConnection
     response_cls = JsonResponse
 
-    def __init__(self, engine="mssql", provider="azure_arm"):
+    def __init__(self, engine=None, provider='azure_arm', env='dev'):
         self.engine = engine
         self.provider = provider
-        self.environment = 'dev'
+        self.environment = env
         self.__login_host = None
         self.__key = None
         self.__secret = None

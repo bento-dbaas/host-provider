@@ -4,16 +4,13 @@ from urllib.parse import urlencode, urlparse, urljoin
 
 import requests
 
-try:
-    from host_provider.settings import HTTP_AZURE_PROXY
-except ImportError:
-    pass
 
 __all__ = [
     'ProviderConnection',
     'Connection',
     'Response',
-    'RawResponse'
+    'RawResponse',
+    'JsonResponse'
 ]
 
 ALLOW_REDIRECTS = 1
@@ -22,11 +19,13 @@ ALLOW_REDIRECTS = 1
 class ConnectionError(Exception):
     def __init__(*args, **kwargs):
         print(f"Connection Error:{args} / {kwargs}")
+        pass
 
 
 class ResponseError(Exception):
     def __init__(*args, **kwargs):
         print(f"Response Error:{args} / {kwargs}")
+        pass
 
 
 class BaseProviderConnection(object):
@@ -41,7 +40,7 @@ class BaseProviderConnection(object):
 
     http_proxy_used = False
 
-    ca_cert = None    
+    ca_cert = None
 
     def __init__(self):
         self.session = requests.Session()
@@ -121,7 +120,7 @@ class Response(object):
         self.error = response.reason
         self.status = response.status_code
         self.request = response.request
-        self.iter_content = response.iter_content
+        self.iter_content = response.iter_content     
 
         self.body = response.text.strip() \
             if response.text is not None and hasattr(response.text, 'strip') \
@@ -280,15 +279,15 @@ class Connection(object):
         secure = self.secure
 
         if getattr(self, 'base_url', None) and base_url is None:
-            (host, port,
-             secure, request_path) = \
-                self._tuple_from_url(getattr(self, 'base_url'))
+            (host, port, secure, request_path) = self._tuple_from_url(getattr(self, 'base_url'))
+
         elif base_url is not None:
-            (host, port,
-             secure, request_path) = self._tuple_from_url(base_url)
+            (host, port, secure, request_path) = self._tuple_from_url(base_url)
+
         else:
             host = host or self.host
             port = port or self.port
+
         port = int(port)
 
         if not hasattr(kwargs, 'host'):
@@ -299,12 +298,6 @@ class Connection(object):
 
         if not hasattr(kwargs, 'secure'):
             kwargs.update({'secure': self.secure})
-
-        if not hasattr(kwargs, 'key_file') and hasattr(self, 'key_file'):
-            kwargs.update({'key_file': getattr(self, 'key_file')})
-
-        if not hasattr(kwargs, 'cert_file') and hasattr(self, 'cert_file'):
-            kwargs.update({'cert_file': getattr(self, 'cert_file')})
 
         if self.timeout:
             kwargs.update({'timeout': self.timeout})
@@ -355,14 +348,13 @@ class Connection(object):
         if self.connection is None:
             self.connect()
 
-        print(str(url))
         try:
             if raw:
                 self.connection.prepared_request( method=method, url=url, body=data, headers=headers, raw=raw, stream=stream)
             else:
                 self.connection.request(method=method, url=url, body=data, headers=headers, stream=stream)
         except Exception as error:
-            print(str(error))
+            raise ResponseError(error)
 
         if raw:
             response_cls = self.rawResponse_cls
@@ -372,9 +364,9 @@ class Connection(object):
             kwargs = {'connection': self, 'response': self.connection.getresponse()}
 
         try:
-            response = response_cls(**kwargs)
+           response = response_cls(**kwargs)
         finally:
-            self.reset_context()
+           self.reset_context()
 
         return response
 
@@ -383,3 +375,6 @@ class Connection(object):
     
     def add_default_headers(self, headers):
         return headers
+
+    def encode_data(self, data):
+        return json.dumps(data)
