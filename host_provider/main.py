@@ -8,7 +8,7 @@ from flask_httpauth import HTTPBasicAuth
 from host_provider.settings import APP_USERNAME, APP_PASSWORD
 from host_provider.credentials.base import CredentialAdd
 from host_provider.providers import get_provider_to
-from host_provider.models import Host
+from host_provider.models import Host, IP
 # TODO: remove duplicate code and write more tests
 
 
@@ -68,6 +68,7 @@ def create_host(provider_name, env):
     zone = data.get("zone", None)
     team_name = data.get("team_name", None)
     database_name = data.get("database_name", "")
+    static_ip_id = data.get("static_ip_id", "")
 
     # TODO improve validation and response
     if not(group and name and engine and cpu and memory):
@@ -82,6 +83,7 @@ def create_host(provider_name, env):
         'node_ip': data.get('node_ip', ''),
         'init_user': data.get('init_user', ''),
         'init_password': data.get('init_password', ''),
+        'static_ip_id': static_ip_id
     }
     for attempt in range(provider.create_attempts):
         try:
@@ -89,13 +91,51 @@ def create_host(provider_name, env):
                 cpu, memory, name, group, zone, **extra_params
             )
             host_obj = provider.create_host_object(
-                provider, data, env, created_host_metadata
+                provider, data, env, created_host_metadata, static_ip_id
             )
+            provider.associate_ip_with_host(host_obj, static_ip_id)
             return response_created(address=host_obj.address, id=host_obj.id)
         except Exception as e:
             print_exc()
             if attempt == provider.create_attempts - 1:
                 return response_invalid_request(str(e))
+
+
+@app.route("/<string:provider_name>/<string:env>/ip/", methods=['POST'])
+@auth.login_required
+def create_ip(provider_name, env):
+    data = request.get_json()
+    group = data.get("group", None)
+    name = data.get("name", None)
+    engine = data.get("engine", None)
+
+    # TODO improve validation and response
+    if not(group and name and engine):
+        return response_invalid_request("invalid data {}".format(data))
+
+    provider = build_provider(provider_name, env, engine)
+
+    ip = provider.create_static_ip(group, name)
+    if ip:
+        return response_created(
+            address=ip.address,
+            identifier=ip.name,
+            id=ip.id
+        )
+    return response_empty_content()
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/ip/<string:ip_name>",
+    methods=['DELETE']
+)
+@auth.login_required
+def destroy_ip(provider_name, env, ip_name):
+    provider = build_provider(provider_name, env, "")
+    provider.destroy_static_ip(ip_name)
+    ip = IP.get(name=ip_name)
+    ip.delete_instance()
+    return response_ok()
 
 
 @app.route("/<string:provider_name>/<string:env>/host/stop", methods=['POST'])
@@ -252,7 +292,8 @@ def destroy_host(provider_name, env, host_id):
 
 
 @app.route(
-    "/<string:provider_name>/<string:env>/clean/<string:name>", methods=['DELETE']
+    "/<string:provider_name>/<string:env>/clean/<string:name>",
+    methods=['DELETE']
 )
 @auth.login_required
 def clean(provider_name, env, name):
@@ -280,7 +321,8 @@ def configure(provider_name, env):
     configuration = data.get("configuration", None)
     if not host or not group or not engine or not configuration:
         return response_invalid_request(
-            "host, group, engine and configuration required. Payload: {}".format(data)
+            ("host, group, engine and configuration required. "
+             "Payload: {}").format(data)
         )
     try:
         provider = build_provider(provider_name, env, engine)
@@ -292,7 +334,8 @@ def configure(provider_name, env):
 
 
 @app.route(
-    "/<string:provider_name>/<string:env>/host/configure/<string:host>", methods=['DELETE']
+    "/<string:provider_name>/<string:env>/host/configure/<string:host>",
+    methods=['DELETE']
 )
 @auth.login_required
 def configure_delete(provider_name, env, host):
@@ -331,7 +374,8 @@ def get_host(provider_name, env, host_id):
 
 
 @app.route(
-    "/<string:provider_name>/<string:env>/host/<host_id>/refresh/", methods=['GET']
+    "/<string:provider_name>/<string:env>/host/<host_id>/refresh/",
+    methods=['GET']
 )
 @auth.login_required
 def get_host_refresh(provider_name, env, host_id):
@@ -518,6 +562,10 @@ def response_ok(message=None, **kwargs):
     if kwargs:
         response.update(**kwargs)
     return _response(200, **response)
+
+
+def response_empty_content():
+    return _response(200, **{})
 
 
 def _response(status, **kwargs):
