@@ -9,7 +9,6 @@ __all__ = [
     'ProviderConnection',
     'Connection',
     'Response',
-    'RawResponse',
     'JsonResponse'
 ]
 
@@ -70,15 +69,6 @@ class ProviderConnection(BaseProviderConnection):
             allow_redirects=ALLOW_REDIRECTS,
             stream=stream
         )
-
-    def prepared_request(self, method, url, body=None, headers=None, raw=False, stream=False):
-
-        headers = self._normalize_headers(headers=headers)
-        req = requests.Request(method, ''.join([self.host, url]), data=body, headers=headers)
-
-        prepped = self.session.prepare_request(req)
-        prepped.body = body
-        self.response = self.session.send(prepped, stream=raw)
 
     def getresponse(self):
         return self.response
@@ -144,50 +134,6 @@ class Response(object):
         return dict(((k.lower(), v) for k, v in dictionary.items()))
 
 
-class RawResponse(Response):
-    connection = None
-    status = None
-    headers = {}
-    body = None
-    object = None
-
-    def __init__(self, connection, response=None):
-        self._status = None
-        self._response = None
-        self._headers = {}
-        self._error = None
-        self._reason = None
-        self.connection = connection
-        if response is not None:
-            self.headers = self.lowercase_keys(dict(response.headers))
-            self.error = response.reason
-            self.status = response.status_code
-            self.request = response.request
-            self.iter_content = response.iter_content
-
-    def success(self):
-        return self.status in [requests.codes.ok, requests.codes.created, requests.codes.accepted]
-
-    @property
-    def response(self):
-        if not self._response:
-            response = self.connection.connection.getresponse()
-            self._response = response
-            if not self.success():
-                self.parse_error()
-        return self._response
-
-    @property
-    def body(self):
-        return self.response.body
-
-    @property
-    def reason(self):
-        if not self._reason:
-            self._reason = self.response.reason
-        return self._reason
-
-
 class JsonResponse(Response):
 
     def parse_body(self):
@@ -205,7 +151,6 @@ class Connection(object):
     connection = None
     conn_cls = ProviderConnection
     response_cls = Response
-    rawResponse_cls = RawResponse
     host = ''
     port = 443
     timeout = None
@@ -349,19 +294,12 @@ class Connection(object):
             self.connect()
 
         try:
-            if raw:
-                self.connection.prepared_request( method=method, url=url, body=data, headers=headers, raw=raw, stream=stream)
-            else:
-                self.connection.request(method=method, url=url, body=data, headers=headers, stream=stream)
+            self.connection.request(method=method, url=url, body=data, headers=headers, stream=stream)
         except Exception as error:
             raise ResponseError(error)
 
-        if raw:
-            response_cls = self.rawResponse_cls
-            kwargs = {'connection': self, 'response': self.connection.getresponse()}
-        else:
-            response_cls = self.response_cls
-            kwargs = {'connection': self, 'response': self.connection.getresponse()}
+        response_cls = self.response_cls
+        kwargs = {'connection': self, 'response': self.connection.getresponse()}
 
         try:
            response = response_cls(**kwargs)

@@ -1,7 +1,7 @@
 from unittest import TestCase
 import requests
 import requests_mock
-from host_provider.common.http import Connection, JsonResponse, RawResponse, ProviderConnection, ResponseError
+from host_provider.common.http import Connection, JsonResponse, ProviderConnection, ResponseError
 
 
 class ResponseClassesTests(TestCase):
@@ -39,25 +39,3 @@ class ResponseClassesTests(TestCase):
 
         parsed = response.parse_body()
         self.assertEqual(parsed, '')
-
-    def test_RawResponse_class_read_method(self):
-
-        TEST_DATA = '1234abcd'
-
-        conn = Connection(host='mock.com', port=80, secure=False)
-        conn.connect()
-
-        with requests_mock.Mocker() as m:
-            m.register_uri('GET', 'http://mock.com/raw_data', text=TEST_DATA,
-                           headers={'test': 'value'})
-            response = conn.request('/raw_data', raw=True)
-        data = response.response.read()
-        self.assertEqual(data, TEST_DATA)
-
-        header_value = response.response.getheader('test')
-        self.assertEqual(header_value, 'value')
-
-        headers = response.response.getheaders()
-        self.assertEqual(headers, [('test', 'value')])
-
-        self.assertEqual(response.response.status, 200)
