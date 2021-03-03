@@ -30,6 +30,12 @@ class FakeProvider(ProviderBase):
         return CredentialAddFake
 
 
+class AzureBaseTesteCase(TestCase):
+    def setUp(self):
+        self.provider = AzureProvider(ENVIRONMENT, ENGINE)
+        self.host = namedtuple('FakeHost', 'identifier')('fake_identifier')
+
+
 class CloudStackBaseTestCase(TestCase):
     def setUp(self):
         self.provider = CloudStackProvider(ENVIRONMENT, ENGINE)
