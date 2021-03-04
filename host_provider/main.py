@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 from flask_httpauth import HTTPBasicAuth
 from host_provider.settings import APP_USERNAME, APP_PASSWORD
+from host_provider.settings import LOGGING_LEVEL
 from host_provider.credentials.base import CredentialAdd
 from host_provider.providers import get_provider_to
 from host_provider.models import Host, IP
@@ -16,6 +17,7 @@ app = Flask(__name__)
 auth = HTTPBasicAuth()
 cors = CORS(app)
 
+logging.basicConfig(level=LOGGING_LEVEL)
 
 @auth.verify_password
 def verify_password(username, password):
@@ -251,7 +253,7 @@ def reinstall_host(provider_name, env):
 
     try:
         provider = build_provider(provider_name, env, host.engine)
-        provider.restore(host.identifier, engine)
+        provider.restore(host, engine)
         if engine and engine != host.engine:
             host.engine = engine
             host.save()

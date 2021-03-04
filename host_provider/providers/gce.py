@@ -2,7 +2,7 @@ import logging
 from time import sleep
 import googleapiclient.discovery
 from google.oauth2 import service_account
-
+from googleapiclient.errors import HttpError
 from host_provider.credentials.gce import CredentialGce, CredentialAddGce
 from host_provider.providers.base import ProviderBase
 from host_provider.models import Host, IP
@@ -40,6 +40,9 @@ class GceProvider(ProviderBase):
     def get_static_ip_by_name(self, name):
         return IP.get(name=name)
 
+    def get_static_ip_host_id(self, host_id):
+        return IP.get(host_id=host_id)
+
     def build_credential(self):
         return CredentialGce(
             self.get_provider(), self.environment, self.engine
@@ -59,7 +62,7 @@ class GceProvider(ProviderBase):
             instance=instance_name
         ).execute()
 
-        self.wait_status_of_instance(instance_name, status='RUNNING')
+        self.wait_status_of_instance(instance_name, zone, status='RUNNING')
 
     def stop(self, identifier):
         host = Host.get(identifier=identifier)
@@ -75,7 +78,7 @@ class GceProvider(ProviderBase):
         ).execute()
 
         self.wait_status_of_instance(
-            instance_name, status='TERMINATED'
+            instance_name, zone, status='TERMINATED'
         )
 
     @property
@@ -215,9 +218,9 @@ class GceProvider(ProviderBase):
         zone = provider.credential.zone
         instance_name = payload['name']
 
-        self.wait_status_of_instance(instance_name, status='RUNNING')
+        self.wait_status_of_instance(instance_name, zone, status='RUNNING')
 
-        instance = self.get_instance(instance_name)
+        instance = self.get_instance(instance_name, zone)
         address = instance['networkInterfaces'][0]['networkIP']
 
         host = Host(
@@ -230,10 +233,11 @@ class GceProvider(ProviderBase):
         host.save()
         return host
 
-    def get_instance(self, instance_name, execute_request=True):
+    def get_instance(self, instance_name, zone, execute_request=True):
         request = self.client.instances().get(
             project=self.credential.project,
-            zone=self.credential.zone,
+            #zone=self.credential.zone,
+            zone=zone,
             instance=instance_name
         )
         if execute_request:
@@ -263,9 +267,10 @@ class GceProvider(ProviderBase):
             required_fields=['address']
         )
 
-    def wait_status_of_instance(self, instance_name, status):
+    def wait_status_of_instance(self, instance_name, zone, status):
         request = self.get_instance(
             instance_name,
+            zone,
             execute_request=False
         )
 
@@ -311,3 +316,55 @@ class GceProvider(ProviderBase):
                             required_fields, resource.keys()
                         )
         raise WrongStatusError(err_msg)
+
+    def restore(self, host, engine=None):
+
+        if host.recreating == False:
+            self._destroy(identifier=host.identifier)
+            host.recreating = True
+            host.save()
+
+        while True:
+            try:
+                instance = self.client.instances().get(
+                    project=self.credential.project,
+                    zone=host.zone,
+                    instance=host.name
+                ).execute()
+            except HttpError:
+                break
+
+        self.credential.zone = host.zone
+        created_host_metadata = self._create_host(
+            cpu=host.cpu,
+            memory=host.memory,
+            name=host.name,
+            static_ip_id=self.get_static_ip_host_id(host.id).name
+        )
+
+        self.wait_status_of_instance(host.name, host.zone, status='RUNNING')
+        host.identifier=created_host_metadata['id']
+        host.recreating = False
+        host.save()
+
+        '''
+       def _create_host(self, cpu, memory, name, *args, **kw):
+
+            offering = self.credential.offering_to(int(cpu), memory)
+            zone = self.credential.zone
+            static_ip_id = kw.get('static_ip_id')
+        '''
+
+
+        '''
+        node = self.BasicInfo(host.identifier)
+
+        if engine is None:
+            template = self.credential.template
+        else:
+            template = self.credential.template_to(engine)
+
+        template = self.BasicInfo(template)
+
+        return self.client.ex_restore(node, template)
+        '''
