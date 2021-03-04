@@ -251,7 +251,7 @@ def reinstall_host(provider_name, env):
 
     try:
         provider = build_provider(provider_name, env, host.engine)
-        provider.restore(host.identifier, engine)
+        provider.restore(host, engine)
         if engine and engine != host.engine:
             host.engine = engine
             host.save()
