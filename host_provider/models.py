@@ -1,7 +1,7 @@
 from copy import deepcopy
 from datetime import datetime
 from peewee import MySQLDatabase, Model, DateTimeField, CharField, \
-    PrimaryKeyField, IntegerField, ForeignKeyField
+    PrimaryKeyField, IntegerField, ForeignKeyField, BooleanField
 from host_provider.settings import MYSQL_PARAMS
 
 
@@ -33,7 +33,7 @@ class Host(BaseModel):
     identifier = CharField()
     address = CharField()
     zone = CharField(null=True)
-    status = IntegerField(null=True, default=1)
+    recreating = BooleanField(default=False)
 
     @property
     def to_dict(self):
@@ -50,10 +50,6 @@ class Host(BaseModel):
         provider_cls = get_provider_to(self.provider)
         provider = provider_cls(self.environment, self.engine, None)
         return provider.credential
-
-    STATUS_CREATED = 1
-    STATUS_DESTROYED = 2
-
 
 
 class IP(BaseModel):

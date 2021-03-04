@@ -5,7 +5,8 @@ from peewee import (
     CharField,
     PrimaryKeyField,
     IntegerField,
-    ForeignKeyField
+    ForeignKeyField,
+    BooleanField
 )
 from host_provider.settings import MYSQL_PARAMS
 from host_provider.settings import LOGGING_LEVEL
@@ -20,8 +21,8 @@ def main():
 
     try:
         logging.info("Add 'status' column on 'Host' table")
-        status_field = IntegerField(null=True, default=1)
-        migrate(migrator.add_column('Host', 'status', status_field))
+        recreating_field = BooleanField(default=False)
+        migrate(migrator.add_column('Host', 'recreating', recreating_field))
     except Exception as e:
         logging.error(e)
 
