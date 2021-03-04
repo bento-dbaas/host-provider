@@ -22,7 +22,7 @@ def main():
     try:
         logging.info("Add 'status' column on 'Host' table")
         recreating_field = BooleanField(default=False)
-        migrate(migrator.add_column('Host', 'recreating', recreating_field))
+        migrate(migrator.add_column('host', 'recreating', recreating_field))
     except Exception as e:
         logging.error(e)
 
