@@ -29,10 +29,10 @@ Go to your `DBaaS local instance > DBaaaS_Credentials > Credentials` and point t
 
 #### Initialize Script
 ```shell
-make db_initialize
+$make db_initialize
 ```
 
 #### Schema Migration
 ```shell
-make db_migrate
+$make db_migrate
 ```
