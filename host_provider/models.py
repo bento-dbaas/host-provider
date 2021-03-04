@@ -33,6 +33,7 @@ class Host(BaseModel):
     identifier = CharField()
     address = CharField()
     zone = CharField(null=True)
+    status = IntegerField(null=True, default=1)
 
     @property
     def to_dict(self):
@@ -49,6 +50,10 @@ class Host(BaseModel):
         provider_cls = get_provider_to(self.provider)
         provider = provider_cls(self.environment, self.engine, None)
         return provider.credential
+
+    STATUS_CREATED = 1
+    STATUS_DESTROYED = 2
+
 
 
 class IP(BaseModel):
