@@ -319,7 +319,10 @@ class GceProvider(ProviderBase):
 
     def restore(self, host, engine=None):
 
-        self._destroy(identifier=host.identifier)
+        if host.recreating == False:
+            self._destroy(identifier=host.identifier)
+            host.recreating = True
+            host.save()
 
         while True:
             try:
@@ -341,6 +344,7 @@ class GceProvider(ProviderBase):
 
         self.wait_status_of_instance(host.name, host.zone, status='RUNNING')
         host.identifier=created_host_metadata['id']
+        host.recreating = False
         host.save()
 
         '''
