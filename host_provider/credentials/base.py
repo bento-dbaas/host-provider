@@ -71,7 +71,17 @@ class CredentialBase(CredentialMongoDB):
         pass
 
     def after_create_host(self, group):
-        pass
+        existing = self.exist_node(group)
+        if not existing:
+            self.collection_last.update_one(
+                {"latestUsed": True, "environment": self.environment},
+                {"$set": {"zone": self.zone}}, upsert=True
+            )
+
+        self.collection_last.update(
+            {"group": group, "environment": self.environment},
+            {"$set": {"zone": self.zone}}, upsert=True
+        )
 
     @property
     def _zones_field(self):

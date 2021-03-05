@@ -17,7 +17,7 @@ deploy_prod:
 	tsuru app-deploy -a host-provider .
 
 db_initialize:
-	python -m host_provider.dbscripts.initialize
+	@python -m host_provider.dbscripts.initialize
 
 db_migrate:
-	python -m host_provider.dbscripts.migrate
+	@python -m host_provider.dbscripts.migrate
