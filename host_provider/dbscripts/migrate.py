@@ -11,6 +11,17 @@ migrator = MySQLMigrator(mysql_db)
 
 
 def main():
+    """
+    If you want to add other fileds import from peewee
+    Fields:
+        DateTimeField
+        CharField
+        PrimaryKeyField
+        IntegerField
+        ForeignKeyField
+        BooleanField
+    Ex. from pewee import ForeignKeyField
+    """
 
     try:
         logging.info("Add 'status' column on 'Host' table")
