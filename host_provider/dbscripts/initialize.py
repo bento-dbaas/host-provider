@@ -7,20 +7,19 @@ import logging
 logging.basicConfig(level=LOGGING_LEVEL)
 mysql_db = MySQLDatabase(**MYSQL_PARAMS)
 
-def main():
+
+def try_create_table(model):
     mysql_db.get_conn()
-
     try:
-        logging.info('Creating Host table')
-        mysql_db.create_tables([Host])
+        logging.info('Creating {} table'.format(model))
+        mysql_db.create_tables([model])
     except Exception as e:
         logging.error(e)
 
-    try:
-        logging.info('Creating IP table')
-        mysql_db.create_tables([IP])
-    except Exception as e:
-        logging.error(e)
+
+def main():
+    try_create_table(Host)
+    try_create_table(IP)
 
 if __name__ == "__main__":
     main()
