@@ -57,19 +57,6 @@ class CredentialCloudStack(CredentialBase):
         self._zone_increment += 1
         self._zone = zone
 
-    def after_create_host(self, group):
-        existing = self.exist_node(group)
-        if not existing:
-            self.collection_last.update_one(
-                {"latestUsed": True, "environment": self.environment},
-                {"$set": {"zone": self.zone}}, upsert=True
-            )
-
-        self.collection_last.update(
-            {"group": group, "environment": self.environment},
-            {"$set": {"zone": self.zone}}, upsert=True
-        )
-
     def remove_last_used_for(self, group):
         self.collection_last.delete_one({
             "environment": self.environment, "group": group
