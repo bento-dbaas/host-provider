@@ -5,7 +5,7 @@ from libcloud.compute.types import Provider
 from libcloud.compute.drivers.ec2 import EC2NodeDriver
 from host_provider.providers.aws import AWSProvider, OfferingNotFoundError
 from host_provider.credentials.aws import CredentialAddAWS
-from .fakes.ec2 import LIST_SIZES, FAKE_TAGS, FAKE_CREDENTIAL
+from .fakes.ec2 import LIST_SIZES, FAKE_TAGS, FAKE_CREDENTIAL, FAKE_HOST
 
 
 ENVIRONMENT = "dev"
@@ -197,13 +197,13 @@ class TestCredentialAWS(TestCase):
     )
     @patch(
         'libcloud.compute.drivers.ec2.EC2NodeDriver',
-        #'libcloud.compute.drivers.ec2.EC2NodeDriver.ex_start_node',
     )
     def test_start(self, node_driver, content):
         self.build_credential_content(content)
-        identifier = "fake-uuid-ec2-stac"
-        self.provider.start(identifier)
-        node_driver().ex_start_node.assert_called_once_with(self.provider.BasicInfo(identifier))
+        self.provider.start(FAKE_HOST)
+        node_driver().ex_start_node.assert_called_once_with(
+            self.provider.BasicInfo('fake_identifier')
+        )
 
     @patch(
         'host_provider.providers.aws.CredentialAWS.get_content'

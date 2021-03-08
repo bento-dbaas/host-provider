@@ -89,3 +89,5 @@ FAKE_NETWORK_C = FAKE_NETWORK_OBJ(
     {'network_domain': 'fake_network_domain_c.globoi.com'}
 )
 FAKE_EX_LIST_NETWORKS = [FAKE_NETWORK_A, FAKE_NETWORK_B, FAKE_NETWORK_C]
+
+FAKE_HOST = namedtuple('FakeHost', 'id identifier name')('fake_id', 'fake_identifier', 'fake_name')

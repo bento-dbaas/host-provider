@@ -43,3 +43,5 @@ FAKE_CREDENTIAL = {
         }
     }
 }
+
+FAKE_HOST = namedtuple('FakeHost', 'id identifier name')('fake_id', 'fake_identifier', 'fake_name')
