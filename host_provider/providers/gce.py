@@ -197,7 +197,7 @@ class GceProvider(ProviderBase):
         pass
 
     def resize(self, host, cpus, memory):
-        offering = self.credential.offering_to(int(cpus), memory) 
+        offering = self.credential.offering_to(int(cpus), memory)
         return self.client.instances().setMachineType(
             project=self.credential.project,
             zone=host.zone,
@@ -322,6 +322,9 @@ class GceProvider(ProviderBase):
         raise WrongStatusError(err_msg)
 
     def restore(self, host, engine=None):
+
+        if engine:
+            self.engine = engine
 
         if host.recreating is False:
             self._destroy(identifier=host.identifier)
