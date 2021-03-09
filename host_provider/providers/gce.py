@@ -197,7 +197,7 @@ class GceProvider(ProviderBase):
         pass
 
     def resize(self, host, cpus, memory):
-        offering = self.credential.offering_to(int(cpus), memory) 
+        offering = self.credential.offering_to(int(cpus), memory)
         return self.client.instances().setMachineType(
             project=self.credential.project,
             zone=host.zone,

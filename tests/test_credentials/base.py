@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from unittest import TestCase
 from unittest.mock import patch
 from host_provider.settings import MONGODB_HOST, MONGODB_PORT, MONGODB_USER, \
     MONGODB_PWD

@@ -24,7 +24,10 @@ FAKE_CREDENTIAL = {
     'environment': 'dev',
     'region': 'sa-east-1',
     'keyname': 'elesbom',
-    'security_groups': [{'id': 'fake_security_group_id', 'name': 'fake_security_name'}],
+    'security_groups': [{
+        'id': 'fake_security_group_id',
+        'name': 'fake_security_name'
+    }],
     'access_id': 'fake_access_id',
     'secret_key': 'fake_secret_key',
     'templates': {
@@ -44,4 +47,8 @@ FAKE_CREDENTIAL = {
     }
 }
 
-FAKE_HOST = namedtuple('FakeHost', 'id identifier name')('fake_id', 'fake_identifier', 'fake_name')
+FAKE_HOST = namedtuple(
+    'FakeHost',
+    'id identifier name')(
+        'fake_id', 'fake_identifier', 'fake_name'
+    )
