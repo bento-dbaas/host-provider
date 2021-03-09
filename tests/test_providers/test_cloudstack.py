@@ -9,7 +9,8 @@ from requests.exceptions import ConnectionError
 from host_provider.providers.cloudstack import CloudStackProvider
 from host_provider.credentials.cloudstack import CredentialAddCloudStack
 from .fakes.cloudstack import (FAKE_CREDENTIAL, FAKE_CS_NODE,
-                               FAKE_EX_LIST_NETWORKS)
+                               FAKE_EX_LIST_NETWORKS,
+                               FAKE_HOST)
 from .base import CloudStackBaseTestCase
 
 
@@ -187,7 +188,7 @@ class TestBaseCredential(TestCase):
 
         name = "infra-01-123456"
         group = "infra123456"
-        self.provider.create_host(1, 1024, name, group)
+        self.provider.create_host(1, 1024, name, group, zone='zone1')
 
         project = content.return_value.get("projectid", None)
         if project:
@@ -213,9 +214,10 @@ class TestBaseCredential(TestCase):
     )
     def test_start(self, ex_start, content):
         self.build_credential_content(content)
-        identifier = "fake-uuid-cloud-stac"
-        self.provider.start(identifier)
-        ex_start.assert_called_once_with(self.provider.BasicInfo(identifier))
+        self.provider.start(FAKE_HOST)
+        ex_start.assert_called_once_with(
+            self.provider.BasicInfo('fake_identifier')
+        )
 
     @patch(
         'host_provider.providers.cloudstack.CredentialCloudStack.get_content'

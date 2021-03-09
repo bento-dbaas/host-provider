@@ -20,15 +20,15 @@ FAKE_GCE_CREDENTIAL = {
     "environment": "fake_env",
     "offerings": {
         "2c1024m": {
-            "id": "e2-micro",
+            "id": "fake_offering_2c1024m",
             "name": "micro instance"
         },
         "2c2048m": {
-            "id": "e2-small",
+            "id": "fake_offering_2c2048m",
             "name": "small instance"
         },
         "2c4096m": {
-            "id": "e2-medium",
+            "id": "fake_offering_2c4096m",
             "name": "medium instance"
         }
     },
@@ -51,5 +51,12 @@ FAKE_GCE_CREDENTIAL = {
 
 FAKE_HOST_OBJ = namedtuple('FakeHostObj', 'id name zone identifier')
 FAKE_HOST = FAKE_HOST_OBJ(
-    'fake_id', 'fake_host_name', 'fake_zone', 'fake_identifier'
+    'fake_id', 'fake_host_name', 'fake_host_zone', 'fake_identifier'
 )
+
+FAKE_STATIC_IP_OBJ = namedtuple('FakeStaticIP', 'id name address')
+FAKE_STATIC_IP = FAKE_STATIC_IP_OBJ(
+    'fake_id', 'fake_ip_name', 'fake_address'
+)
+
+FAKE_GOOGLE_RESPONSE_STATIC_IP = {'address': 'fake_address'}

@@ -20,6 +20,8 @@ class StaticIPNotFoundError(Exception):
 
 
 class GceProvider(ProviderBase):
+    WAIT_STATUS_ATTEMPS = 60
+    WAIT_STATUS_TIME = 5
 
     def build_client(self):
         service_account_data = self.credential.content['service_account']
@@ -90,18 +92,21 @@ class GceProvider(ProviderBase):
 
         return image_response['selfLink']
 
+    def get_machine_type(self, offering, zone=None):
+        return "zones/{}/machineTypes/{}".format(
+            zone or self.credential.zone,
+            offering
+        )
+
     def _create_host(self, cpu, memory, name, *args, **kw):
 
         offering = self.credential.offering_to(int(cpu), memory)
-        zone = self.credential.zone
         static_ip_id = kw.get('static_ip_id')
         if not static_ip_id:
             raise StaticIPNotFoundError(
                 'The id of static IP must be provided'
             )
         static_ip = self.get_static_ip_by_name(static_ip_id)
-
-        machine_type = "zones/{}/machineTypes/{}".format(zone, offering)
 
         network_interface = {
             'subnetwork': self.credential.subnetwork,
@@ -111,7 +116,7 @@ class GceProvider(ProviderBase):
 
         config = {
             'name': name,
-            'machineType': machine_type,
+            'machineType': self.get_machine_type(offering),
 
             # Specify the boot disk and the image to use as a source.
             'disks': [
@@ -141,7 +146,7 @@ class GceProvider(ProviderBase):
 
         instance = self.client.instances().insert(
             project=self.credential.project,
-            zone=zone,
+            zone=self.credential.zone,
             body=config
         ).execute()
         return instance
@@ -193,15 +198,15 @@ class GceProvider(ProviderBase):
 
     def resize(self, host, cpus, memory):
         offering = self.credential.offering_to(int(cpus), memory)
-        machine_type = "zones/{}/machineTypes/{}".format(host.zone, offering)
-        config = {
-            'machineType': machine_type,
-        }
         return self.client.instances().setMachineType(
             project=self.credential.project,
             zone=host.zone,
             instance=host.name,
-            body=config
+            body={
+                'machineType': self.get_machine_type(
+                    offering, host.zone
+                ),
+            }
         ).execute()
 
     def _is_ready(self, host):
@@ -236,7 +241,6 @@ class GceProvider(ProviderBase):
     def get_instance(self, instance_name, zone, execute_request=True):
         request = self.client.instances().get(
             project=self.credential.project,
-            #zone=self.credential.zone,
             zone=zone,
             instance=instance_name
         )
@@ -296,7 +300,7 @@ class GceProvider(ProviderBase):
         if required_fields is None:
             required_fields = []
         attempts = 1
-        while attempts <= 60:
+        while attempts <= self.WAIT_STATUS_ATTEMPS:
 
             resource = request.execute()
             resource_status = resource['status']
@@ -305,7 +309,7 @@ class GceProvider(ProviderBase):
                 return True
 
             attempts += 1
-            sleep(5)
+            sleep(self.WAIT_STATUS_TIME)
 
         err_msg = "It was expected status: {} got: {}.".format(
             status, resource_status
@@ -319,14 +323,14 @@ class GceProvider(ProviderBase):
 
     def restore(self, host, engine=None):
 
-        if host.recreating == False:
+        if host.recreating is False:
             self._destroy(identifier=host.identifier)
             host.recreating = True
             host.save()
 
         while True:
             try:
-                instance = self.client.instances().get(
+                self.client.instances().get(
                     project=self.credential.project,
                     zone=host.zone,
                     instance=host.name
@@ -343,28 +347,6 @@ class GceProvider(ProviderBase):
         )
 
         self.wait_status_of_instance(host.name, host.zone, status='RUNNING')
-        host.identifier=created_host_metadata['id']
+        host.identifier = created_host_metadata['id']
         host.recreating = False
         host.save()
-
-        '''
-       def _create_host(self, cpu, memory, name, *args, **kw):
-
-            offering = self.credential.offering_to(int(cpu), memory)
-            zone = self.credential.zone
-            static_ip_id = kw.get('static_ip_id')
-        '''
-
-
-        '''
-        node = self.BasicInfo(host.identifier)
-
-        if engine is None:
-            template = self.credential.template
-        else:
-            template = self.credential.template_to(engine)
-
-        template = self.BasicInfo(template)
-
-        return self.client.ex_restore(node, template)
-        '''
