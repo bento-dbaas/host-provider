@@ -9,8 +9,8 @@ from requests.exceptions import ConnectionError
 from host_provider.providers.cloudstack import CloudStackProvider
 from host_provider.credentials.cloudstack import CredentialAddCloudStack
 from .fakes.cloudstack import (FAKE_CREDENTIAL, FAKE_CS_NODE,
-                               FAKE_EX_LIST_NETWORKS,
-                               FAKE_HOST)
+                               FAKE_EX_LIST_NETWORKS)
+from .fakes.base import FAKE_HOST
 from .base import CloudStackBaseTestCase
 
 

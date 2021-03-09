@@ -8,7 +8,8 @@ from libcloud import security
 from host_provider.providers.base import ProviderBase
 from host_provider.providers import base, CloudStackProvider, GceProvider
 from tests.test_credentials import CredentialAddFake, FakeMongoDB
-from .fakes.gce import FAKE_GCE_CREDENTIAL, FAKE_HOST
+from .fakes.gce import FAKE_GCE_CREDENTIAL
+from .fakes.base import FAKE_HOST
 
 
 ENVIRONMENT = "dev"
