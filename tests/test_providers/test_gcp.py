@@ -1,11 +1,13 @@
 from unittest.mock import patch, MagicMock, PropertyMock
 
 from peewee import DoesNotExist
+from googleapiclient.errors import HttpError
 
 from .base import GCPBaseTestCase
-from .fakes.gce import (FAKE_HOST, FAKE_GCE_CREDENTIAL,
+from .fakes.gce import (FAKE_GCE_CREDENTIAL,
                         FAKE_STATIC_IP,
                         FAKE_GOOGLE_RESPONSE_STATIC_IP)
+from .fakes.base import FAKE_ENGINE, FAKE_HOST
 from host_provider.providers.gce import StaticIPNotFoundError, WrongStatusError
 
 
@@ -118,6 +120,18 @@ class CreateHostTestCase(GCPBaseTestCase):
         self.assertEqual(
             network_interface_config['networkIP'], 'fake_address'
         )
+
+    def test_create_host_with_specific_zone(self, client_mock):
+        self.provider.credential._zone = 'fake_zone_1'
+        insert_mock = client_mock().instances().insert
+        self.provider._create_host(
+            2, 1024, 'fake_name',
+            static_ip_id='fake_static_ip_id',
+            zone='another_fake_zone'
+        )
+        self.assertTrue(insert_mock.called)
+        insert_params = insert_mock.call_args[1]
+        self.assertEqual(insert_params['zone'], 'another_fake_zone')
 
 
 @patch('host_provider.providers.gce.IP')
@@ -368,3 +382,44 @@ class WaitStatusOfTestCase(GCPBaseTestCase):
         )
 
         self.assertTrue(resp)
+
+
+@patch('host_provider.providers.gce.GceProvider._destroy')
+@patch('host_provider.providers.gce.GceProvider._create_host')
+@patch('host_provider.providers.gce.GceProvider.wait_status_of_instance')
+@patch('host_provider.providers.gce.GceProvider.get_instance')
+@patch('host_provider.providers.gce.GceProvider.build_client')
+@patch('host_provider.providers.gce.CredentialGce.get_content',
+       new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
+@patch('host_provider.providers.gce.GceProvider.get_static_ip_by_host_id',
+       new=MagicMock(return_value=FAKE_STATIC_IP))
+class RestoreTestCase(GCPBaseTestCase):
+
+    def setUp(self):
+        super(RestoreTestCase, self).setUp()
+        fake_resp = type('FakeResp', (object,), {'status': 404})
+        fake_content = MagicMock(spec=bytes)
+        self.fake_http_error = HttpError(fake_resp, fake_content)
+
+    def test_call_destroy_when_not_recreating(self, client_mock,
+                                              get_instance_mock,
+                                              wait_status_mock,
+                                              create_host_mock,
+                                              destroy_host_mock):
+
+        get_instance_mock.side_effect = self.fake_http_error
+        self.provider.restore(FAKE_HOST, FAKE_ENGINE)
+
+        self.assertTrue(destroy_host_mock.called)
+
+    def test_dont_call_destroy_when_recreating(self, client_mock,
+                                               get_instance_mock,
+                                               wait_status_mock,
+                                               create_host_mock,
+                                               destroy_host_mock):
+
+        get_instance_mock.side_effect = self.fake_http_error
+        FAKE_HOST.recreating = True
+        self.provider.restore(FAKE_HOST, FAKE_ENGINE)
+
+        self.assertFalse(destroy_host_mock.called)

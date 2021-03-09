@@ -42,7 +42,7 @@ class GceProvider(ProviderBase):
     def get_static_ip_by_name(self, name):
         return IP.get(name=name)
 
-    def get_static_ip_host_id(self, host_id):
+    def get_static_ip_by_host_id(self, host_id):
         return IP.get(host_id=host_id)
 
     def build_credential(self):
@@ -98,7 +98,7 @@ class GceProvider(ProviderBase):
             offering
         )
 
-    def _create_host(self, cpu, memory, name, *args, **kw):
+    def _create_host(self, cpu, memory, name, zone=None, *args, **kw):
 
         offering = self.credential.offering_to(int(cpu), memory)
         static_ip_id = kw.get('static_ip_id')
@@ -146,7 +146,7 @@ class GceProvider(ProviderBase):
 
         instance = self.client.instances().insert(
             project=self.credential.project,
-            zone=self.credential.zone,
+            zone=zone or self.credential.zone,
             body=config
         ).execute()
         return instance
@@ -325,28 +325,40 @@ class GceProvider(ProviderBase):
 
         if engine:
             self.engine = engine
-
+        # import ipdb; ipdb.set_trace()
         if host.recreating is False:
             self._destroy(identifier=host.identifier)
             host.recreating = True
             host.save()
 
-        while True:
+        attempts = 1
+        while attempts <= self.WAIT_STATUS_ATTEMPS:
             try:
-                self.client.instances().get(
-                    project=self.credential.project,
-                    zone=host.zone,
-                    instance=host.name
-                ).execute()
-            except HttpError:
-                break
+                self.get_instance(
+                    instance_name=host.name,
+                    zone=host.zone
+                )
+            except HttpError as err:
+                status = err.resp.status
+                if status == 404:
+                    break
+                else:
+                    LOG.error(
+                        ("Restore of host <{}> expect get status 404."
+                         " got: {}").format(
+                            host, status
+                        )
+                    )
 
-        self.credential.zone = host.zone
+            attempts += 1
+            sleep(self.WAIT_STATUS_TIME)
+
         created_host_metadata = self._create_host(
             cpu=host.cpu,
             memory=host.memory,
             name=host.name,
-            static_ip_id=self.get_static_ip_host_id(host.id).name
+            static_ip_id=self.get_static_ip_by_host_id(host.id).name,
+            zone=host.zone
         )
 
         self.wait_status_of_instance(host.name, host.zone, status='RUNNING')
