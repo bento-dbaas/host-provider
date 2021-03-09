@@ -323,6 +323,9 @@ class GceProvider(ProviderBase):
 
     def restore(self, host, engine=None):
 
+        if engine:
+            self.engine = engine
+
         if host.recreating is False:
             self._destroy(identifier=host.identifier)
             host.recreating = True
