@@ -1,0 +1,16 @@
+{
+    "properties": {
+      "enableAcceleratedNetworking": false,
+      "ipConfigurations": [
+        {
+          "name": "ipconfig1",
+          "properties": {
+            "subnet": {
+              "id": "/subscriptions/624cb9e9-819d-413d-b6ba-5e17154f1a24/resourceGroups/RG-Network-BR/providers/Microsoft.Network/virtualNetworks/VNET-CORP-DEV-BR/subnets/dbaas-subnet-test"
+            }
+          }
+        }
+      ]
+    },
+    "location": "brazilsouth"
+  }

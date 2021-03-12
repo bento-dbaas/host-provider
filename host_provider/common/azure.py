@@ -4,7 +4,6 @@ from urllib.parse import urlencode
 
 from host_provider.common.http import Connection, ProviderConnection, Response, JsonResponse
 from host_provider.credentials.azure import CredentialAzure
-from host_provider.providers.azure import AzureProvider
 
 
 class AzureConnection(Connection):
@@ -79,6 +78,7 @@ class AzureConnection(Connection):
         self.subscription_id = credentials.subscription_id
         self.login_resource = "https://management.azure.com/.default"
         self.login_host = "login.microsoftonline.com"
+        return credentials
 
     def get_token_from_credentials(self):
         self._build_credentials()

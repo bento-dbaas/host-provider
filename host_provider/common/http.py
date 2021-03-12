@@ -281,6 +281,9 @@ class Connection(object):
 
         if data:
             data = self.encode_data(data)
+        
+        print(f"PARAMS: {params}")
+        print(f"ACTION: {action}")
 
         if params:
             if '?' in action:

@@ -1,15 +1,44 @@
 from collections import namedtuple
 from time import sleep
+import os
+import json
+from urllib.parse import urljoin
 from host_provider.credentials.azure import CredentialAddAzure, CredentialAzure
+from host_provider.common.azure import AzureConnection
 from host_provider.models import Host
 from host_provider.providers import ProviderBase
 from host_provider.settings import HOST_ORIGIN_TAG
 from libcloud.compute.types import Provider
 from host_provider.clients.team import TeamClient
+from pathlib import Path
+
+
+class JsonTemplates(object):
+    def __init__(self, path="host_provider/templates/azure/version/"):
+        self.path = path
+    
+    def list_files(self, version):
+        files_version = os.path.join(self.path, f"{version}/")
+        files = [path for path in Path(files_version).rglob('*.json')]
+        return files
+
+    def load_json(self, json_file):
+        data = None
+
+        with open(json_file) as fp:
+            data = json.load(fp)
+        return data
+    
+    def dumps_json(self, obj):
+        if isinstance(obj, dict):
+            return json.dumps(obj)
+        return None
 
 
 class AzureProvider(ProviderBase):
     BasicInfo = namedtuple("AzureBasicInfo", "id")
+    azClient = None
+    connCls = AzureConnection
 
     @classmethod
     def get_provider(cls):
@@ -19,39 +48,65 @@ class AzureProvider(ProviderBase):
         AzureClient = self.get_driver()
 
         client = AzureClient(
-            tenant_id=self.credential.tenant_id,
-            subscription_id=self.credential.subscription_id,
-            key=self.credential.access_id,
-            secret=self.credential.secret_key,
+            self.credential.tenant_id,
+            self.credential.subscription_id,
+            self.credential.access_id,
+            self.credential.secret_key,
             region=self.credential.region
         )
         return client
 
     def build_credential(self):
         return CredentialAzure(
-            self.get_provider(), self.environment, self.engine
-        )
+            self.get_provider(), self.environment, self.engine)
+
+    def get_azure_connection(self):
+        az = self.connCls()
+        self.azClient = az
+
+        return az.conn_cls(self.credential.access_id, \
+            self.credential.secret_key, \
+                tenant_id=self.credential.tenant_id, \
+                    subscription_id=self.credential.subscription_id)
 
     def get_node(self, node_id):
-        if not node_id:
-            raise ValueError
-        nodes = self.client.list_nodes()
-        if len(nodes) >= 1:
-            for node in nodes:
-                if node.get_uuid() == node_id:
-                    return node
-        return None    
+        pass
+
+    def get_image(self):
+
+        templates = self.credential.template_to(self.engine)
+
 
     def offering_to(self, cpu, memory):
-        offerings = self.client.list_sizes()
+        pass
 
-        for offering in offerings:
-            if offering.ram == memory and offering.extra.get('numberOfCores') == cpu:
-                return offering
+    def has_network(self, api_version='2020-07-01'):
+        subnet = self.credential.get_next_zone_from(self.credential.subnets)
+        vnet = self.credential.subnets.get(subnet)['name']
+        base_url = self.credential.endpoint
 
-        raise OfferingNotFoundError(
-            "Offering with {} cpu and {} of memory not found.".format(cpu, memory)
-        )
+        action = "subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s?api-version=%s" \
+            %(self.credential.subscription_id, self.credential.resource_group, vnet, api_version)
+
+        header = {}
+        self.get_azure_connection()
+        self.azClient.connect(base_url=base_url)
+        self.azClient.add_default_headers(header)
+        self.azClient.connection.request("GET", action, headers=header)
+        resp = self.azClient.connection.getresponse()
+        
+        if resp.status_code == 200:
+            return resp.json()
+
+        else:
+            raise Exception(
+                "Network {} not found".format(name)
+            )
+
+    def deploy_vm(self, template_version):
+        subnet = self.credential.get_next_zone_from(self.credential.subnets)
+        template = JsonTemplates()
+        pass
 
     def generate_tags(self, team_name, infra_name, database_name):
         tags = TeamClient.make_tags(team_name, self.engine)
@@ -78,52 +133,19 @@ class AzureProvider(ProviderBase):
         return host
 
     def _create_host(self, cpu, memory, name, *args, **kw):
-
-        return client.created_node(
-            name=name,
-            image=self.BasicInfo(self.credential.template_to(self.engine)),
-            size=self.offering_to(int(cpu), int(memory)),
-            ex_keyname=self.credential.keyname,
-            ex_security_group_ids=self.credential.security_group_ids,
-            ex_subnet=self.BasicInfo(self.credential.zone),
-            ex_metadata=self.generate_tags(
-                team_name=kw.get('team_name'),
-                infra_name=kw.get('group'),
-                database_name=kw.get('database_name')
-            )
-        )
+        pass
 
     def wait_state(self, identifier, state):
-        attempts = 1
-        while attempts <= 15:
-
-            node = self.get_node(identifier)
-            node_state = node.state
-            if node_state == state:
-                return True
-
-            attempts += 1
-            sleep(5)
-
-        raise WrongStateError(
-            "It was expected state: {} got: {}".format(state, node_state)
-        )
+        pass
 
     def start(self, host):
-        node = self.get_node(host.identifier)
-        resp = self.client.ex_start_node(node)
-        self.wait_state(host.identifier, 'running')
-        return resp
+        pass
 
     def stop(self, identifier):
-        node = self.get_node(identifier)
-        resp = self.client.ex_stop_node(node)
-        self.wait_state(identifier, 'stopped')
-        return resp
+        pass
 
     def _destroy(self, identifier):
-        node = self.get_node(identifier)
-        return self.client.destroy_node(node)
+        pass
 
     def _all_node_destroyed(self, group):
         self.credential.remove_last_used_for(group) 

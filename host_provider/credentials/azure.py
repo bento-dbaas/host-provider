@@ -8,6 +8,26 @@ class CredentialAzure(CredentialBase):
         return self.content['keyname']
 
     @property
+    def resource_group(self):
+        return self.content['resource_group']
+
+    @property
+    def storage_account(self):
+        return self.content['storage_account']
+
+    @property
+    def init_password(self):
+        return self.content['init_password']
+        
+    @property
+    def gallery(self):
+        return self.content['gallery']
+        
+    @property
+    def endpoint(self):
+        return self.content['endpoint']['azure']
+
+    @property
     def region(self):
         return self.content['region']
 
