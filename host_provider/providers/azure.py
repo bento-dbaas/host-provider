@@ -76,9 +76,28 @@ class AzureProvider(ProviderBase):
     def get_node(self, node_id):
         pass
 
-    def get_image(self):
+    def parse_image(self, name, size, gallery='myGallery', version='1.0.0'):
+        templates = JsonTemplates()
+        pw = self.credential.init_password
 
-        templates = self.credential.template_to(self.engine)
+        image_id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/%s/images/%s/versions/%s' \
+            %( self.credential.subscription_id, self.credential.resource_group, gallery, name, version )
+        
+        network_id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkInterfaces/%s' \
+            %( self.credential.subscription_id, self.credential.resource_group, name )
+
+        osProfile = {'adminUsername': 'dbaas', 'computerName': name, 'adminPassword': pw}
+
+        for file in templates.list_files(version):
+            file_name = file.name.split('.json')[0]
+            if file_name == 'sql':
+                sql_dict = templates.load_json(file.as_posix())
+                sql_dict['properties']['hardwareProfile']['vmSize'] = size
+                sql_dict['properties']['storageProfile']['imageReference']['id'] = image_id
+                sql_dict['properties']['storageProfile']['osDisk']['name'] = name
+                sql_dict['properties']['osProfile'] = osProfile
+                sql_dict['properties']['networkProfile']['networkInterfaces'][0]['id'] = network_id
+        return sql_dict
 
     def offering_to(self, cpu, memory, api_version='2020-12-01'):
 
@@ -95,7 +114,7 @@ class AzureProvider(ProviderBase):
 
         if resp.status_code == 200:
             offerings = resp.json()['value']
-            
+
             for offering in offerings:
                 if offering.get('memoryInMB') == memory and offering.get('numberOfCores') == cpu:
                     return offering
