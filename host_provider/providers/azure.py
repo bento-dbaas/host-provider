@@ -80,6 +80,43 @@ class AzureProvider(ProviderBase):
     def offering_to(self, cpu, memory):
         pass
 
+    def parse_nic(self, name, vnet, subnet):
+        id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s/subnets/%s' \
+            %(self.credential.subscription_id, self.credential.resource_group, vnet, subnet)
+
+        templates = JsonTemplates()
+        for file in templates.list_files('1.0.0'):
+            file_name = file.name.split('.json')[0]
+            if file_name == 'nic':
+                nic_dict = templates.load_json(file.as_posix())
+                config = nic_dict['properties']['ipConfigurations']
+                for nic in config:
+                    nic['name'] = name
+                    nic['properties']['subnet']['id'] = id
+                nic_dict['properties']['ipConfigurations'] = config
+        return nic_dict
+
+    def create_nic(self, name, api_version='2020-07-01'):
+        subnet = self.credential.get_next_zone_from(self.credential.subnets)
+        vnet = self.credential.subnets.get(subnet)['name']
+        base_url = self.credential.endpoint
+        action = 'subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkInterfaces/%s?api-version=%s' \
+            %(self.credential.subscription_id, self.credential.resource_group, name, api_version)
+        nic = self.parse_nic(name, vnet, subnet)
+
+        payload = json.dumps(nic)
+        header = {}
+        self.get_azure_connection()
+        self.azClient.connect(base_url=base_url)
+        self.azClient.add_default_headers(header)
+        self.azClient.connection.request("PUT", action, body=payload, headers=header)
+        resp = self.azClient.connection.getresponse()
+        
+        if resp.status_code == 200 or resp.status_code == 201:
+            return resp.json()
+        
+        return None
+
     def has_network(self, api_version='2020-07-01'):
         subnet = self.credential.get_next_zone_from(self.credential.subnets)
         vnet = self.credential.subnets.get(subnet)['name']
