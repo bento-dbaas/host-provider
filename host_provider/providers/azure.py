@@ -77,11 +77,12 @@ class AzureProvider(ProviderBase):
         pass
 
     def parse_image(self, name, size, gallery='myGallery', version='1.0.0'):
+        image = 'mssql_2019_0_0'
         templates = JsonTemplates()
         pw = self.credential.init_password
 
         image_id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/%s/images/%s/versions/%s' \
-            %( self.credential.subscription_id, self.credential.resource_group, gallery, name, version )
+            %( self.credential.subscription_id, self.credential.resource_group, gallery, image, version )
         
         network_id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkInterfaces/%s' \
             %( self.credential.subscription_id, self.credential.resource_group, name )
@@ -160,7 +161,7 @@ class AzureProvider(ProviderBase):
         
         return None
 
-    def has_network(self, api_version='2020-07-01'):
+    def get_network(self, api_version='2020-07-01'):
         subnet = self.credential.get_next_zone_from(self.credential.subnets)
         vnet = self.credential.subnets.get(subnet)['name']
         base_url = self.credential.endpoint
@@ -182,11 +183,6 @@ class AzureProvider(ProviderBase):
             raise Exception(
                 "Network {} not found".format(name)
             )
-
-    def deploy_vm(self, template_version):
-        subnet = self.credential.get_next_zone_from(self.credential.subnets)
-        template = JsonTemplates()
-        pass
 
     def generate_tags(self, team_name, infra_name, database_name):
         tags = TeamClient.make_tags(team_name, self.engine)
@@ -212,8 +208,34 @@ class AzureProvider(ProviderBase):
         host.save()
         return host
 
+    def deploy_vm(self, name, size, api_version='2020-12-01'):
+        
+        size_name = size['name']
+        nic = self.create_nic(name)
+        template = self.parse_image(name, size_name)
+        
+
+        if nic is not None:
+            base_url = self.credential.endpoint
+            action = 'subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s?api-version=%s' \
+                %(self.credential.subscription_id, self.credential.resource_group, name, api_version)
+
+            payload = json.dumps(template)
+            
+            header = {}
+            self.get_azure_connection()
+            self.azClient.connect(base_url=base_url)
+            self.azClient.add_default_headers(header)
+            self.azClient.connection.request("PUT", action, body=payload, headers=header)
+            resp = self.azClient.connection.getresponse()
+        
+        return resp.json()       
+
     def _create_host(self, cpu, memory, name, *args, **kw):
-        pass
+        name = name
+        vmSize = self.offering_to(int(cpu), int(memory))
+
+        return self.deploy_vm(name, vmSize)
 
     def wait_state(self, identifier, state):
         pass
