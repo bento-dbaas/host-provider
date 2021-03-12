@@ -153,11 +153,13 @@ class GceProvider(ProviderBase):
 
     def _destroy(self, identifier):
         host = Host.get(identifier=identifier)
-        return self.client.instances().delete(
+        self.client.instances().delete(
             project=self.credential.project,
             zone=host.zone,
             instance=host.name
         ).execute()
+
+        return self.wait_instance_404(host)
 
     def create_static_ip(self, group, ip_name):
         self.credential.before_create_host(group)
@@ -257,6 +259,25 @@ class GceProvider(ProviderBase):
         if execute_request:
             return request.execute()
         return request
+
+    def wait_instance_404(self, host):
+        request = self.get_instance(
+            host.name,
+            host.zone,
+            execute_request=False
+        )
+
+        while True:
+            try:
+                request.execute()
+                sleep(3)
+            except HttpError as ex:
+                if ex.resp.status == 404:
+                    break
+                else:
+                    raise Exception(ex)
+        
+        return True
 
     def wait_status_of_static_ip(self, address_name, status):
 
