@@ -13,6 +13,10 @@ from host_provider.clients.team import TeamClient
 from pathlib import Path
 
 
+class OfferingNotFoundError(Exception):
+    pass
+
+
 class JsonTemplates(object):
     def __init__(self, path="host_provider/templates/azure/version/"):
         self.path = path
@@ -76,9 +80,29 @@ class AzureProvider(ProviderBase):
 
         templates = self.credential.template_to(self.engine)
 
+    def offering_to(self, cpu, memory, api_version='2020-12-01'):
 
-    def offering_to(self, cpu, memory):
-        pass
+        base_url = self.credential.endpoint
+        action = "subscriptions/%s/providers/Microsoft.Compute/locations/%s/vmSizes?api-version=%s" \
+            %(self.credential.subscription_id, self.credential.region, api_version)
+
+        header = {}
+        self.get_azure_connection()
+        self.azClient.connect(base_url=base_url)
+        self.azClient.add_default_headers(header)
+        self.azClient.connection.request("GET", action, headers=header)
+        resp = self.azClient.connection.getresponse()
+
+        if resp.status_code == 200:
+            offerings = resp.json()['value']
+            
+            for offering in offerings:
+                if offering.get('memoryInMB') == memory and offering.get('numberOfCores') == cpu:
+                    return offering
+
+        raise OfferingNotFoundError(
+            "Offering with {} cpu and {} of memory not found.".format(cpu, memory)
+        )
 
     def parse_nic(self, name, vnet, subnet):
         id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s/subnets/%s' \
