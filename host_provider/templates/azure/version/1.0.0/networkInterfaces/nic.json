@@ -3,10 +3,10 @@
       "enableAcceleratedNetworking": false,
       "ipConfigurations": [
         {
-          "name": "ipconfig1",
+          "name": "{ipconfig1}",
           "properties": {
             "subnet": {
-              "id": "/subscriptions/624cb9e9-819d-413d-b6ba-5e17154f1a24/resourceGroups/RG-Network-BR/providers/Microsoft.Network/virtualNetworks/VNET-CORP-DEV-BR/subnets/dbaas-subnet-test"
+              "id": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{networkInterfaceName}"
             }
           }
         }
