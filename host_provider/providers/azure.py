@@ -2,6 +2,7 @@ from collections import namedtuple
 from time import sleep
 import os
 import json
+import re
 from urllib.parse import urljoin
 from host_provider.credentials.azure import CredentialAddAzure, CredentialAzure
 from host_provider.common.azure import AzureConnection
@@ -15,6 +16,12 @@ from pathlib import Path
 
 class OfferingNotFoundError(Exception):
     pass
+
+
+class InvalidParameter(Exception):
+    def __init__(*args, **kwargs):
+        print(f"Connection Error:{args} / {kwargs}")
+        pass
 
 
 class JsonTemplates(object):
@@ -76,8 +83,7 @@ class AzureProvider(ProviderBase):
     def get_node(self, node_id):
         pass
 
-    def parse_image(self, name, size, gallery='myGallery', version='1.0.0'):
-        image = 'mssql_2019_0_0'
+    def parse_image(self, name, size, gallery='myGallery', image='mssql_2019_0_0', version='1.0.0'):
         templates = JsonTemplates()
         pw = self.credential.init_password
 
@@ -232,7 +238,12 @@ class AzureProvider(ProviderBase):
         return resp.json()       
 
     def _create_host(self, cpu, memory, name, *args, **kw):
-        name = name
+        name = re.sub('[^A-Za-z0-9]+', '', str(name))
+        if len(name) <= 15 and not name.isnumeric():
+            name = name
+        else:
+            raise InvalidParameter('InvalidParameter: %s' % (name))
+
         vmSize = self.offering_to(int(cpu), int(memory))
 
         return self.deploy_vm(name, vmSize)
