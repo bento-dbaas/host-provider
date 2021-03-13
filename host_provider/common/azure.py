@@ -2,7 +2,7 @@ import json
 import time
 from urllib.parse import urlencode
 
-from host_provider.common.http import Connection, ProviderConnection, Response, JsonResponse
+from host_provider.common.http import Connection, ProviderConnection, JsonResponse
 from host_provider.credentials.azure import CredentialAzure
 
 
