@@ -1,9 +1,7 @@
 from collections import namedtuple
-from time import sleep
 import os
 import json
 import re
-from urllib.parse import urljoin
 from host_provider.credentials.azure import CredentialAddAzure, CredentialAzure
 from host_provider.common.azure import AzureConnection
 from host_provider.models import Host
@@ -17,6 +15,7 @@ from pathlib import Path
 class DeployVmError(Exception):
     def __init__(*args, **kwargs):
         pass
+
 
 class OfferingNotFoundError(Exception):
     pass
@@ -86,7 +85,7 @@ class AzureProvider(ProviderBase):
     def get_node(self, node_id):
         pass
 
-    def parse_image(self, name, size, gallery='myGallery', image='mssql_2019_0_0', version='1.0.0'):
+    def _parse_image(self, name, size, gallery='myGallery', image='mssql_2019_0_0', version='1.0.0'):
         templates = JsonTemplates()
         pw = self.credential.init_password
 
@@ -133,7 +132,7 @@ class AzureProvider(ProviderBase):
             "Offering with {} cpu and {} of memory not found.".format(cpu, memory)
         )
 
-    def parse_nic(self, name, vnet, subnet):
+    def _parse_nic(self, name, vnet, subnet):
         id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s/subnets/%s' \
             %(self.credential.subscription_id, self.credential.resource_group, vnet, subnet)
 
@@ -155,7 +154,7 @@ class AzureProvider(ProviderBase):
         base_url = self.credential.endpoint
         action = 'subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkInterfaces/%s?api-version=%s' \
             %(self.credential.subscription_id, self.credential.resource_group, name, api_version)
-        nic = self.parse_nic(name, vnet, subnet)
+        nic = self._parse_nic(name, vnet, subnet)
 
         payload = json.dumps(nic)
         header = {}
@@ -221,7 +220,7 @@ class AzureProvider(ProviderBase):
         try:
             size_name = size['name']
             nic = self.create_nic(name)
-            template = self.parse_image(name, size_name)
+            template = self._parse_image(name, size_name)
             
             if nic is not None:
                 base_url = self.credential.endpoint
