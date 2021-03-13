@@ -17,13 +17,11 @@ ALLOW_REDIRECTS = 1
 
 class ConnectionError(Exception):
     def __init__(*args, **kwargs):
-        print(f"Connection Error:{args} / {kwargs}")
         pass
 
 
 class ResponseError(Exception):
     def __init__(*args, **kwargs):
-        print(f"Response Error:{args} / {kwargs}")
         pass
 
 

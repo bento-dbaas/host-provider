@@ -14,13 +14,16 @@ from host_provider.clients.team import TeamClient
 from pathlib import Path
 
 
+class DeployVmError(Exception):
+    def __init__(*args, **kwargs):
+        pass
+
 class OfferingNotFoundError(Exception):
     pass
 
 
-class InvalidParameter(Exception):
+class InvalidParameterError(Exception):
     def __init__(*args, **kwargs):
-        print(f"Connection Error:{args} / {kwargs}")
         pass
 
 
@@ -163,7 +166,7 @@ class AzureProvider(ProviderBase):
         resp = self.azClient.connection.getresponse()
         
         if resp.status_code == 200 or resp.status_code == 201:
-            return resp.json()
+            return resp
         
         return None
 
@@ -215,34 +218,37 @@ class AzureProvider(ProviderBase):
         return host
 
     def deploy_vm(self, name, size, api_version='2020-12-01'):
-        
-        size_name = size['name']
-        nic = self.create_nic(name)
-        template = self.parse_image(name, size_name)
-        
-
-        if nic is not None:
-            base_url = self.credential.endpoint
-            action = 'subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s?api-version=%s' \
-                %(self.credential.subscription_id, self.credential.resource_group, name, api_version)
-
-            payload = json.dumps(template)
+        try:
+            size_name = size['name']
+            nic = self.create_nic(name)
+            template = self.parse_image(name, size_name)
             
-            header = {}
-            self.get_azure_connection()
-            self.azClient.connect(base_url=base_url)
-            self.azClient.add_default_headers(header)
-            self.azClient.connection.request("PUT", action, body=payload, headers=header)
-            resp = self.azClient.connection.getresponse()
-        
-        return resp.json()       
+            if nic is not None:
+                base_url = self.credential.endpoint
+                action = 'subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s?api-version=%s' \
+                    %(self.credential.subscription_id, self.credential.resource_group, name, api_version)
+
+                payload = json.dumps(template)
+                
+                header = {}
+                self.get_azure_connection()
+                self.azClient.connect(base_url=base_url)
+                self.azClient.add_default_headers(header)
+                self.azClient.connection.request("PUT", action, body=payload, headers=header)
+                resp = self.azClient.connection.getresponse()
+            
+        except DeployVmError as err:
+            raise DeployVmError("OperationNotAllowed: %s" % (err))
+
+        finally:
+            return resp
 
     def _create_host(self, cpu, memory, name, *args, **kw):
         name = re.sub('[^A-Za-z0-9]+', '', str(name))
         if len(name) <= 15 and not name.isnumeric():
             name = name
         else:
-            raise InvalidParameter('InvalidParameter: %s' % (name))
+            raise InvalidParameterError('InvalidParameterError: %s' % (name))
 
         vmSize = self.offering_to(int(cpu), int(memory))
 
