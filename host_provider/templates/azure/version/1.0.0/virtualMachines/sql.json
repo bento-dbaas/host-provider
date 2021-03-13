@@ -1,0 +1,36 @@
+{
+    "location": "brazilsouth",
+    "properties": {
+      "hardwareProfile": {
+        "vmSize": "Standard_DS1_v2"
+      },
+      "storageProfile": {
+        "imageReference": {
+          "id": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/galleries/{myGallery}/images/{myImage}/versions/{1.0.0}"
+        },
+        "osDisk": {
+          "caching": "ReadWrite",
+          "managedDisk": {
+            "storageAccountType": "Standard_LRS"
+          },
+          "name": "{myVMosdisk}",
+          "createOption": "FromImage"
+        }
+      },
+      "osProfile": {
+        "adminUsername": "dbaas",
+        "computerName": "{myVM}",
+        "adminPassword": "{myPwd}"
+      },
+      "networkProfile": {
+        "networkInterfaces": [
+          {
+            "id": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces/{networkInterfaceName}",
+            "properties": {
+              "primary": true
+            }
+          }
+        ]
+      }
+    }
+  }
