@@ -1,7 +1,9 @@
 from collections import namedtuple
+from requests.status_codes import codes as response_created
 import os
 import json
 import re
+from contextlib import suppress
 from host_provider.credentials.azure import CredentialAddAzure, CredentialAzure
 from host_provider.common.azure import AzureConnection
 from host_provider.models import Host
@@ -12,9 +14,12 @@ from host_provider.clients.team import TeamClient
 from pathlib import Path
 
 
+class OperationNotAllowed(Exception):
+    pass
+
+
 class DeployVmError(Exception):
-    def __init__(*args, **kwargs):
-        pass
+    pass
 
 
 class OfferingNotFoundError(Exception):
@@ -22,8 +27,7 @@ class OfferingNotFoundError(Exception):
 
 
 class InvalidParameterError(Exception):
-    def __init__(*args, **kwargs):
-        pass
+    pass
 
 
 class JsonTemplates(object):
@@ -164,11 +168,8 @@ class AzureProvider(ProviderBase):
         self.azClient.connection.request("PUT", action, body=payload, headers=header)
         resp = self.azClient.connection.getresponse()
         
-        if resp.status_code == 200 or resp.status_code == 201:
-            return resp
+        return resp
         
-        return None
-
     def get_network(self, api_version='2020-07-01'):
         subnet = self.credential.get_next_zone_from(self.credential.subnets)
         vnet = self.credential.subnets.get(subnet)['name']
@@ -217,30 +218,38 @@ class AzureProvider(ProviderBase):
         return host
 
     def deploy_vm(self, name, size, api_version='2020-12-01'):
-        try:
-            size_name = size['name']
-            nic = self.create_nic(name)
-            template = self._parse_image(name, size_name)
-            
-            if nic is not None:
-                base_url = self.credential.endpoint
-                action = 'subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s?api-version=%s' \
-                    %(self.credential.subscription_id, self.credential.resource_group, name, api_version)
 
-                payload = json.dumps(template)
+        size_name = size['name']
+        nic_metadata = self.create_nic(name)
+        template = self._parse_image(name, size_name)
+            
+        if nic_metadata.status_code in [response_created.CREATED]:
+            base_url = self.credential.endpoint
+            action = 'subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s?api-version=%s' \
+                %(self.credential.subscription_id, self.credential.resource_group, name, api_version)
+
+            payload = json.dumps(template)
                 
-                header = {}
-                self.get_azure_connection()
-                self.azClient.connect(base_url=base_url)
-                self.azClient.add_default_headers(header)
-                self.azClient.connection.request("PUT", action, body=payload, headers=header)
-                resp = self.azClient.connection.getresponse()
-            
-        except DeployVmError as err:
-            raise DeployVmError("OperationNotAllowed: %s" % (err))
+            header = {}
+            self.get_azure_connection()
+            self.azClient.connect(base_url=base_url)
+            self.azClient.add_default_headers(header)
+            self.azClient.connection.request("PUT", action, body=payload, headers=header)
+            response_metadata = self.azClient.connection.getresponse()
+            result = response_metadata.json()
 
-        finally:
-            return resp
+            error = 'error'
+            for key, value in result.items():
+                if error in key:
+                    error = result.get(error)
+                    with suppress(ValueError):
+                        code, message, target = [ item for item in error.items() ]
+                        if 'OperationNotAllowed' in code:
+                            raise OperationNotAllowed('OperationNotAllowed: code: %s, message: %s, target: %s' %(code[1], message[1], target[1]))
+            
+            return response_metadata
+
+        return None
 
     def _create_host(self, cpu, memory, name, *args, **kw):
         name = re.sub('[^A-Za-z0-9]+', '', str(name))
