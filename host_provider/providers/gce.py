@@ -92,9 +92,9 @@ class GceProvider(ProviderBase):
 
         return image_response['selfLink']
 
-    def get_machine_type(self, offering, zone=None):
+    def get_machine_type(self, offering, zone):
         return "zones/{}/machineTypes/{}".format(
-            zone or self.credential.zone,
+            zone,
             offering
         )
 
@@ -102,6 +102,8 @@ class GceProvider(ProviderBase):
 
         offering = self.credential.offering_to(int(cpu), memory)
         static_ip_id = kw.get('static_ip_id')
+        zone = zone or self.credential.zone
+
         if not static_ip_id:
             raise StaticIPNotFoundError(
                 'The id of static IP must be provided'
@@ -116,7 +118,7 @@ class GceProvider(ProviderBase):
 
         config = {
             'name': name,
-            'machineType': self.get_machine_type(offering),
+            'machineType': self.get_machine_type(offering, zone),
 
             # Specify the boot disk and the image to use as a source.
             'disks': [
@@ -146,7 +148,7 @@ class GceProvider(ProviderBase):
 
         instance = self.client.instances().insert(
             project=self.credential.project,
-            zone=zone or self.credential.zone,
+            zone=zone,
             body=config
         ).execute()
         return instance
