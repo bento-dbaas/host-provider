@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/bento-dbaas/host-provider.svg?branch=master)](https://travis-ci.com/bento-dbaas/host-provider)
+
 ## Host Provider
 
 ### How to run
