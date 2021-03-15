@@ -1,6 +1,6 @@
 apache-libcloud==2.3.0
 Flask==0.12.2
-pymongo==3.6.0
+pymongo~=3.11.2
 mysqlclient==1.3.12
 peewee==2.10.2
 Flask-Cors==3.0.4
@@ -20,3 +20,8 @@ requests-oauthlib==1.3.0
 rsa==4.6
 urllib3==1.25.9
 websocket-client==0.57.0
+
+requests~=2.25.1
+mock~=4.0.3
+jinja2~=2.11.2
+pyyaml~=5.3.1
