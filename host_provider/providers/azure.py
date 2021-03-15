@@ -34,7 +34,7 @@ class InvalidParameterError(Exception):
 class JsonTemplates(object):
     def __init__(self, path="host_provider/templates/azure/version/"):
         self.path = path
-    
+
     def list_files(self, version):
         files_version = os.path.join(self.path, f"{version}/")
         files = [path for path in Path(files_version).rglob('*.json')]
@@ -46,7 +46,7 @@ class JsonTemplates(object):
         with open(json_file) as fp:
             data = json.load(fp)
         return data
-    
+
     def dumps_json(self, obj):
         if isinstance(obj, dict):
             return json.dumps(obj)
@@ -97,12 +97,12 @@ class AzureProvider(ProviderBase):
         region = self.credential.region
 
         image_id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/%s/images/%s/versions/%s' \
-            %( self.credential.subscription_id, self.credential.resource_group, gallery, image, version )
-        
-        network_id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkInterfaces/%s' \
-            %( self.credential.subscription_id, self.credential.resource_group, name )
+                   % (self.credential.subscription_id, self.credential.resource_group, gallery, image, version)
 
-        osProfile = {'adminUsername': 'dbaas', 'computerName': name, 'adminPassword': pw}        
+        network_id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkInterfaces/%s' \
+                     % (self.credential.subscription_id, self.credential.resource_group, name)
+
+        osProfile = {'adminUsername': 'dbaas', 'computerName': name, 'adminPassword': pw}
 
         try:
             for file in templates.list_files(version):
@@ -117,13 +117,13 @@ class AzureProvider(ProviderBase):
                     sql_dict['location'] = region
             return sql_dict
         except Exception as error:
-            raise Exception( "Template parse error: {}" %(error) )
+            raise Exception("Template parse error: {}" % (error))
 
     def offering_to(self, cpu, memory, api_version='2020-12-01'):
 
         base_url = self.credential.endpoint
         action = "subscriptions/%s/providers/Microsoft.Compute/locations/%s/vmSizes?api-version=%s" \
-            %(self.credential.subscription_id, self.credential.region, api_version)
+                 % (self.credential.subscription_id, self.credential.region, api_version)
 
         header = {}
         self.get_azure_connection()
@@ -146,7 +146,7 @@ class AzureProvider(ProviderBase):
     def _parse_nic(self, name, vnet, subnet, version='1.0.0'):
         nic_dict = OrderedDict()
         id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s/subnets/%s' \
-            %(self.credential.subscription_id, self.credential.resource_group, vnet, subnet)
+             % (self.credential.subscription_id, self.credential.resource_group, vnet, subnet)
 
         region = self.credential.region
         templates = JsonTemplates()
@@ -163,14 +163,14 @@ class AzureProvider(ProviderBase):
                     nic_dict['location'] = region
             return nic_dict
         except Exception as error:
-            raise Exception( "Template not found error" )
+            raise Exception("Template not found error")
 
     def create_nic(self, name, api_version='2020-07-01'):
         subnet = self.credential.get_next_zone_from(self.credential.subnets)
         vnet = self.credential.subnets.get(subnet)['name']
         base_url = self.credential.endpoint
         action = 'subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkInterfaces/%s?api-version=%s' \
-            %(self.credential.subscription_id, self.credential.resource_group, name, api_version)
+                 % (self.credential.subscription_id, self.credential.resource_group, name, api_version)
         nic = self._parse_nic(name, vnet, subnet)
 
         payload = json.dumps(nic)
@@ -180,16 +180,16 @@ class AzureProvider(ProviderBase):
         self.azClient.add_default_headers(header)
         self.azClient.connection.request("PUT", action, body=payload, headers=header)
         resp = self.azClient.connection.getresponse()
-        
+
         return resp
-        
+
     def get_network(self, api_version='2020-07-01'):
         subnet = self.credential.get_next_zone_from(self.credential.subnets)
         vnet = self.credential.subnets.get(subnet)['name']
         base_url = self.credential.endpoint
 
         action = "subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s?api-version=%s" \
-            %(self.credential.subscription_id, self.credential.resource_group, vnet, api_version)
+                 % (self.credential.subscription_id, self.credential.resource_group, vnet, api_version)
 
         header = {}
         self.get_azure_connection()
@@ -197,7 +197,7 @@ class AzureProvider(ProviderBase):
         self.azClient.add_default_headers(header)
         self.azClient.connection.request("GET", action, headers=header)
         resp = self.azClient.connection.getresponse()
-        
+
         if resp.status_code == 200:
             return resp.json()
 
@@ -218,12 +218,12 @@ class AzureProvider(ProviderBase):
         return tags
 
     def create_host_object(self, provider, payload, env, created_host_metadata):
-        nic = created_host_metadata.get('nic','')
-        vm = created_host_metadata.get('vm','')
+        nic = created_host_metadata.get('nic', '')
+        vm = created_host_metadata.get('vm', '')
 
         configs = [conf for conf in nic['properties']['ipConfigurations']]
         primaryIPAddress = [i['properties']['privateIPAddress'] for i in configs][0]
-        identifier = vm.get('id','')
+        identifier = vm.get('id', '')
 
         address = primaryIPAddress
         host = Host(
@@ -241,35 +241,35 @@ class AzureProvider(ProviderBase):
         base_url = self.credential.endpoint
 
         action = "subscriptions/%s/providers/Microsoft.Compute/virtualMachines/?api-version=%s&statusOnly=%s" \
-            %(self.credential.subscription_id, api_version, status_only)
-        
+                 % (self.credential.subscription_id, api_version, status_only)
+
         header = {}
         self.get_azure_connection()
         self.azClient.connect(base_url=base_url)
         self.azClient.add_default_headers(header)
         self.azClient.connection.request("GET", action, headers=header)
         resp = self.azClient.connection.getresponse()
-        
+
         return resp.json()
 
     def deploy_vm(self, name, size, api_version='2020-12-01'):
         response_metadata = OrderedDict()
 
-        vms = self._list_vm(name).get('value',[])
-        has_name = lambda _vms, name: [i for i in _vms if i.get('name','') == name]
-        
+        vms = self._list_vm(name).get('value', [])
+        has_name = lambda _vms, name: [i for i in _vms if i.get('name', '') == name]
+
         if any(has_name(vms, name)):
-            raise DeployVmError('Already exists: %s' % (name))
+            raise DeployVmError('Already exists: %s' % name)
 
         size_name = size['name']
         nic_metadata = self.create_nic(name)
         template = self._parse_image(name, size_name)
-  
+
         if nic_metadata.status_code in [response_created.CREATED]:
             response_metadata['nic'] = nic_metadata.json()
             base_url = self.credential.endpoint
             action = 'subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s?api-version=%s' \
-                %(self.credential.subscription_id, self.credential.resource_group, name, api_version)
+                     % (self.credential.subscription_id, self.credential.resource_group, name, api_version)
 
             payload = json.dumps(template)
 
@@ -297,9 +297,10 @@ class AzureProvider(ProviderBase):
                             response_metadata['nic'] = resp.json()
 
                     with suppress(ValueError):
-                        code, message, target = [ item for item in error.items() ]
+                        code, message, target = [item for item in error.items()]
                         if 'OperationNotAllowed' in code:
-                            raise OperationNotAllowed('OperationNotAllowed: code: %s, message: %s, target: %s' %(code[1], message[1], target[1]))
+                            raise OperationNotAllowed('OperationNotAllowed: code: %s, message: %s, target: %s' % (
+                            code[1], message[1], target[1]))
 
             response_metadata['vm'] = result
             return response_metadata
@@ -330,7 +331,7 @@ class AzureProvider(ProviderBase):
         pass
 
     def _all_node_destroyed(self, group):
-        self.credential.remove_last_used_for(group) 
+        self.credential.remove_last_used_for(group)
 
     @property
     def engine_name(self):
@@ -338,4 +339,3 @@ class AzureProvider(ProviderBase):
 
     def get_credential_add(self):
         return CredentialAddAzure
-
