@@ -91,6 +91,7 @@ class AzureProvider(ProviderBase):
         pass
 
     def _parse_image(self, name, size, gallery='myGallery', image='mssql_2019_0_0', version='1.0.0'):
+        sql_dict = OrderedDict()
         templates = JsonTemplates()
         pw = self.credential.init_password
         region = self.credential.region
@@ -143,6 +144,7 @@ class AzureProvider(ProviderBase):
         )
 
     def _parse_nic(self, name, vnet, subnet, version='1.0.0'):
+        nic_dict = OrderedDict()
         id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s/subnets/%s' \
             %(self.credential.subscription_id, self.credential.resource_group, vnet, subnet)
 
