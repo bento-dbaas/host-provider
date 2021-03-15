@@ -192,6 +192,8 @@ class DestroyStaticIPTestCase(GCPBaseTestCase):
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
+@patch('host_provider.providers.gce.GceProvider.wait_instance_404',
+       new=MagicMock(return_value=True))
 class DestroyVMTestCase(GCPBaseTestCase):
 
     def test_host_not_found(self, client_mock, wait_status_mock):
