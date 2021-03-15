@@ -20,8 +20,8 @@ class StaticIPNotFoundError(Exception):
 
 
 class GceProvider(ProviderBase):
-    WAIT_STATUS_ATTEMPS = 60
-    WAIT_STATUS_TIME = 5
+    WAIT_ATTEMPTS = 60
+    WAIT_TIME = 5
 
     def build_client(self):
         service_account_data = self.credential.content['service_account']
@@ -266,18 +266,20 @@ class GceProvider(ProviderBase):
             host.zone,
             execute_request=False
         )
+        attempts = 0
 
-        while True:
+        while attempts <= self.WAIT_ATTEMPTS:
             try:
                 request.execute()
-                sleep(3)
+                sleep(self.WAIT_TIME)
             except HttpError as ex:
                 if ex.resp.status == 404:
-                    break
+                    return True
                 else:
                     raise Exception(ex)
-        
-        return True
+            attempts += 1
+
+        raise Exception("Wait limit exceeded")
 
     def wait_status_of_static_ip(self, address_name, status):
 
@@ -321,7 +323,7 @@ class GceProvider(ProviderBase):
         if required_fields is None:
             required_fields = []
         attempts = 1
-        while attempts <= self.WAIT_STATUS_ATTEMPS:
+        while attempts <= self.WAIT_ATTEMPTS:
 
             resource = request.execute()
             resource_status = resource['status']
@@ -330,7 +332,7 @@ class GceProvider(ProviderBase):
                 return True
 
             attempts += 1
-            sleep(self.WAIT_STATUS_TIME)
+            sleep(self.WAIT_TIME)
 
         err_msg = "It was expected status: {} got: {}.".format(
             status, resource_status
@@ -353,7 +355,7 @@ class GceProvider(ProviderBase):
             host.save()
 
         attempts = 1
-        while attempts <= self.WAIT_STATUS_ATTEMPS:
+        while attempts <= self.WAIT_ATTEMPTS:
             try:
                 self.get_instance(
                     instance_name=host.name,
@@ -372,7 +374,7 @@ class GceProvider(ProviderBase):
                     )
 
             attempts += 1
-            sleep(self.WAIT_STATUS_TIME)
+            sleep(self.WAIT_TIME)
 
         created_host_metadata = self._create_host(
             cpu=host.cpu,

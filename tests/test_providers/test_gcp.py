@@ -319,8 +319,8 @@ class WaitStatusOfTestCase(GCPBaseTestCase):
 
     def setUp(self):
         super(WaitStatusOfTestCase, self).setUp()
-        self.provider.WAIT_STATUS_ATTEMPS = 3
-        self.provider.WAIT_STATUS_TIME = 0
+        self.provider.WAIT_ATTEMPTS = 3
+        self.provider.WAIT_TIME = 0
         self.fake_request = MagicMock()
         self.fake_request.execute.return_value = {
             'status': 'READY',
