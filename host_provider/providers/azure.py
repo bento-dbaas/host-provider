@@ -300,7 +300,7 @@ class AzureProvider(ProviderBase):
                         code, message, target = [item for item in error.items()]
                         if 'OperationNotAllowed' in code:
                             raise OperationNotAllowed('OperationNotAllowed: code: %s, message: %s, target: %s' % (
-                            code[1], message[1], target[1]))
+                                code[1], message[1], target[1]))
 
             response_metadata['vm'] = result
             return response_metadata
@@ -312,7 +312,7 @@ class AzureProvider(ProviderBase):
         if len(name) <= 15 and not name.isnumeric():
             name = name
         else:
-            raise InvalidParameterError('InvalidParameterError: %s' % (name))
+            raise InvalidParameterError('InvalidParameterError: %s' % name)
 
         vmSize = self.offering_to(int(cpu), int(memory))
 
