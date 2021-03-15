@@ -1,0 +1,16 @@
+{
+    "properties": {
+      "enableAcceleratedNetworking": false,
+      "ipConfigurations": [
+        {
+          "name": "{ipconfig1}",
+          "properties": {
+            "subnet": {
+              "id": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{networkInterfaceName}"
+            }
+          }
+        }
+      ]
+    },
+    "location": "{brazilsouth}"
+  }
