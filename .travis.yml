@@ -4,11 +4,11 @@ python:
 services:
   - mongodb
   - mysql
-before_install:
-  - mysql -e 'CREATE DATABASE IF NOT EXISTS host_provider;'
-  - make db_initialize
 install:
   - pip install -r requirements_dev.txt
+before_script:
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS host_provider;'
+  - make db_initialize
 script:
   - make test
 notifications:
