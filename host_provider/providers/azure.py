@@ -201,7 +201,7 @@ class AzureProvider(ProviderBase):
 
         else:
             raise Exception(
-                "Network {} not found".format(name)
+                "Network {} not found".format(vnet)
             )
 
     def generate_tags(self, team_name, infra_name, database_name):
