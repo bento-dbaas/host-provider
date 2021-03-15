@@ -82,10 +82,10 @@ class AzureProvider(ProviderBase):
         az = self.connCls()
         self.azClient = az
 
-        return az.conn_cls(self.credential.access_id, \
-            self.credential.secret_key, \
-                tenant_id=self.credential.tenant_id, \
-                    subscription_id=self.credential.subscription_id)
+        return az.conn_cls(self.credential.access_id,
+                           self.credential.secret_key,
+                           tenant_id=self.credential.tenant_id,
+                           subscription_id=self.credential.subscription_id)
 
     def get_node(self, node_id):
         pass
