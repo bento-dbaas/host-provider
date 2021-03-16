@@ -1,7 +1,7 @@
 import copy
 import json
 from urllib.parse import urlencode, urlparse, urljoin
-
+from host_provider.settings import HTTP_PROXY
 import requests
 
 
@@ -42,6 +42,34 @@ class BaseProviderConnection(object):
     def __init__(self):
         self.session = requests.Session()
 
+    def set_http_proxy(self, proxy_url):
+        result = self._parse_proxy_url(proxy_url=proxy_url)
+        scheme = result[0]
+        host = result[1]
+        port = result[2]
+        self.proxy_scheme = scheme
+        self.proxy_host = host
+        self.proxy_port = port
+        self.http_proxy_used = True
+        self.session.proxies = {
+            'http': proxy_url,
+            'https': proxy_url,
+        }
+
+    def _parse_proxy_url(self, proxy_url):
+        parsed = urlparse(proxy_url)
+        if parsed.scheme not in ('http', 'https'):
+            raise ValueError('Only http or https proxy')
+
+        proxy_scheme = parsed.scheme
+        proxy_host, proxy_port = parsed.hostname, parsed.port
+        netloc = parsed.netloc
+
+        if '@' in netloc:
+            raise ValueError('Invalid format')
+
+        return (proxy_scheme, proxy_host, proxy_port)
+
 
 class ProviderConnection(BaseProviderConnection):
     timeout = None
@@ -52,8 +80,15 @@ class ProviderConnection(BaseProviderConnection):
         scheme = 'https' if secure is not None and secure else 'http'
         self.host = '{0}://{1}{2}'.format( 'https' if port == 443 else scheme, host, ":{0}".format(port) if port not in (80, 443) else "" )
 
+        http_proxy_url_env = HTTP_PROXY
+
+        proxy_url = kwargs.pop('proxy_url', http_proxy_url_env)
+
         BaseProviderConnection.__init__(self)
         self.session.timeout = kwargs.get('timeout', 60)
+
+        if proxy_url:
+            self.set_http_proxy(proxy_url=proxy_url)
 
     def request(self, method, url, body=None, headers=None, raw=False, stream=False):
         url = urljoin(self.host, url)
@@ -77,7 +112,7 @@ class ProviderConnection(BaseProviderConnection):
 
     @property
     def reason(self):
-        return None if self.response.status_code > 400 else self.response.text        
+        return None if self.response.status_code > 400 else self.response.text
 
     def _normalize_headers(self, headers):
         headers = headers or {}
@@ -177,6 +212,10 @@ class Connection(object):
 
         self.timeout = timeout or self.timeout
         self.proxy_url = proxy_url
+
+    def set_http_proxy(self, proxy_url):
+        self.proxy_url = proxy_url
+        self.connection.set_http_proxy(proxy_url=proxy_url)
 
     def _tuple_from_url(self, url):
         secure = 1
