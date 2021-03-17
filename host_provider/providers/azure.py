@@ -217,7 +217,10 @@ class AzureProvider(ProviderBase):
         })
         return tags
 
-    def create_host_object(self, provider, payload, env, created_host_metadata):
+    def associate_ip_with_host(self, host, static_ip_id):
+        pass
+
+    def create_host_object(self, provider, payload, env, created_host_metadata, static_ip_id, **kw):
         nic = created_host_metadata.get('nic', '')
         vm = created_host_metadata.get('vm', '')
 
