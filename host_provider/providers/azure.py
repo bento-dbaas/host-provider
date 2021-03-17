@@ -117,7 +117,7 @@ class AzureProvider(ProviderBase):
                     sql_dict['location'] = region
             return sql_dict
         except Exception as error:
-            raise Exception("Template parse error: {}" % (error))
+            raise Exception("Template parse error: {}" % error)
 
     def offering_to(self, cpu, memory, api_version='2020-12-01'):
 
