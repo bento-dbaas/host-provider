@@ -4,7 +4,6 @@ from urllib.parse import urlencode, urlparse, urljoin
 from host_provider.settings import HTTP_PROXY
 import requests
 
-
 __all__ = [
     'ProviderConnection',
     'Connection',
@@ -78,7 +77,8 @@ class ProviderConnection(BaseProviderConnection):
 
     def __init__(self, host, port, secure=None, **kwargs):
         scheme = 'https' if secure is not None and secure else 'http'
-        self.host = '{0}://{1}{2}'.format( 'https' if port == 443 else scheme, host, ":{0}".format(port) if port not in (80, 443) else "" )
+        self.host = '{0}://{1}{2}'.format('https' if port == 443 else scheme, host,
+                                          ":{0}".format(port) if port not in (80, 443) else "")
 
         http_proxy_url_env = HTTP_PROXY
 
@@ -128,7 +128,6 @@ class ProviderConnection(BaseProviderConnection):
 
 
 class Response(object):
-
     status = None
     headers = {}
     body = None
@@ -143,7 +142,7 @@ class Response(object):
         self.error = response.reason
         self.status = response.status_code
         self.request = response.request
-        self.iter_content = response.iter_content     
+        self.iter_content = response.iter_content
 
         self.body = response.text.strip() \
             if response.text is not None and hasattr(response.text, 'strip') \
@@ -162,7 +161,7 @@ class Response(object):
 
     def success(self):
         return self.status in [requests.codes.ok, requests.codes.created, requests.codes.accepted]
-    
+
     def lowercase_keys(self, dictionary):
         return dict(((k.lower(), v) for k, v in dictionary.items()))
 
@@ -339,18 +338,17 @@ class Connection(object):
         kwargs = {'connection': self, 'response': self.connection.getresponse()}
 
         try:
-           response = response_cls(**kwargs)
+            response = response_cls(**kwargs)
         finally:
-           self.reset_context()
+            self.reset_context()
 
         return response
 
     def add_default_params(self, params):
         return params
-    
+
     def add_default_headers(self, headers):
         return headers
 
     def encode_data(self, data):
         return json.dumps(data)
-
