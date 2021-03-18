@@ -1,11 +1,11 @@
 from copy import deepcopy
 from unittest import TestCase
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 from libcloud.compute.types import Provider
 from libcloud.compute.drivers.ec2 import EC2NodeDriver
 from host_provider.providers.aws import AWSProvider, OfferingNotFoundError
 from host_provider.credentials.aws import CredentialAddAWS
-from .fakes.ec2 import LIST_SIZES, FAKE_TAGS, FAKE_CREDENTIAL
+from .fakes.ec2 import LIST_SIZES, FAKE_TAGS, FAKE_CREDENTIAL, FAKE_HOST
 
 
 ENVIRONMENT = "dev"
@@ -38,7 +38,6 @@ class TestCredentialAWS(TestCase):
 
         self.assertFalse(success)
         self.assertEqual(error, "Must be 3 active subnets at least")
-
 
     @patch(
         'host_provider.providers.aws.CredentialAWS.get_content'
@@ -73,7 +72,9 @@ class TestCredentialAWS(TestCase):
         self, collection_last, zone, create_node, credential_content
     ):
 
-        self.create_host_tests(collection_last, create_node, credential_content, zone)
+        self.create_host_tests(
+            collection_last, create_node, credential_content, zone
+        )
 
     @patch(
         'libcloud.compute.drivers.ec2.EC2NodeDriver.list_sizes',
@@ -91,8 +92,11 @@ class TestCredentialAWS(TestCase):
     @patch(
         'host_provider.credentials.aws.CredentialAWS.collection_last'
     )
-    def test_create_host_without_teams(self, collection_last, zone, create_node, credential_content):
-        self.create_host_tests(collection_last, create_node, credential_content, zone)
+    def test_create_host_without_teams(self, collection_last, zone,
+                                       create_node, credential_content):
+        self.create_host_tests(
+            collection_last, create_node, credential_content, zone
+        )
 
     @patch(
         'libcloud.compute.drivers.ec2.EC2NodeDriver.list_sizes',
@@ -114,8 +118,15 @@ class TestCredentialAWS(TestCase):
         'host_provider.providers.aws.TeamClient.make_tags',
         new=MagicMock(return_value=FAKE_TAGS)
     )
-    def test_create_host_with_teams(self, collection_last, zone, create_node, credential_content):
-        self.create_host_tests(collection_last, create_node, credential_content, zone, has_tags=True)
+    def test_create_host_with_teams(self, collection_last, zone, create_node,
+                                    credential_content):
+        self.create_host_tests(
+            collection_last,
+            create_node,
+            credential_content,
+            zone,
+            has_tags=True
+        )
 
     def build_credential_content(self, content, **kwargs):
         values = deepcopy(FAKE_CREDENTIAL)
@@ -153,7 +164,7 @@ class TestCredentialAWS(TestCase):
     def test_offering_not_found(self, sizes_mock, content):
         self.build_credential_content(content)
         with self.assertRaises(OfferingNotFoundError):
-            result = self.provider.offering_to(cpu=99, memory=999)
+            self.provider.offering_to(cpu=99, memory=999)
 
     def create_host_tests(
         self, collection_last, create_node, content, zone, **kwargs
@@ -170,10 +181,6 @@ class TestCredentialAWS(TestCase):
         project = content.return_value.get("projectid", None)
         if project:
             project = self.provider.BasicInfo(id=project)
-
-        networks = [
-            self.provider.BasicInfo("net1"), self.provider.BasicInfo("net2")
-        ]
 
         expected_tags = FAKE_TAGS if kwargs.get('has_tags') else {}
         expected_tags.update({
@@ -197,13 +204,13 @@ class TestCredentialAWS(TestCase):
     )
     @patch(
         'libcloud.compute.drivers.ec2.EC2NodeDriver',
-        #'libcloud.compute.drivers.ec2.EC2NodeDriver.ex_start_node',
     )
     def test_start(self, node_driver, content):
         self.build_credential_content(content)
-        identifier = "fake-uuid-ec2-stac"
-        self.provider.start(identifier)
-        node_driver().ex_start_node.assert_called_once_with(self.provider.BasicInfo(identifier))
+        self.provider.start(FAKE_HOST)
+        node_driver().ex_start_node.assert_called_once_with(
+            self.provider.BasicInfo('fake_identifier')
+        )
 
     @patch(
         'host_provider.providers.aws.CredentialAWS.get_content'

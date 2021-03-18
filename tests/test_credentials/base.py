@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from unittest import TestCase
 from unittest.mock import patch
 from host_provider.settings import MONGODB_HOST, MONGODB_PORT, MONGODB_USER, \
     MONGODB_PWD
@@ -15,7 +14,7 @@ FAKE_CERT_PATH = "/path/to/certs/"
 GROUP = "fake-group"
 
 
-class TestBaseProvider(TestCase):
+class TestBaseProvider(object):
 
     def tearDown(self):
         FakeMongoDB.clear()
@@ -34,11 +33,6 @@ class TestBaseProvider(TestCase):
         credential = CredentialBaseFake(PROVIDER, ENVIRONMENT + "-new", ENGINE)
         self.assertIsNone(credential._content)
         self.assertRaises(NotImplementedError, credential.get_content)
-
-    def test_after_before_create_methods(self):
-        credential = CredentialBaseFake(PROVIDER, ENVIRONMENT, ENGINE)
-        self.assertIsNone(credential.before_create_host(GROUP))
-        self.assertIsNone(credential.after_create_host(GROUP))
 
     @patch('host_provider.credentials.base.MongoClient')
     def test_mongo_db_connection(self, mongo_client):

@@ -1,5 +1,5 @@
 run:
-	export LIBCLOUD_CA_CERTS_PATH=""; export FLASK_DEBUG=1; export VERIFY_SSL_CERT=1; export DBAAS_AWS_PROXY=;export FLASK_APP=./host_provider/main.py; python -m flask run --port 5002
+	export LIBCLOUD_CA_CERTS_PATH=""; export FLASK_DEBUG=1; export VERIFY_SSL_CERT=1; export DBAAS_AWS_PROXY=;export FLASK_APP=./host_provider/main.py; python -m flask run --host 0.0.0.0 --port 5002
 
 test:
 	export DBAAS_AWS_PROXY=;coverage run --source=./ -m unittest discover --start-directory ./tests -p "*.py"
@@ -15,3 +15,9 @@ deploy_dev:
 
 deploy_prod:
 	tsuru app-deploy -a host-provider .
+
+db_initialize:
+	@python -m host_provider.dbscripts.initialize
+
+db_migrate:
+	@python -m host_provider.dbscripts.migrate

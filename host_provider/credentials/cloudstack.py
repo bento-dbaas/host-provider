@@ -5,7 +5,9 @@ from host_provider.models import Host
 class CredentialCloudStack(CredentialBase):
 
     def __init__(self, provider, environment, engine):
-        super(CredentialCloudStack, self).__init__(provider, environment, engine)
+        super(CredentialCloudStack, self).__init__(
+            provider, environment, engine
+        )
         self._zone_increment = 0
 
     @property
@@ -19,9 +21,6 @@ class CredentialCloudStack(CredentialBase):
     @property
     def secret_key(self):
         return self.content['secret_key']
-
-    def offering_to(self, cpu, memory):
-        return self.content['offerings']['{}c{}m'.format(cpu, memory)]['id']
 
     def template_to(self, engine):
         return self.content['templates'][engine]
@@ -60,19 +59,6 @@ class CredentialCloudStack(CredentialBase):
         self._zone_increment += 1
         self._zone = zone
 
-    def after_create_host(self, group):
-        existing = self.exist_node(group)
-        if not existing:
-            self.collection_last.update_one(
-                {"latestUsed": True, "environment": self.environment},
-                {"$set": {"zone": self.zone}}, upsert=True
-            )
-
-        self.collection_last.update(
-            {"group": group, "environment": self.environment},
-            {"$set": {"zone": self.zone}}, upsert=True
-        )
-
     def remove_last_used_for(self, group):
         self.collection_last.delete_one({
             "environment": self.environment, "group": group
@@ -99,7 +85,10 @@ class CredentialCloudStack(CredentialBase):
 
         latest_used = self.last_used_zone()
         if latest_used:
-            return self.get_next_zone_from(latest_used["zone"], self._zone_increment)
+            return self.get_next_zone_from(
+                latest_used["zone"],
+                self._zone_increment
+            )
 
         zones = list(self.zones.keys())
         return self.get_next_zone_from(zones[0], self._zone_increment)

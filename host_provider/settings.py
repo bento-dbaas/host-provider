@@ -1,6 +1,7 @@
 from os import getenv
 import re
 import json
+import logging
 
 
 LIBCLOUD_CA_CERTS_PATH = getenv("LIBCLOUD_CA_CERTS_PATH", None)
@@ -42,3 +43,5 @@ HTTP_PROXY = getenv("DBAAS_HTTP_PROXY", None)
 AWS_PROXY = getenv("DBAAS_AWS_PROXY", None)
 TEAM_API_URL = getenv("TEAM_API_URL", None)
 HOST_ORIGIN_TAG = getenv("HOST_ORIGIN_TAG", "")
+
+LOGGING_LEVEL = int(getenv('LOGGING_LEVEL', logging.INFO))

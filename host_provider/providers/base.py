@@ -126,3 +126,15 @@ class ProviderBase(object):
 
     def _refresh_metadata(self, host):
         pass
+
+    def create_static_ip(self, *args, **kw):
+        pass
+
+    def destroy_static_ip(self, *args, **kw):
+        pass
+
+    def associate_ip_with_host(self, *args, **kw):
+        pass
+
+    def create_host_object(self, *args, **kw):
+        raise NotImplementedError

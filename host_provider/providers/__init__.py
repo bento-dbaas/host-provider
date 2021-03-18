@@ -2,8 +2,7 @@ from host_provider.providers.base import ProviderBase
 from host_provider.providers.cloudstack import CloudStackProvider
 from host_provider.providers.aws import AWSProvider
 from host_provider.providers.k8s import K8sProvider
-from host_provider.providers.azure import AzureProvider
-
+from host_provider.providers.gce import GceProvider
 
 
 def get_provider_to(provider_name):

@@ -112,8 +112,8 @@ class CloudStackProvider(ProviderBase):
     def _all_node_destroyed(self, group):
         self.credential.remove_last_used_for(group)
 
-    def restore(self, identifier, engine=None):
-        node = self.BasicInfo(identifier)
+    def restore(self, host, engine=None):
+        node = self.BasicInfo(host.identifier)
 
         if engine is None:
             template = self.credential.template
@@ -131,7 +131,7 @@ class CloudStackProvider(ProviderBase):
         return self.client.ex_change_node_size(node, offering)
 
     def create_host_object(self, provider, payload, env,
-                           created_host_metadata):
+                           created_host_metadata, *args, **kw):
         address = created_host_metadata.private_ips[0]
         host = Host(
             name=payload['name'], group=payload['group'],

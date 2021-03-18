@@ -64,11 +64,24 @@ class CredentialBase(CredentialMongoDB):
             self._content = self.get_content()
         return super(CredentialBase, self).content
 
+    def offering_to(self, cpu, memory):
+        return self.content['offerings']['{}c{}m'.format(cpu, memory)]['id']
+
     def before_create_host(self, group):
         pass
 
     def after_create_host(self, group):
-        pass
+        existing = self.exist_node(group)
+        if not existing:
+            self.collection_last.update_one(
+                {"latestUsed": True, "environment": self.environment},
+                {"$set": {"zone": self.zone}}, upsert=True
+            )
+
+        self.collection_last.update(
+            {"group": group, "environment": self.environment},
+            {"$set": {"zone": self.zone}}, upsert=True
+        )
 
     @property
     def _zones_field(self):
