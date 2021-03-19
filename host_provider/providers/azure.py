@@ -117,7 +117,7 @@ class AzureProvider(ProviderBase):
                     sql_dict['location'] = region
             return sql_dict
         except Exception as error:
-            raise Exception("Template parse error: {}" % (error))
+            raise Exception("Template parse error: {}" % error)
 
     def offering_to(self, cpu, memory, api_version='2020-12-01'):
 
@@ -217,16 +217,13 @@ class AzureProvider(ProviderBase):
         })
         return tags
 
-    def associate_ip_with_host(self, host, static_ip_id):
-        pass
-
     def create_host_object(self, provider, payload, env, created_host_metadata, static_ip_id, **kw):
         nic = created_host_metadata.get('nic', '')
         vm = created_host_metadata.get('vm', '')
 
         configs = [conf for conf in nic['properties']['ipConfigurations']]
         primaryIPAddress = [i['properties']['privateIPAddress'] for i in configs][0]
-        identifier = vm.get('id', '')
+        identifier = vm['properties']['vmId']
 
         address = primaryIPAddress
         host = Host(
@@ -237,6 +234,7 @@ class AzureProvider(ProviderBase):
             zone=provider.credential._zone
         )
         host.save()
+
         return host
 
     def _list_vm(self, name, only_status=True, api_version='2020-12-01'):

@@ -6,7 +6,6 @@ from host_provider.providers.gce import GceProvider
 from host_provider.providers.azure import AzureProvider
 
 
-
 def get_provider_to(provider_name):
     for cls in ProviderBase.__subclasses__():
         if cls.get_provider() == provider_name:

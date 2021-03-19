@@ -49,11 +49,6 @@ FAKE_GCE_CREDENTIAL = {
     "region": "fake_region"
 }
 
-FAKE_HOST_OBJ = namedtuple('FakeHostObj', 'id name zone identifier')
-FAKE_HOST = FAKE_HOST_OBJ(
-    'fake_id', 'fake_host_name', 'fake_host_zone', 'fake_identifier'
-)
-
 FAKE_STATIC_IP_OBJ = namedtuple('FakeStaticIP', 'id name address')
 FAKE_STATIC_IP = FAKE_STATIC_IP_OBJ(
     'fake_id', 'fake_ip_name', 'fake_address'
