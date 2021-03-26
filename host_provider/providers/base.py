@@ -3,15 +3,17 @@ from libcloud import security
 from host_provider.models import Host
 from host_provider.settings import LIBCLOUD_CA_CERTS_PATH
 
+from base_provider import BaseProvider
 
-class ProviderBase(object):
+
+class ProviderBase(BaseProvider):
 
     def __init__(self, environment, engine, auth_info=None):
-        self.environment = environment
-        self.engine = engine
-        self._client = None
-        self._credential = None
-        self.auth_info = auth_info
+        super(ProviderBase, self).__init__(
+            environment,
+            engine=engine,
+            auth_info=None
+        )
 
         if LIBCLOUD_CA_CERTS_PATH is not None:
             security.CA_CERTS_PATH = LIBCLOUD_CA_CERTS_PATH
@@ -24,20 +26,6 @@ class ProviderBase(object):
     @property
     def create_attempts(self):
         return 1
-
-    @property
-    def client(self):
-        if not self._client:
-            self._client = self.build_client()
-
-        return self._client
-
-    @property
-    def credential(self):
-        if not self._credential:
-            self._credential = self.build_credential()
-
-        return self._credential
 
     def credential_add(self, content):
         credential_cls = self.get_credential_add()
@@ -93,20 +81,7 @@ class ProviderBase(object):
         self._refresh_metadata(host)
         host.save()
 
-    @classmethod
-    def get_provider(cls):
-        raise NotImplementedError
-
-    def build_client(self):
-        raise NotImplementedError
-
     def _create_host(self, cpu, memory, name, *args, **kw):
-        raise NotImplementedError
-
-    def build_credential(self):
-        raise NotImplementedError
-
-    def get_credential_add(self):
         raise NotImplementedError
 
     def start(self, host):
