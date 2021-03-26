@@ -11,7 +11,7 @@ from .fakes.base import FAKE_ENGINE, FAKE_HOST
 from host_provider.providers.gce import StaticIPNotFoundError, WrongStatusError
 
 
-@patch('host_provider.providers.gce.GceProvider.wait_status_of_instance')
+@patch('base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
@@ -27,16 +27,8 @@ class StartVMTestCase(GCPBaseTestCase):
         self.assertEqual(start_params['instance'], 'fake_host_name')
         self.assertEqual(start_params['zone'], 'fake_host_zone')
 
-    def test_wait_status(self, client_mock, wait_status_mock):
-        self.provider.start(self.host)
 
-        self.assertTrue(wait_status_mock.called)
-        wait_status_params = wait_status_mock.call_args
-        self.assertEqual(wait_status_params[0][0], 'fake_host_name')
-        self.assertEqual(wait_status_params[1]['status'], 'RUNNING')
-
-
-@patch('host_provider.providers.gce.GceProvider.wait_status_of_instance')
+@patch('base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
@@ -54,18 +46,8 @@ class StopVMTestCase(GCPBaseTestCase):
         self.assertEqual(stop_params['instance'], 'fake_host_name')
         self.assertEqual(stop_params['zone'], 'fake_host_zone')
 
-    @patch('host_provider.models.Host.get',
-           new=MagicMock(return_value=FAKE_HOST))
-    def test_wait_status(self, client_mock, wait_status_mock):
-        self.provider.stop('fake_identifier')
 
-        self.assertTrue(wait_status_mock.called)
-        wait_status_params = wait_status_mock.call_args
-        self.assertEqual(wait_status_params[0][0], 'fake_host_name')
-        self.assertEqual(wait_status_params[1]['status'], 'TERMINATED')
-
-
-@patch('host_provider.providers.gce.GceProvider.wait_status_of_instance')
+@patch('base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
@@ -83,6 +65,8 @@ class StopVMEdgeCasesTestCase(GCPBaseTestCase):
        new=MagicMock(return_value=FAKE_STATIC_IP))
 @patch('host_provider.providers.gce.GceProvider.disk_image_link',
        new=PropertyMock(return_value='fake_disk_image_link'))
+@patch('base_provider.BaseProvider.wait_operation',
+       new=MagicMock(return_value={'status': 'READY'}))
 class CreateHostTestCase(GCPBaseTestCase):
 
     def test_static_ip_not_found(self, client_mock):
@@ -188,12 +172,10 @@ class DestroyStaticIPTestCase(GCPBaseTestCase):
         self.assertEqual(delete_params['address'], 'fake_ip_name')
 
 
-@patch('host_provider.providers.gce.GceProvider.wait_status_of_instance')
+@patch('base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
-@patch('host_provider.providers.gce.GceProvider.wait_instance_404',
-       new=MagicMock(return_value=True))
 class DestroyVMTestCase(GCPBaseTestCase):
 
     def test_host_not_found(self, client_mock, wait_status_mock):
@@ -388,7 +370,7 @@ class WaitStatusOfTestCase(GCPBaseTestCase):
 
 @patch('host_provider.providers.gce.GceProvider._destroy')
 @patch('host_provider.providers.gce.GceProvider._create_host')
-@patch('host_provider.providers.gce.GceProvider.wait_status_of_instance')
+@patch('base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.get_instance')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',

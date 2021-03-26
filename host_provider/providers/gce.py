@@ -58,13 +58,16 @@ class GceProvider(ProviderBase):
         zone = host.zone
         instance_name = host.name
 
-        self.client.instances().start(
+        start = self.client.instances().start(
             project=project,
             zone=zone,
             instance=instance_name
         ).execute()
 
-        self.wait_status_of_instance(instance_name, zone, status='RUNNING')
+        return self.wait_operation(
+            operation=start.get('name'),
+            zone=zone
+        )
 
     def stop(self, identifier):
         host = Host.get(identifier=identifier)
@@ -73,14 +76,15 @@ class GceProvider(ProviderBase):
         zone = host.zone
         instance_name = host.name
 
-        self.client.instances().stop(
+        stop = self.client.instances().stop(
             project=project,
             zone=zone,
             instance=instance_name
         ).execute()
 
-        self.wait_status_of_instance(
-            instance_name, zone, status='TERMINATED'
+        return self.wait_operation(
+            operation=stop.get('name'),
+            zone=zone
         )
 
     @property
@@ -151,17 +155,26 @@ class GceProvider(ProviderBase):
             zone=zone,
             body=config
         ).execute()
+
+        self.wait_operation(
+            operation=instance.get('name'),
+            zone=zone
+        )
+
         return instance
 
     def _destroy(self, identifier):
         host = Host.get(identifier=identifier)
-        self.client.instances().delete(
+        destroy = self.client.instances().delete(
             project=self.credential.project,
             zone=host.zone,
             instance=host.name
         ).execute()
 
-        return self.wait_instance_404(host)
+        return self.wait_operation(
+            operation=destroy.get('name'),
+            zone=host.zone
+        )
 
     def create_static_ip(self, group, ip_name):
         self.credential.before_create_host(group)
@@ -193,6 +206,7 @@ class GceProvider(ProviderBase):
             region=self.credential.region,
             address=ip_name
         ).execute()
+
 
     def clean(self, name):
         pass
@@ -227,8 +241,6 @@ class GceProvider(ProviderBase):
         zone = provider.credential.zone
         instance_name = payload['name']
 
-        self.wait_status_of_instance(instance_name, zone, status='RUNNING')
-
         instance = self.get_instance(instance_name, zone)
         address = instance['networkInterfaces'][0]['networkIP']
 
@@ -262,27 +274,6 @@ class GceProvider(ProviderBase):
             return request.execute()
         return request
 
-    def wait_instance_404(self, host):
-        request = self.get_instance(
-            host.name,
-            host.zone,
-            execute_request=False
-        )
-        attempts = 0
-
-        while attempts <= self.WAIT_ATTEMPTS:
-            try:
-                request.execute()
-                sleep(self.WAIT_TIME)
-            except HttpError as ex:
-                if ex.resp.status == 404:
-                    return True
-                else:
-                    raise Exception(ex)
-            attempts += 1
-
-        raise Exception("Wait limit exceeded")
-
     def wait_status_of_static_ip(self, address_name, status):
 
         request = self.get_internal_static_ip(
@@ -295,15 +286,6 @@ class GceProvider(ProviderBase):
             status,
             required_fields=['address']
         )
-
-    def wait_status_of_instance(self, instance_name, zone, status):
-        request = self.get_instance(
-            instance_name,
-            zone,
-            execute_request=False
-        )
-
-        return self._wait_status_of(request, status)
 
     def _wait_status_of(self, request, status, required_fields=None):
         """
@@ -386,7 +368,6 @@ class GceProvider(ProviderBase):
             zone=host.zone
         )
 
-        self.wait_status_of_instance(host.name, host.zone, status='RUNNING')
         host.identifier = created_host_metadata['id']
         host.recreating = False
         host.save()
