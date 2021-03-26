@@ -21,11 +21,12 @@ class AzureConnection(Connection):
         self.__tenant_id = None
         self.__login_resource = None
         self.__subscription_id = None
+        self.__endpoint = None
 
     @property
     def subscription_id(self):
         return self.__subscription_id
-        
+
     @subscription_id.setter
     def subscription_id(self, subscription_id):
         self.__subscription_id = subscription_id
@@ -33,7 +34,7 @@ class AzureConnection(Connection):
     @property
     def key(self):
         return self.__key
-        
+
     @key.setter
     def key(self, key):
         self.__key = key
@@ -41,14 +42,14 @@ class AzureConnection(Connection):
     @property
     def secret(self):
         return self.__secret
-        
+
     @secret.setter
     def secret(self, secret):
         self.__secret = secret
 
     @property
     def tenant_id(self):
-        return self.__tenant_id        
+        return self.__tenant_id
 
     @tenant_id.setter
     def tenant_id(self, tenant_id):
@@ -57,10 +58,18 @@ class AzureConnection(Connection):
     @property
     def login_host(self):
         return self.__login_host
-    
+
     @login_host.setter
     def login_host(self, host):
         self.__login_host = host
+
+    @property
+    def endpoint(self):
+        return self.__endpoint
+
+    @endpoint.setter
+    def endpoint(self, endpoint):
+        self.__endpoint = endpoint
 
     @property
     def login_resource(self):
@@ -76,8 +85,9 @@ class AzureConnection(Connection):
         self.secret = credentials.secret_key
         self.tenant_id = credentials.tenant_id
         self.subscription_id = credentials.subscription_id
-        self.login_resource = "https://management.azure.com/.default"
-        self.login_host = "login.microsoftonline.com"
+        self.login_resource = credentials.endpoint['scope']
+        self.login_host = credentials.endpoint['login']
+        self.endpoint = credentials.endpoint['api']
         return credentials
 
     def get_token_from_credentials(self):
