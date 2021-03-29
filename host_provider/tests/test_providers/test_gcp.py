@@ -17,10 +17,10 @@ from host_provider.providers.gce import StaticIPNotFoundError, WrongStatusError
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
 class StartVMTestCase(GCPBaseTestCase):
 
-    def test_call_client_params(self, client_mock, wait_status_mock):
+    def test_call_client_params(self, client_mock, wait_op):
         start_mock = client_mock().instances().start
         self.provider.start(self.host)
-
+        self.assertTrue(wait_op.called)
         self.assertTrue(start_mock.called)
         start_params = start_mock.call_args[1]
         self.assertEqual(start_params['project'], 'fake_project')
@@ -36,10 +36,12 @@ class StopVMTestCase(GCPBaseTestCase):
 
     @patch('host_provider.models.Host.get',
            new=MagicMock(return_value=FAKE_HOST))
-    def test_call_client_params(self, client_mock, wait_status_mock):
+    def test_call_client_params(self, client_mock, wait_op):
         stop_mock = client_mock().instances().stop
         self.provider.stop('fake_identifier')
 
+
+        self.assertTrue(wait_op.called)
         self.assertTrue(stop_mock.called)
         stop_params = stop_mock.call_args[1]
         self.assertEqual(stop_params['project'], 'fake_project')
@@ -53,11 +55,11 @@ class StopVMTestCase(GCPBaseTestCase):
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
 class StopVMEdgeCasesTestCase(GCPBaseTestCase):
 
-    def test_host_not_found(self, client_mock, wait_status_mock):
+    def test_host_not_found(self, client_mock, wait_op):
         with self.assertRaises(DoesNotExist):
             self.provider.stop('fake_identifier')
 
-
+@patch('base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
@@ -69,17 +71,18 @@ class StopVMEdgeCasesTestCase(GCPBaseTestCase):
        new=MagicMock(return_value={'status': 'READY'}))
 class CreateHostTestCase(GCPBaseTestCase):
 
-    def test_static_ip_not_found(self, client_mock):
+    def test_static_ip_not_found(self, client_mock, wait_op):
         with self.assertRaises(StaticIPNotFoundError):
             self.provider._create_host(2, 1024, 'fake_name')
 
-    def test_call_client_params(self, client_mock):
+    def test_call_client_params(self, client_mock, wait_op):
         self.provider.credential._zone = 'fake_zone_1'
         insert_mock = client_mock().instances().insert
         self.provider._create_host(
             2, 1024, 'fake_name', static_ip_id='fake_static_ip_id'
         )
 
+        self.assertTrue(wait_op.called)
         self.assertTrue(insert_mock.called)
         insert_params = insert_mock.call_args[1]
         self.assertEqual(insert_params['project'], 'fake_project')
@@ -105,7 +108,7 @@ class CreateHostTestCase(GCPBaseTestCase):
             network_interface_config['networkIP'], 'fake_address'
         )
 
-    def test_create_host_with_specific_zone(self, client_mock):
+    def test_create_host_with_specific_zone(self, client_mock, wait_op):
         self.provider.credential._zone = 'fake_zone_1'
         insert_mock = client_mock().instances().insert
         self.provider._create_host(
@@ -117,9 +120,8 @@ class CreateHostTestCase(GCPBaseTestCase):
         insert_params = insert_mock.call_args[1]
         self.assertEqual(insert_params['zone'], 'another_fake_zone')
 
-
+@patch('base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.IP')
-@patch('host_provider.providers.gce.GceProvider.wait_status_of_static_ip')
 @patch('host_provider.providers.gce.GceProvider.get_internal_static_ip',
        new=MagicMock(return_value=FAKE_GOOGLE_RESPONSE_STATIC_IP))
 @patch('host_provider.providers.gce.GceProvider.build_client')
@@ -127,11 +129,10 @@ class CreateHostTestCase(GCPBaseTestCase):
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
 class CreateStaticIPTestCase(GCPBaseTestCase):
 
-    def test_call_client_params(self, client_mock, wait_status_mock,
-                                model_ip_mock):
+    def test_call_client_params(self, client_mock, model_ip_mock, wait_op):
         insert_mock = client_mock().addresses().insert
         self.provider.create_static_ip('fake_group', 'fake_ip_name')
-
+        self.assertTrue(wait_op.called)
         self.assertTrue(insert_mock.called)
         insert_params = insert_mock.call_args[1]
         self.assertEqual(insert_params['project'], 'fake_project')
@@ -145,8 +146,8 @@ class CreateStaticIPTestCase(GCPBaseTestCase):
             }
         )
 
-    def test_model_ip_called(self, client_mock, wait_status_mock,
-                             model_ip_mock):
+    def test_model_ip_called(self, client_mock,
+                             model_ip_mock, wait_op):
         self.provider.create_static_ip('fake_group', 'fake_ip_name')
 
         self.assertTrue(model_ip_mock.called)
@@ -155,16 +156,16 @@ class CreateStaticIPTestCase(GCPBaseTestCase):
         self.assertEqual(model_ip_params['group'], 'fake_group')
         self.assertEqual(model_ip_params['address'], 'fake_address')
 
-
+@patch('base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
 class DestroyStaticIPTestCase(GCPBaseTestCase):
 
-    def test_call_client_params(self, client_mock):
+    def test_call_client_params(self, client_mock, wait_op):
         delete_mock = client_mock().addresses().delete
         self.provider.destroy_static_ip('fake_ip_name')
-
+        self.assertTrue(wait_op.called)
         self.assertTrue(delete_mock.called)
         delete_params = delete_mock.call_args[1]
         self.assertEqual(delete_params['project'], 'fake_project')
@@ -178,16 +179,16 @@ class DestroyStaticIPTestCase(GCPBaseTestCase):
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
 class DestroyVMTestCase(GCPBaseTestCase):
 
-    def test_host_not_found(self, client_mock, wait_status_mock):
+    def test_host_not_found(self, client_mock, wait_op):
         with self.assertRaises(DoesNotExist):
             self.provider._destroy('fake_identifier')
 
     @patch('host_provider.models.Host.get',
            new=MagicMock(return_value=FAKE_HOST))
-    def test_call_client_params(self, client_mock, wait_status_mock):
+    def test_call_client_params(self, client_mock, wait_op):
         delete_mock = client_mock().instances().delete
         self.provider._destroy('fake_identifier')
-
+        self.assertTrue(wait_op.called)
         self.assertTrue(delete_mock.called)
         delete_params = delete_mock.call_args[1]
         self.assertEqual(delete_params['project'], 'fake_project')
@@ -312,65 +313,12 @@ class WaitStatusOfTestCase(GCPBaseTestCase):
             'color': 'black'
         }
 
-    def test_status_not_satisfied(self):
-        self.fake_request.execute.return_value = {
-            'status': 'unespected_status',
-            'age': 99,
-            'color': 'black'
-        }
-        with self.assertRaises(WrongStatusError):
-            self.provider._wait_status_of(
-                self.fake_request,
-                status='READY'
-            )
 
-    def test_status_not_satisfied_and_required_fields_satisfied(self):
-        self.fake_request.execute.return_value = {
-            'status': 'unespected_status',
-            'age': 99,
-            'color': 'black'
-        }
-        with self.assertRaises(WrongStatusError):
-            self.provider._wait_status_of(
-                self.fake_request,
-                status='READY',
-                required_fields=['age', 'color']
-            )
-
-    def test_status_satisfied(self):
-
-        resp = self.provider._wait_status_of(
-            self.fake_request,
-            status='READY'
-        )
-
-        self.assertTrue(resp)
-
-    def test_status_satisfied_and_required_fields_not_satisfied(self):
-        self.fake_request.execute.return_value = {
-            'status': 'READY',
-            'color': 'black'
-        }
-        with self.assertRaises(WrongStatusError):
-            self.provider._wait_status_of(
-                self.fake_request,
-                status='READY',
-                required_fields=['age', 'color']
-            )
-
-    def test_status_satisfied_and_required_fields_satisfied(self):
-        resp = self.provider._wait_status_of(
-            self.fake_request,
-            status='READY',
-            required_fields=['age', 'color']
-        )
-
-        self.assertTrue(resp)
+   
 
 
 @patch('host_provider.providers.gce.GceProvider._destroy')
 @patch('host_provider.providers.gce.GceProvider._create_host')
-@patch('base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.get_instance')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
@@ -387,7 +335,6 @@ class RestoreTestCase(GCPBaseTestCase):
 
     def test_call_destroy_when_not_recreating(self, client_mock,
                                               get_instance_mock,
-                                              wait_status_mock,
                                               create_host_mock,
                                               destroy_host_mock):
 
@@ -398,7 +345,6 @@ class RestoreTestCase(GCPBaseTestCase):
 
     def test_dont_call_destroy_when_recreating(self, client_mock,
                                                get_instance_mock,
-                                               wait_status_mock,
                                                create_host_mock,
                                                destroy_host_mock):
 
