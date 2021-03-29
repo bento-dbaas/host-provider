@@ -178,7 +178,7 @@ class GceProvider(ProviderBase):
 
     def create_static_ip(self, group, ip_name):
         self.credential.before_create_host(group)
-        self.client.addresses().insert(
+        address = self.client.addresses().insert(
             project=self.credential.project,
             region=self.credential.region,
             body={
@@ -188,7 +188,11 @@ class GceProvider(ProviderBase):
             }
         ).execute()
 
-        self.wait_status_of_static_ip(ip_name, status="RESERVED")
+        self.wait_operation(
+            operation=address.get('name'),
+            region=self.credential.region
+        )
+
         ip_metadata = self.get_internal_static_ip(ip_name)
 
         ip = IP(
@@ -201,11 +205,16 @@ class GceProvider(ProviderBase):
         return ip
 
     def destroy_static_ip(self, ip_name):
-        self.client.addresses().delete(
+        del_addr = self.client.addresses().delete(
             project=self.credential.project,
             region=self.credential.region,
             address=ip_name
         ).execute()
+
+        self.wait_operation(
+            operation=del_addr.get('name'),
+            region=self.credential.region
+        )
 
 
     def clean(self, name):
@@ -274,60 +283,6 @@ class GceProvider(ProviderBase):
             return request.execute()
         return request
 
-    def wait_status_of_static_ip(self, address_name, status):
-
-        request = self.get_internal_static_ip(
-            address_name,
-            execute_request=False
-        )
-
-        return self._wait_status_of(
-            request,
-            status,
-            required_fields=['address']
-        )
-
-    def _wait_status_of(self, request, status, required_fields=None):
-        """
-        Wait resource get specific status through
-        status param.
-        u can pass `required_fields`
-        required_fields is a array with field name.
-        When u pass fields name, we will wait this field
-        exists in response resource.
-        Ex. required_fields=['age', 'name']
-        """
-
-        def resource_has_required_fields(resource, required_fields):
-            for field_name in required_fields:
-                if field_name not in resource:
-                    return False
-            return True
-
-        if required_fields is None:
-            required_fields = []
-        attempts = 1
-        while attempts <= self.WAIT_ATTEMPTS:
-
-            resource = request.execute()
-            resource_status = resource['status']
-            if (resource_status == status and
-                    resource_has_required_fields(resource, required_fields)):
-                return True
-
-            attempts += 1
-            sleep(self.WAIT_TIME)
-
-        err_msg = "It was expected status: {} got: {}.".format(
-            status, resource_status
-        )
-        if required_fields:
-            err_msg += (" And It expected required fields: {} "
-                        "the resource has this fields: {}").format(
-                            required_fields, resource.keys()
-                        )
-        raise WrongStatusError(err_msg)
-
     def restore(self, host, engine=None):
 
         if engine:
@@ -337,28 +292,6 @@ class GceProvider(ProviderBase):
             self._destroy(identifier=host.identifier)
             host.recreating = True
             host.save()
-
-        attempts = 1
-        while attempts <= self.WAIT_ATTEMPTS:
-            try:
-                self.get_instance(
-                    instance_name=host.name,
-                    zone=host.zone
-                )
-            except HttpError as err:
-                status = err.resp.status
-                if status == 404:
-                    break
-                else:
-                    LOG.error(
-                        ("Restore of host <{}> expect get status 404."
-                         " got: {}").format(
-                            host, status
-                        )
-                    )
-
-            attempts += 1
-            sleep(self.WAIT_TIME)
 
         created_host_metadata = self._create_host(
             cpu=host.cpu,
