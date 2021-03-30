@@ -2,7 +2,7 @@ from pymongo import MongoClient, ReturnDocument
 from host_provider.settings import MONGODB_DB, MONGODB_HOST, MONGODB_PORT, \
     MONGODB_USER, MONGODB_PWD, MONGO_ENDPOINT
 
-from base_provider import BaseCredential
+from dbaas_base_provider import BaseCredential
 
 
 class CredentialMongoDB(BaseCredential):
