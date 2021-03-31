@@ -8,6 +8,10 @@ from dbaas_base_provider import BaseProvider
 
 class ProviderBase(BaseProvider):
 
+    @property
+    def provider_type(self):
+        return 'host_provider'
+
     def __init__(self, environment, engine, auth_info=None):
         super(ProviderBase, self).__init__(
             environment,
