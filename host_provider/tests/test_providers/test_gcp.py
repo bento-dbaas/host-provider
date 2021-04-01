@@ -40,7 +40,6 @@ class StopVMTestCase(GCPBaseTestCase):
         stop_mock = client_mock().instances().stop
         self.provider.stop('fake_identifier')
 
-
         self.assertTrue(wait_op.called)
         self.assertTrue(stop_mock.called)
         stop_params = stop_mock.call_args[1]
@@ -58,6 +57,7 @@ class StopVMEdgeCasesTestCase(GCPBaseTestCase):
     def test_host_not_found(self, client_mock, wait_op):
         with self.assertRaises(DoesNotExist):
             self.provider.stop('fake_identifier')
+
 
 @patch('dbaas_base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
@@ -120,6 +120,7 @@ class CreateHostTestCase(GCPBaseTestCase):
         insert_params = insert_mock.call_args[1]
         self.assertEqual(insert_params['zone'], 'another_fake_zone')
 
+
 @patch('dbaas_base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.IP')
 @patch('host_provider.providers.gce.GceProvider.get_internal_static_ip',
@@ -155,6 +156,7 @@ class CreateStaticIPTestCase(GCPBaseTestCase):
         self.assertEqual(model_ip_params['name'], 'fake_ip_name')
         self.assertEqual(model_ip_params['group'], 'fake_group')
         self.assertEqual(model_ip_params['address'], 'fake_address')
+
 
 @patch('dbaas_base_provider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
@@ -312,9 +314,6 @@ class WaitStatusOfTestCase(GCPBaseTestCase):
             'age': 99,
             'color': 'black'
         }
-
-
-   
 
 
 @patch('host_provider.providers.gce.GceProvider._destroy')
