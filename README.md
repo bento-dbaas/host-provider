@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.com/bento-dbaas/host-provider.svg?branch=master)](https://travis-ci.com/bento-dbaas/host-provider) [![codecov](https://codecov.io/gh/bento-dbaas/host-provider/branch/master/graph/badge.svg?token=GQN1ZN9FJQ)](https://codecov.io/gh/bento-dbaas/host-provider)
+
+
 ## Host Provider
 
 ### How to run

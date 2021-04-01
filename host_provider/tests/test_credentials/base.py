@@ -3,7 +3,7 @@ from unittest.mock import patch
 from host_provider.settings import MONGODB_HOST, MONGODB_PORT, MONGODB_USER, \
     MONGODB_PWD
 from host_provider.credentials.base import CredentialAdd, CredentialBase
-from tests.test_credentials import CredentialAddFake, CredentialBaseFake, \
+from host_provider.tests.test_credentials import CredentialAddFake, CredentialBaseFake, \
     FakeMongoDB
 
 

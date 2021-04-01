@@ -1,42 +1,27 @@
-from collections import OrderedDict
 from pymongo import MongoClient, ReturnDocument
 from host_provider.settings import MONGODB_DB, MONGODB_HOST, MONGODB_PORT, \
     MONGODB_USER, MONGODB_PWD, MONGO_ENDPOINT
 
+from dbaas_base_provider import BaseCredential
 
-class CredentialMongoDB(object):
+
+class CredentialMongoDB(BaseCredential):
+
+    @property
+    def provider_type(self):
+        return 'host_provider'
 
     def __init__(self, provider, environment):
-        self.provider = provider
-        self.environment = environment
-        self._db = None
-        self._collection_credential = None
-        self._content = None
-
-    @property
-    def db(self):
-        if not self._db:
-            params = {'document_class': OrderedDict}
-            if MONGO_ENDPOINT is None:
-                params.update({
-                    'host': MONGODB_HOST, 'port': MONGODB_PORT,
-                    'username': MONGODB_USER, 'password': MONGODB_PWD
-                })
-                client = MongoClient(**params)
-            else:
-                client = MongoClient(MONGO_ENDPOINT, **params)
-            self._db = client[MONGODB_DB]
-        return self._db
-
-    @property
-    def credential(self):
-        if not self._collection_credential:
-            self._collection_credential = self.db["credential"]
-        return self._collection_credential
-
-    @property
-    def content(self):
-        return self._content
+        super(CredentialMongoDB, self).__init__(
+            provider,
+            environment
+        )
+        self.MONGO_ENDPOINT = MONGO_ENDPOINT
+        self.MONGODB_HOST = MONGODB_HOST
+        self.MONGODB_USER = MONGODB_USER
+        self.MONGODB_PORT = MONGODB_PORT
+        self.MONGODB_PWD = MONGODB_PWD
+        self.MONGODB_DB = MONGODB_DB
 
 
 class CredentialBase(CredentialMongoDB):

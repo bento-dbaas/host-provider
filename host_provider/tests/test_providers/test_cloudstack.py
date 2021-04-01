@@ -18,6 +18,8 @@ ENVIRONMENT = "dev"
 ENGINE = "redis"
 
 
+@patch('host_provider.providers.cloudstack.CredentialCloudStack.get_content',
+       new=MagicMock(return_value=FAKE_CREDENTIAL))
 @patch('libcloud.compute.drivers.cloudstack.CloudStackNodeDriver.ex_get_node')
 class CsHostDataTestCase(CloudStackBaseTestCase):
     def test_get_node_called(self, get_node_mock):
@@ -34,6 +36,8 @@ class CsHostDataTestCase(CloudStackBaseTestCase):
         self.assertEqual('fake_project_id', args[1].id)
 
 
+@patch('host_provider.providers.cloudstack.CredentialCloudStack.get_content',
+       new=MagicMock(return_value=FAKE_CREDENTIAL))
 @patch(('libcloud.compute.drivers.cloudstack.CloudStackNodeDriver'
         '.ex_list_networks'), new=MagicMock(
             return_value=FAKE_EX_LIST_NETWORKS))
@@ -57,6 +61,8 @@ class GetNetworkFromTestCase(CloudStackBaseTestCase):
         self.assertEqual(None, network)
 
 
+@patch('host_provider.providers.cloudstack.CredentialCloudStack.get_content',
+       new=MagicMock(return_value=FAKE_CREDENTIAL))
 class FqdnTestCase(CloudStackBaseTestCase):
     @patch(('host_provider.providers.cloudstack.CloudStackProvider'
            '.get_cs_node'))
@@ -106,6 +112,8 @@ class FqdnTestCase(CloudStackBaseTestCase):
         self.assertEqual('', fqdn)
 
 
+@patch('host_provider.providers.cloudstack.CredentialCloudStack.get_content',
+       new=MagicMock(return_value=FAKE_CREDENTIAL))
 class TestBaseCredential(TestCase):
 
     def setUp(self):

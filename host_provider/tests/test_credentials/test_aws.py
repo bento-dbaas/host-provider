@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 from host_provider.credentials.aws import CredentialAWS, \
     CredentialAddAWS
 from host_provider.providers.aws import AWSProvider
-from tests.test_credentials.base import FakeMongoDB
+from host_provider.tests.test_credentials.base import FakeMongoDB
 
 
 ENVIRONMENT = "dev"

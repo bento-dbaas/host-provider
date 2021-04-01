@@ -20,8 +20,8 @@ class StaticIPNotFoundError(Exception):
 
 
 class GceProvider(ProviderBase):
-    WAIT_STATUS_ATTEMPS = 60
-    WAIT_STATUS_TIME = 5
+    WAIT_ATTEMPTS = 60
+    WAIT_TIME = 5
 
     def build_client(self):
         service_account_data = self.credential.content['service_account']
@@ -58,13 +58,16 @@ class GceProvider(ProviderBase):
         zone = host.zone
         instance_name = host.name
 
-        self.client.instances().start(
+        start = self.client.instances().start(
             project=project,
             zone=zone,
             instance=instance_name
         ).execute()
 
-        self.wait_status_of_instance(instance_name, zone, status='RUNNING')
+        return self.wait_operation(
+            operation=start.get('name'),
+            zone=zone
+        )
 
     def stop(self, identifier):
         host = Host.get(identifier=identifier)
@@ -73,14 +76,15 @@ class GceProvider(ProviderBase):
         zone = host.zone
         instance_name = host.name
 
-        self.client.instances().stop(
+        stop = self.client.instances().stop(
             project=project,
             zone=zone,
             instance=instance_name
         ).execute()
 
-        self.wait_status_of_instance(
-            instance_name, zone, status='TERMINATED'
+        return self.wait_operation(
+            operation=stop.get('name'),
+            zone=zone
         )
 
     @property
@@ -92,9 +96,9 @@ class GceProvider(ProviderBase):
 
         return image_response['selfLink']
 
-    def get_machine_type(self, offering, zone=None):
+    def get_machine_type(self, offering, zone):
         return "zones/{}/machineTypes/{}".format(
-            zone or self.credential.zone,
+            zone,
             offering
         )
 
@@ -102,6 +106,8 @@ class GceProvider(ProviderBase):
 
         offering = self.credential.offering_to(int(cpu), memory)
         static_ip_id = kw.get('static_ip_id')
+        zone = zone or self.credential.zone
+
         if not static_ip_id:
             raise StaticIPNotFoundError(
                 'The id of static IP must be provided'
@@ -116,7 +122,7 @@ class GceProvider(ProviderBase):
 
         config = {
             'name': name,
-            'machineType': self.get_machine_type(offering),
+            'machineType': self.get_machine_type(offering, zone),
 
             # Specify the boot disk and the image to use as a source.
             'disks': [
@@ -146,22 +152,33 @@ class GceProvider(ProviderBase):
 
         instance = self.client.instances().insert(
             project=self.credential.project,
-            zone=zone or self.credential.zone,
+            zone=zone,
             body=config
         ).execute()
+
+        self.wait_operation(
+            operation=instance.get('name'),
+            zone=zone
+        )
+
         return instance
 
     def _destroy(self, identifier):
         host = Host.get(identifier=identifier)
-        return self.client.instances().delete(
+        destroy = self.client.instances().delete(
             project=self.credential.project,
             zone=host.zone,
             instance=host.name
         ).execute()
 
+        return self.wait_operation(
+            operation=destroy.get('name'),
+            zone=host.zone
+        )
+
     def create_static_ip(self, group, ip_name):
         self.credential.before_create_host(group)
-        self.client.addresses().insert(
+        address = self.client.addresses().insert(
             project=self.credential.project,
             region=self.credential.region,
             body={
@@ -171,7 +188,11 @@ class GceProvider(ProviderBase):
             }
         ).execute()
 
-        self.wait_status_of_static_ip(ip_name, status="RESERVED")
+        self.wait_operation(
+            operation=address.get('name'),
+            region=self.credential.region
+        )
+
         ip_metadata = self.get_internal_static_ip(ip_name)
 
         ip = IP(
@@ -184,11 +205,17 @@ class GceProvider(ProviderBase):
         return ip
 
     def destroy_static_ip(self, ip_name):
-        self.client.addresses().delete(
+        del_addr = self.client.addresses().delete(
             project=self.credential.project,
             region=self.credential.region,
             address=ip_name
         ).execute()
+
+        self.wait_operation(
+            operation=del_addr.get('name'),
+            region=self.credential.region
+        )
+
 
     def clean(self, name):
         pass
@@ -223,8 +250,6 @@ class GceProvider(ProviderBase):
         zone = provider.credential.zone
         instance_name = payload['name']
 
-        self.wait_status_of_instance(instance_name, zone, status='RUNNING')
-
         instance = self.get_instance(instance_name, zone)
         address = instance['networkInterfaces'][0]['networkIP']
 
@@ -258,69 +283,6 @@ class GceProvider(ProviderBase):
             return request.execute()
         return request
 
-    def wait_status_of_static_ip(self, address_name, status):
-
-        request = self.get_internal_static_ip(
-            address_name,
-            execute_request=False
-        )
-
-        return self._wait_status_of(
-            request,
-            status,
-            required_fields=['address']
-        )
-
-    def wait_status_of_instance(self, instance_name, zone, status):
-        request = self.get_instance(
-            instance_name,
-            zone,
-            execute_request=False
-        )
-
-        return self._wait_status_of(request, status)
-
-    def _wait_status_of(self, request, status, required_fields=None):
-        """
-        Wait resource get specific status through
-        status param.
-        u can pass `required_fields`
-        required_fields is a array with field name.
-        When u pass fields name, we will wait this field
-        exists in response resource.
-        Ex. required_fields=['age', 'name']
-        """
-
-        def resource_has_required_fields(resource, required_fields):
-            for field_name in required_fields:
-                if field_name not in resource:
-                    return False
-            return True
-
-        if required_fields is None:
-            required_fields = []
-        attempts = 1
-        while attempts <= self.WAIT_STATUS_ATTEMPS:
-
-            resource = request.execute()
-            resource_status = resource['status']
-            if (resource_status == status and
-                    resource_has_required_fields(resource, required_fields)):
-                return True
-
-            attempts += 1
-            sleep(self.WAIT_STATUS_TIME)
-
-        err_msg = "It was expected status: {} got: {}.".format(
-            status, resource_status
-        )
-        if required_fields:
-            err_msg += (" And It expected required fields: {} "
-                        "the resource has this fields: {}").format(
-                            required_fields, resource.keys()
-                        )
-        raise WrongStatusError(err_msg)
-
     def restore(self, host, engine=None):
 
         if engine:
@@ -331,28 +293,6 @@ class GceProvider(ProviderBase):
             host.recreating = True
             host.save()
 
-        attempts = 1
-        while attempts <= self.WAIT_STATUS_ATTEMPS:
-            try:
-                self.get_instance(
-                    instance_name=host.name,
-                    zone=host.zone
-                )
-            except HttpError as err:
-                status = err.resp.status
-                if status == 404:
-                    break
-                else:
-                    LOG.error(
-                        ("Restore of host <{}> expect get status 404."
-                         " got: {}").format(
-                            host, status
-                        )
-                    )
-
-            attempts += 1
-            sleep(self.WAIT_STATUS_TIME)
-
         created_host_metadata = self._create_host(
             cpu=host.cpu,
             memory=host.memory,
@@ -361,7 +301,6 @@ class GceProvider(ProviderBase):
             zone=host.zone
         )
 
-        self.wait_status_of_instance(host.name, host.zone, status='RUNNING')
         host.identifier = created_host_metadata['id']
         host.recreating = False
         host.save()

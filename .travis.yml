@@ -1,0 +1,18 @@
+language: python
+python:
+  - 3.6.1
+services:
+  - mongodb
+  - mysql
+install:
+  - pip install -r requirements_dev.txt
+before_script:
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS host_provider;'
+  - make db_initialize
+script:
+  - make test_report
+notifications:
+  email: false
+cache: false
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
