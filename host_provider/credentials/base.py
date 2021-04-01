@@ -7,9 +7,7 @@ from dbaas_base_provider import BaseCredential
 
 class CredentialMongoDB(BaseCredential):
 
-    @property
-    def provider_type(self):
-        return 'host_provider'
+    provider_type = "host_provider"
 
     def __init__(self, provider, environment):
         super(CredentialMongoDB, self).__init__(
