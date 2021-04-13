@@ -1,8 +1,10 @@
 import logging
+import httplib2
 from time import sleep
 import googleapiclient.discovery
 from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
+from host_provider.settings import HTTPS_PROXY
 from host_provider.credentials.gce import CredentialGce, CredentialAddGce
 from host_provider.providers.base import ProviderBase
 from host_provider.models import Host, IP
@@ -31,8 +33,25 @@ class GceProvider(ProviderBase):
         credentials = service_account.Credentials.from_service_account_info(
             service_account_data
         )
+
+        if HTTPS_PROXY:
+            protocol, host, port = HTTPS_PROXY.split(':')
+            try:
+                port = int(port)
+            except ValueError:
+                raise EnvironmentError('HTTPS_PROXY incorrect format')
+
+            proxied_http = httplib2.Http(proxy_info=httplib2.ProxyInfo(
+                httplib2.socks.PROXY_TYPE_HTTP,
+                proxy_host=protocol + host,
+                proxy_port=port
+            ))
+
         return googleapiclient.discovery.build(
-            'compute', 'v1', credentials=credentials
+            'compute',
+            'v1',
+            credentials=credentials,
+            **{'http': proxied_http} if proxied_http else {}
         )
 
     @classmethod

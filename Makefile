@@ -2,7 +2,7 @@ run:
 	export LIBCLOUD_CA_CERTS_PATH=""; export FLASK_DEBUG=1; export VERIFY_SSL_CERT=1; export DBAAS_AWS_PROXY=;export FLASK_APP=./host_provider/main.py; python -m flask run --host 0.0.0.0 --port 5002
 
 test:
-	export DBAAS_AWS_PROXY=;coverage run --source=./ -m unittest discover --start-directory ./host_provider/tests -p "*.py"
+	export DBAAS_HTTP_PROXY=; export DBAAS_HTTPS_PROXY=;coverage run --source=./ -m unittest discover --start-directory ./host_provider/tests -p "*.py"
 
 test_report: test
 	coverage report -m
