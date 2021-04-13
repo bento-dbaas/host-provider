@@ -4,7 +4,7 @@ from time import sleep
 import googleapiclient.discovery
 from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
-from host_provider.settings import HTTPS_PROXY
+from host_provider.settings import HTTP_PROXY
 from host_provider.credentials.gce import CredentialGce, CredentialAddGce
 from host_provider.providers.base import ProviderBase
 from host_provider.models import Host, IP
@@ -34,12 +34,12 @@ class GceProvider(ProviderBase):
             service_account_data
         )
 
-        if HTTPS_PROXY:
-            protocol, host, port = HTTPS_PROXY.split(':')
+        if HTTP_PROXY:
+            protocol, host, port = HTTP_PROXY.split(':')
             try:
                 port = int(port)
             except ValueError:
-                raise EnvironmentError('HTTPS_PROXY incorrect format')
+                raise EnvironmentError('HTTP_PROXY incorrect format')
 
             proxied_http = httplib2.Http(proxy_info=httplib2.ProxyInfo(
                 httplib2.socks.PROXY_TYPE_HTTP,
