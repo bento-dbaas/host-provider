@@ -46,7 +46,8 @@ FAKE_GCE_CREDENTIAL = {
         "mongodb_4_0_3": "fake_template_mongo_4_0_3",
         "mongodb_4_2_3": "fake_template_mongo_4_2_3"
     },
-    "region": "fake_region"
+    "region": "fake_region",
+    "scopes": ["fake_scope"]
 }
 
 FAKE_STATIC_IP_OBJ = namedtuple('FakeStaticIP', 'id name address')
