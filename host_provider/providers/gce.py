@@ -1,5 +1,7 @@
 import logging
 import httplib2
+import google_auth_httplib2
+
 from time import sleep
 import googleapiclient.discovery
 from google.oauth2 import service_account
@@ -30,12 +32,14 @@ class GceProvider(ProviderBase):
         service_account_data['private_key'] = service_account_data[
             'private_key'
         ].replace('\\n', '\n')
+
         credentials = service_account.Credentials.from_service_account_info(
-            service_account_data
+            service_account_data,
+            scopes=self.credential.scopes
         )
 
         if HTTP_PROXY:
-            protocol, host, port = HTTP_PROXY.split(':')
+            _, host, port = HTTP_PROXY.split(':')
             try:
                 port = int(port)
             except ValueError:
@@ -43,16 +47,26 @@ class GceProvider(ProviderBase):
 
             proxied_http = httplib2.Http(proxy_info=httplib2.ProxyInfo(
                 httplib2.socks.PROXY_TYPE_HTTP,
-                proxy_host=protocol + host,
-                proxy_port=port
+                host.replace('//', ''),
+                port
             ))
 
-        return googleapiclient.discovery.build(
-            'compute',
-            'v1',
-            credentials=credentials,
-            **{'http': proxied_http} if proxied_http else {}
-        )
+            authorized_http = google_auth_httplib2.AuthorizedHttp(
+                                credentials,
+                                http=proxied_http)
+
+            service = googleapiclient.discovery.build(
+                        'compute',
+                        'v1',
+                        http=authorized_http)
+        else:
+            service = googleapiclient.discovery.build(
+                'compute',
+                'v1',
+                credentials=credentials,
+            )
+
+        return service
 
     @classmethod
     def get_provider(cls):
@@ -234,7 +248,6 @@ class GceProvider(ProviderBase):
             operation=del_addr.get('name'),
             region=self.credential.region
         )
-
 
     def clean(self, name):
         pass

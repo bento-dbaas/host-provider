@@ -13,6 +13,10 @@ class CredentialGce(CredentialBase):
     @property
     def region(self):
         return self.content['region']
+    
+    @property
+    def scopes(self):
+        return self.content['scopes']
 
     @property
     def subnetwork(self):
