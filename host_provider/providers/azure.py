@@ -61,17 +61,6 @@ class AzureProvider(ProviderBase):
     BasicInfo = namedtuple("AzureBasicInfo", "id")
     azClient = None
     connCls = AzureConnection
-    paths = {
-        "action_getnode": "subscriptions/{}/providers/Microsoft.Compute/virtualMachines?api-version={}",
-        "imageid_parseimage": "/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/galleries/{}/images/{}/versions/{}",
-        "networkid_parseimage":"/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/networkInterfaces/{}",
-        "action_offeringto":"subscriptions/{}/providers/Microsoft.Compute/locations/{}/vmSizes?api-version={}",
-        "id_parsenic":"/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/virtualNetworks/{}/subnets/{}",
-        "action_createnic":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/networkInterfaces/{}?api-version={}",
-        "action_getnetwork":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/virtualNetworks/{}?api-version={}",
-        "action_listvm":"subscriptions/{}/providers/Microsoft.Compute/virtualMachines/?api-version={}&statusOnly={}",
-        "action_deployvm":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/virtualMachines/{}?api-version={}"
-    }
 
     @classmethod
     def get_provider(cls):
@@ -105,10 +94,9 @@ class AzureProvider(ProviderBase):
 
     def get_node(self, node_id, api_version="2020-12-01"):
 
-        
         self.get_azure_connection()
         base_url = self.azClient.endpoint
-        action = (self.paths.get("action_getnode").format(
+        action = (self.connCls.paths_connection_restapi.get("action_getnode").format(
                     self.credential.subscription_id, api_version))
 
         header = {}
@@ -117,7 +105,7 @@ class AzureProvider(ProviderBase):
         self.azClient.connection.request("GET", action, headers=header)
         resp = self.azClient.connection.getresponse()
 
-        if resp.status_code == 200:
+        if resp.ok:
             nodes = resp.json()["value"][0]
             for key, value in nodes.items():
                 if key.startswith("properties") and node_id == value["vmId"]:
@@ -130,11 +118,11 @@ class AzureProvider(ProviderBase):
         pw = self.credential.init_password
         region = self.credential.region
 
-        image_id = (self.paths.get("imageid_parseimage").format(self.credential.subscription_id,
+        image_id = (self.connCls.paths_connection_restapi.get("imageid_parseimage").format(self.credential.subscription_id,
                                                                 self.credential.resource_group,
                                                                 gallery, image, version))
 
-        network_id = (self.paths.get("networkid_parseimage").format(self.credential.subscription_id,
+        network_id = (self.connCls.paths_connection_restapi.get("networkid_parseimage").format(self.credential.subscription_id,
                                                     self.credential.resource_group, name))
 
         os_profile = {"adminUsername": "dbaas", "computerName": name, "adminPassword": pw}
@@ -159,7 +147,7 @@ class AzureProvider(ProviderBase):
         self.get_azure_connection()
         
         base_url = self.azClient.endpoint
-        action = (self.paths.get("action_offeringto").format(self.credential.subscription_id,
+        action = (self.connCls.paths_connection_restapi.get("action_offeringto").format(self.credential.subscription_id,
                                                                self.credential.region, api_version))
         header = {}
         self.azClient.connect(base_url=base_url)
@@ -167,7 +155,7 @@ class AzureProvider(ProviderBase):
         self.azClient.connection.request("GET", action, headers=header)
         resp = self.azClient.connection.getresponse()
 
-        if resp.status_code == 200:
+        if resp.ok:
             offerings = resp.json()["value"]
 
             for offering in offerings:
@@ -180,7 +168,7 @@ class AzureProvider(ProviderBase):
 
     def _parse_nic(self, name, vnet, subnet, version="1.0.0"):
         nic_dict = OrderedDict()
-        id = (self.paths.get("id_parsenic").format(self.credential.subscription_id,
+        id = (self.connCls.paths_connection_restapi.get("id_parsenic").format(self.credential.subscription_id,
                                                       self.credential.resource_group, vnet, subnet))
 
         region = self.credential.region
@@ -207,7 +195,7 @@ class AzureProvider(ProviderBase):
         self.get_azure_connection()
         base_url = self.azClient.endpoint
 
-        action = (self.paths.get("action_createnic").format(self.credential.subscription_id,
+        action = (self.connCls.paths_connection_restapi.get("action_createnic").format(self.credential.subscription_id,
                                                                self.credential.resource_group,
                                                                name, api_version))
         nic = self._parse_nic(name, vnet, subnet)
@@ -228,7 +216,7 @@ class AzureProvider(ProviderBase):
         self.get_azure_connection()
         base_url = self.azClient.endpoint
 
-        action = (self.paths.get("get_network").format(self.credential.subscription_id,
+        action = (self.connCls.paths_connection_restapi.get("get_network").format(self.credential.subscription_id,
                                                              self.credential.resource_group,
                                                              vnet, api_version))
 
@@ -238,7 +226,7 @@ class AzureProvider(ProviderBase):
         self.azClient.connection.request("GET", action, headers=header)
         resp = self.azClient.connection.getresponse()
 
-        if resp.status_code == 200:
+        if resp.ok:
             return resp.json()
 
         else:
@@ -282,7 +270,7 @@ class AzureProvider(ProviderBase):
         self.get_azure_connection()
         base_url = self.azClient.endpoint
 
-        action = (self.paths.get("action_listvm").format(self.credential.subscription_id,
+        action = (self.connCls.paths_connection_restapi.get("action_listvm").format(self.credential.subscription_id,
                                                                          api_version, status_only))
 
         header = {}
@@ -310,7 +298,7 @@ class AzureProvider(ProviderBase):
             response_metadata["nic"] = nic_metadata.json()
             self.get_azure_connection()
             base_url = self.azClient.endpoint
-            action = (self.paths.get("action_deployvm").format(self.credential.subscription_id,
+            action = (self.connCls.paths_connection_restapi.get("action_deployvm").format(self.credential.subscription_id,
                                                                  self.credential.resource_group,
                                                                  name, api_version))
 

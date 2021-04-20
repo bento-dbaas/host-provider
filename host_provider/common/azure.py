@@ -10,6 +10,18 @@ class AzureConnection(Connection):
     credential_cls = CredentialAzure
     conn_cls = ProviderConnection
     response_cls = JsonResponse
+    
+    paths_connection_restapi = {
+        "action_getnode": "subscriptions/{}/providers/Microsoft.Compute/virtualMachines?api-version={}",
+        "imageid_parseimage": "/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/galleries/{}/images/{}/versions/{}",
+        "networkid_parseimage":"/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/networkInterfaces/{}",
+        "action_offeringto":"subscriptions/{}/providers/Microsoft.Compute/locations/{}/vmSizes?api-version={}",
+        "id_parsenic":"/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/virtualNetworks/{}/subnets/{}",
+        "action_createnic":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/networkInterfaces/{}?api-version={}",
+        "action_getnetwork":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/virtualNetworks/{}?api-version={}",
+        "action_listvm":"subscriptions/{}/providers/Microsoft.Compute/virtualMachines/?api-version={}&statusOnly={}",
+        "action_deployvm":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/virtualMachines/{}?api-version={}"
+    }
 
     def __init__(self, engine=None, provider='azure_arm', env='dev'):
         self.engine = engine
