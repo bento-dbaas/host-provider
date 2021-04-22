@@ -97,9 +97,9 @@ class AzureConnection(Connection):
         self.secret = credentials.secret_key
         self.tenant_id = credentials.tenant_id
         self.subscription_id = credentials.subscription_id
-        self.login_resource = credentials.endpoint['scope']
-        self.login_host = credentials.endpoint['login']
-        self.endpoint = credentials.endpoint['api']
+        self.login_resource = credentials.endpoint["scope"]
+        self.login_host = credentials.endpoint["login"]
+        self.endpoint = credentials.endpoint["url"]
         return credentials
 
     def get_token_from_credentials(self):

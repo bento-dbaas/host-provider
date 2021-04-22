@@ -19,7 +19,7 @@ MYSQL_HOST = getenv("MYSQL_HOST", "127.0.0.1")
 MYSQL_PORT = int(getenv("MYSQL_PORT", 3306))
 MYSQL_DB = getenv("MYSQL_DB", "host_provider")
 MYSQL_USER = getenv("MYSQL_USER", "root")
-MYSQL_PWD = getenv("MYSQL_PWD", "")
+MYSQL_PWD = getenv("MYSQL_PWD", "123")
 DBAAS_MYSQL_ENDPOINT = getenv("DBAAS_MYSQL_ENDPOINT")
 
 if DBAAS_MYSQL_ENDPOINT:

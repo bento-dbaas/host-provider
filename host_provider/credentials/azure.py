@@ -25,7 +25,7 @@ class CredentialAzure(CredentialBase):
         
     @property
     def endpoint(self):
-        return self.content['endpoint']['azure']
+        return self.content['endpoint']
 
     @property
     def region(self):
