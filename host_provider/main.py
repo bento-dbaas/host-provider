@@ -10,6 +10,7 @@ from host_provider.settings import LOGGING_LEVEL
 from host_provider.credentials.base import CredentialAdd
 from host_provider.providers import get_provider_to
 from host_provider.models import Host, IP
+
 # TODO: remove duplicate code and write more tests
 
 
@@ -18,6 +19,7 @@ auth = HTTPBasicAuth()
 cors = CORS(app)
 
 logging.basicConfig(level=LOGGING_LEVEL)
+
 
 @auth.verify_password
 def verify_password(username, password):
@@ -46,7 +48,7 @@ def prepare(provider_name, env):
     engine = data.get("engine", None)
     ports = data.get("ports", [])
 
-    if not(group and name and engine):
+    if not (group and name and engine):
         return response_invalid_request("invalid data {}".format(data))
 
     try:
@@ -73,7 +75,7 @@ def create_host(provider_name, env):
     static_ip_id = data.get("static_ip_id", "")
 
     # TODO improve validation and response
-    if not(group and name and engine and cpu and memory):
+    if not (group and name and engine and cpu and memory):
         return response_invalid_request("invalid data {}".format(data))
 
     provider = build_provider(provider_name, env, engine)
@@ -112,7 +114,7 @@ def create_ip(provider_name, env):
     engine = data.get("engine", None)
 
     # TODO improve validation and response
-    if not(group and name and engine):
+    if not (group and name and engine):
         return response_invalid_request("invalid data {}".format(data))
 
     provider = build_provider(provider_name, env, engine)
@@ -457,7 +459,7 @@ def get_credential(provider_name, uuid):
 
 
 @app.route(("/<string:provider_name>/<string:env>/credential/<string:cpus>"
-           "/<string:memory>"), methods=['GET'])
+            "/<string:memory>"), methods=['GET'])
 @auth.login_required
 def get_credential_by_offering(provider_name, env, cpus, memory):
     try:
