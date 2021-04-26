@@ -3,7 +3,7 @@ from libcloud import security
 from host_provider.models import Host
 from host_provider.settings import LIBCLOUD_CA_CERTS_PATH
 
-from dbaas_base_provider import BaseProvider
+from dbaas_base_provider.baseProvider import BaseProvider
 
 
 class ProviderBase(BaseProvider):
