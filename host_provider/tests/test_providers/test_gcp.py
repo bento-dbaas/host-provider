@@ -11,7 +11,7 @@ from .fakes.base import FAKE_ENGINE, FAKE_HOST
 from host_provider.providers.gce import StaticIPNotFoundError, WrongStatusError
 
 
-@patch('dbaas_base_provider.BaseProvider.wait_operation')
+@patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
@@ -28,7 +28,7 @@ class StartVMTestCase(GCPBaseTestCase):
         self.assertEqual(start_params['zone'], 'fake_host_zone')
 
 
-@patch('dbaas_base_provider.BaseProvider.wait_operation')
+@patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
@@ -48,7 +48,7 @@ class StopVMTestCase(GCPBaseTestCase):
         self.assertEqual(stop_params['zone'], 'fake_host_zone')
 
 
-@patch('dbaas_base_provider.BaseProvider.wait_operation')
+@patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
@@ -59,7 +59,7 @@ class StopVMEdgeCasesTestCase(GCPBaseTestCase):
             self.provider.stop('fake_identifier')
 
 
-@patch('dbaas_base_provider.BaseProvider.wait_operation')
+@patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
@@ -67,7 +67,7 @@ class StopVMEdgeCasesTestCase(GCPBaseTestCase):
        new=MagicMock(return_value=FAKE_STATIC_IP))
 @patch('host_provider.providers.gce.GceProvider.disk_image_link',
        new=PropertyMock(return_value='fake_disk_image_link'))
-@patch('dbaas_base_provider.BaseProvider.wait_operation',
+@patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation',
        new=MagicMock(return_value={'status': 'READY'}))
 class CreateHostTestCase(GCPBaseTestCase):
 
@@ -121,7 +121,7 @@ class CreateHostTestCase(GCPBaseTestCase):
         self.assertEqual(insert_params['zone'], 'another_fake_zone')
 
 
-@patch('dbaas_base_provider.BaseProvider.wait_operation')
+@patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.IP')
 @patch('host_provider.providers.gce.GceProvider.get_internal_static_ip',
        new=MagicMock(return_value=FAKE_GOOGLE_RESPONSE_STATIC_IP))
@@ -158,7 +158,7 @@ class CreateStaticIPTestCase(GCPBaseTestCase):
         self.assertEqual(model_ip_params['address'], 'fake_address')
 
 
-@patch('dbaas_base_provider.BaseProvider.wait_operation')
+@patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
@@ -175,7 +175,7 @@ class DestroyStaticIPTestCase(GCPBaseTestCase):
         self.assertEqual(delete_params['address'], 'fake_ip_name')
 
 
-@patch('dbaas_base_provider.BaseProvider.wait_operation')
+@patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
