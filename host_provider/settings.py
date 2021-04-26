@@ -19,7 +19,7 @@ MYSQL_HOST = getenv("MYSQL_HOST", "127.0.0.1")
 MYSQL_PORT = int(getenv("MYSQL_PORT", 3306))
 MYSQL_DB = getenv("MYSQL_DB", "host_provider")
 MYSQL_USER = getenv("MYSQL_USER", "root")
-MYSQL_PWD = getenv("MYSQL_PWD", "")
+MYSQL_PWD = getenv("MYSQL_PWD", "123")
 DBAAS_MYSQL_ENDPOINT = getenv("DBAAS_MYSQL_ENDPOINT")
 
 if DBAAS_MYSQL_ENDPOINT:
@@ -40,6 +40,7 @@ APP_USERNAME = getenv("APP_USERNAME", None)
 APP_PASSWORD = getenv("APP_PASSWORD", None)
 HTTP_PROXY = getenv("DBAAS_HTTP_PROXY", None)
 HTTPS_PROXY = getenv("DBAAS_HTTPS_PROXY", None)
+
 TEAM_API_URL = getenv("TEAM_API_URL", None)
 HOST_ORIGIN_TAG = getenv("HOST_ORIGIN_TAG", "")
 
