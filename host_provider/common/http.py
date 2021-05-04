@@ -67,7 +67,7 @@ class BaseProviderConnection(object):
         if '@' in netloc:
             raise ValueError('Invalid format')
 
-        return (proxy_scheme, proxy_host, proxy_port)
+        return proxy_scheme, proxy_host, proxy_port
 
 
 class ProviderConnection(BaseProviderConnection):
@@ -145,8 +145,7 @@ class Response(object):
         self.iter_content = response.iter_content
 
         self.body = response.text.strip() \
-            if response.text is not None and hasattr(response.text, 'strip') \
-            else ''
+            if response.text is not None and hasattr(response.text, 'strip') else ''
 
         if not self.success():
             raise ResponseError(code=self.status, message=self.parse_error(), headers=self.headers)
@@ -219,8 +218,7 @@ class Connection(object):
     def _tuple_from_url(self, url):
         secure = 1
         port = None
-        (scheme, netloc, request_path, param,
-         query, fragment) = urlparse(url)
+        (scheme, netloc, request_path, param, query, fragment) = urlparse(url)
 
         if scheme not in ['http', 'https']:
             raise ConnectionError('Invalid scheme: %s in url %s' % (scheme, url))
@@ -241,7 +239,7 @@ class Connection(object):
         host = netloc
         port = int(port)
 
-        return (host, port, secure, request_path)
+        return host, port, secure, request_path
 
     def set_context(self, context):
         if not isinstance(context, dict):

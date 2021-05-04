@@ -17,7 +17,6 @@ from host_provider.models import Host, IP
 app = Flask(__name__)
 auth = HTTPBasicAuth()
 cors = CORS(app)
-app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 logging.basicConfig(level=LOGGING_LEVEL)
 
