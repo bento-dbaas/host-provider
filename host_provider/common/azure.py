@@ -10,7 +10,7 @@ class AzureConnection(Connection):
     credential_cls = CredentialAzure
     conn_cls = ProviderConnection
     response_cls = JsonResponse
-    
+
     paths_connection_restapi = {
         "action_getnode": "subscriptions/{}/providers/Microsoft.Compute/virtualMachines?api-version={}",
         "imageid_parseimage": "/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/galleries/{}/images/{}/versions/{}",
@@ -20,7 +20,10 @@ class AzureConnection(Connection):
         "action_createnic":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/networkInterfaces/{}?api-version={}",
         "action_getnetwork":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/virtualNetworks/{}?api-version={}",
         "action_listvm":"subscriptions/{}/providers/Microsoft.Compute/virtualMachines/?api-version={}&statusOnly={}",
-        "action_deployvm":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/virtualMachines/{}?api-version={}"
+        "action_deployvm":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/virtualMachines/{}?api-version={}",
+        "action_destroyvm":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/virtualMachines/{}?api-version=2020-12-01",
+        "action_stopvm":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/virtualMachines/{}/powerOff?api-version=2020-12-01",
+        "action_startvm":"subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/virtualMachines/{}/start?api-version=2020-12-01"
     }
 
     def __init__(self, engine=None, provider='azure_arm', env='dev'):
@@ -86,11 +89,11 @@ class AzureConnection(Connection):
     @property
     def login_resource(self):
         return self.__login_resource
-    
+
     @login_resource.setter
     def login_resource(self, login_resource):
         self.__login_resource = login_resource
-        
+
     def _build_credentials(self):
         credentials = self.credential_cls(self.provider, self.environment, self.engine)
         self.key = credentials.access_id
@@ -122,10 +125,10 @@ class AzureConnection(Connection):
         headers['Content-Type'] = "application/json"
         headers['Authorization'] = "Bearer %s" % self.access_token
         return headers
-    
+
     def encode_data(self, data):
         return json.dumps(data)
-    
+
     def connect(self, **kwargs):
         self.get_token_from_credentials()
         return super(AzureConnection, self).connect(**kwargs)

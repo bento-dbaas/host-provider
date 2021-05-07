@@ -104,3 +104,5 @@ ENV/
 
 # Dev files
 .export-host-provider-local-dev.sh
+
+docker-compose.yml
