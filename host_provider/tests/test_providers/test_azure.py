@@ -1,5 +1,5 @@
 from unittest import TestCase
-from mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch, PropertyMock
 from libcloud.compute.types import Provider
 from host_provider.providers import AzureProvider
 from host_provider.credentials.azure import CredentialAddAzure
