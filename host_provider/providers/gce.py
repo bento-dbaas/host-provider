@@ -153,6 +153,14 @@ class GceProvider(ProviderBase):
             'networkIP': static_ip.address
         }
 
+        service_account = {
+            'email': self.credential.vm_service_account,
+            'scopes': [
+                'https://www.googleapis.com/auth/devstorage.read_write',
+                'https://www.googleapis.com/auth/logging.write'
+            ]
+        }
+
         config = {
             'name': name,
             'machineType': self.get_machine_type(offering, zone),
@@ -173,13 +181,7 @@ class GceProvider(ProviderBase):
             'networkInterfaces': [network_interface],
 
             # Allow the instance to access cloud storage and logging.
-            'serviceAccounts': [{
-                'email': 'default',
-                'scopes': [
-                    'https://www.googleapis.com/auth/devstorage.read_write',
-                    'https://www.googleapis.com/auth/logging.write'
-                ]
-            }],
+            'serviceAccounts': [service_account],
 
         }
 
