@@ -13,7 +13,7 @@ class CredentialGce(CredentialBase):
     @property
     def region(self):
         return self.content['region']
-    
+
     @property
     def scopes(self):
         return self.content['scopes']
@@ -21,6 +21,10 @@ class CredentialGce(CredentialBase):
     @property
     def subnetwork(self):
         return self.content['subnetwork']
+
+    @property
+    def vm_service_account(self):
+        return self.content['vm_service_account']
 
     @property
     def _zones_field(self):
