@@ -145,7 +145,7 @@ class AzureProvider(ProviderBase):
     def offering_to(self, cpu, memory, api_version="2020-12-01"):
 
         self.get_azure_connection()
-        
+
         base_url = self.azClient.endpoint
         action = (self.connCls.paths_connection_restapi.get("action_offeringto").format(self.credential.subscription_id,
                                                                self.credential.region, api_version))
@@ -191,7 +191,7 @@ class AzureProvider(ProviderBase):
     def create_nic(self, name, api_version="2020-07-01"):
         subnet = self.credential.get_next_zone_from(self.credential.subnets)
         vnet = self.credential.subnets.get(subnet)["name"]
-        
+
         self.get_azure_connection()
         base_url = self.azClient.endpoint
 
@@ -212,7 +212,7 @@ class AzureProvider(ProviderBase):
     def get_network(self, api_version="2020-07-01"):
         subnet = self.credential.get_next_zone_from(self.credential.subnets)
         vnet = self.credential.subnets.get(subnet)["name"]
-        
+
         self.get_azure_connection()
         base_url = self.azClient.endpoint
 
@@ -353,13 +353,57 @@ class AzureProvider(ProviderBase):
         pass
 
     def start(self, host):
-        pass
+     action = (self.connCls.paths_connection_restapi.get("action_startvm").format(
+                  self.credential.subscription_id, self.credential.resource_group,
+                  host.name)
+                  )
+     header = {}
+     self.get_azure_connection()
+     base_url = self.azClient.endpoint
+     self.azClient.connect(base_url=base_url)
+     self.azClient.add_default_headers(header)
+     self.azClient.connection.request("POST", action, headers=header)
+     response = self.azClient.connection.getresponse()
 
     def stop(self, identifier):
-        pass
+     host = None
+     try:
+         host = Host.get(identifier=identifier)
+     except Host.DoesNotExist:
+         raise NodeFoundError("Could not find host")
+
+     action = (self.connCls.paths_connection_restapi.get("action_stopvm").format(
+                  self.credential.subscription_id, self.credential.resource_group,
+                  host.name)
+                  )
+     header = {}
+     self.get_azure_connection()
+     base_url = self.azClient.endpoint
+     self.azClient.connect(base_url=base_url)
+     self.azClient.add_default_headers(header)
+     self.azClient.connection.request("POST", action, headers=header)
+     response = self.azClient.connection.getresponse()
 
     def _destroy(self, identifier):
-        pass
+        host = None
+        try:
+            host = Host.get(identifier=identifier)
+        except Host.DoesNotExist:
+            raise NodeFoundError("Could not find host")
+
+        action = (self.connCls.paths_connection_restapi.get("action_destroyvm").format(
+                     self.credential.subscription_id, self.credential.resource_group,
+                     host.name)
+                     )
+        header = {}
+        self.get_azure_connection()
+        base_url = self.azClient.endpoint
+        self.azClient.connect(base_url=base_url)
+        self.azClient.add_default_headers(header)
+        self.azClient.connection.request("DELETE", action, headers=header)
+        response = self.azClient.connection.getresponse()
+        if response.status_code != 202 and response.status_code != 204:
+            raise OperationNotAllowed("Operation not allowed")
 
     def _all_node_destroyed(self, group):
         self.credential.remove_last_used_for(group)
