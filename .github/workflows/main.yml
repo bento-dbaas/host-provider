@@ -9,6 +9,7 @@ jobs:
       MYSQL_PWD: root
     steps:
       - name: setup python verision
+        uses: actions/setup-python@v2
         with:
           python-version: '3.6.1'
       - name: Start MongoDB
