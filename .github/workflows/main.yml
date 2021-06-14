@@ -3,7 +3,7 @@ name: Run Tests
 on: [push, pull_request]
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     name: Test
     strategy:
       matrix:
@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 1
       - name: Install apt dependencies
-        run: sudo apt update && sudo apt install -y libmysqlclient-dev gcc && pip install --upgrade setuptools
+        run: sudo apt update && sudo apt install -y libmysqlclient-dev gcc &&  pip install --upgrade setuptools &&  pip install --upgrade wheel
       - name: Cache dependency
         uses: actions/cache@v2
         id: cachepip
