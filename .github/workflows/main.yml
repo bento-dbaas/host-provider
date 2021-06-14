@@ -11,7 +11,7 @@ jobs:
       - name: setup python verision
         uses: actions/setup-python@v2
         with:
-          python-version: '3.6.1'
+          python-version: '3.6.7'
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.6.0
         with:
