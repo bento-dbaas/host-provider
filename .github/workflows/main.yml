@@ -1,0 +1,40 @@
+name: Run Tests
+
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+    strategy:
+      matrix:
+        python-version: [3.6.1]
+    steps:
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.6.0
+        with:
+          mongodb-version: "4.4.3"
+      - name: Start Mysql
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          mysql version: '5.7'
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Cache dependency
+        uses: actions/cache@v2
+        id: cachepip
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+      - name: Install Requirements
+        run: pip install -r requirements_test.txt
+      - name: Run Tests
+        run: make test
+      - name: Send to codecov
+        uses: codecov/codecov-action@v1
+        with:
+          flags: unittests 
+          name: codecov-umbrella 
+          fail_ci_if_error: true 
+          verbose: true 
