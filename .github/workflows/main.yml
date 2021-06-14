@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 1
       - name: Install apt dependencies
-        run: sudo apt update && sudo apt install libmysqlclient-dev
+        run: sudo apt update && sudo apt install -y libmysqlclient-dev gcc && pip install --upgrade setuptools
       - name: Cache dependency
         uses: actions/cache@v2
         id: cachepip
