@@ -8,6 +8,8 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6.1]
+    env:
+      MYSQL_PWD: root
     steps:
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.6.0
@@ -18,7 +20,7 @@ jobs:
         with:
           mysql version: '5.7'
           mysql user: 'root'
-          mysql password: ""
+          mysql password: "root"
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
