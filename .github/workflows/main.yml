@@ -5,12 +5,12 @@ jobs:
   test:
     runs-on: ubuntu-18.04
     name: Test
-    strategy:
-      matrix:
-        python-version: [3.6.1]
     env:
       MYSQL_PWD: root
     steps:
+      - name: setup python verision
+      with:
+        python-version: '3.6.1'
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.6.0
         with:
