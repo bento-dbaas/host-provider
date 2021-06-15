@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: '3.6.7' ## USED ONLY IN CI
       - name: Shutdown Ubuntu MySQL (SUDO)
-          run: sudo service mysql stop
+        run: sudo service mysql stop
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.6.0
         with:
