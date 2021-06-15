@@ -8,6 +8,7 @@ jobs:
     env:
       MYSQL_PWD: root
       MYSQL_PORT: 3800
+      MYSQL_HOST: 0.0.0.0
     steps:
       - name: setup python verision
         uses: actions/setup-python@v2
