@@ -42,6 +42,8 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/requirements_dev.txt') }}
       - name: Install Requirements
         run: python -V && pip install -r requirements_dev.txt
+      - name: Start MySQL
+        run: sudo service mysql restart
       - name: Wait for MySQL
         run: |
           while ! mysqladmin ping --host=127.0.0.1 --port 3800 --password=root --silent; do
