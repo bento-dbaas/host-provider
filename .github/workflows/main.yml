@@ -4,16 +4,15 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: [3.6.1]
     name: Test
     env:
       MYSQL_PWD: root
       MYSQL_PORT: 3800
       MYSQL_HOST: 0.0.0.0
     steps:
-      - name: setup python verision
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.6.1' ## USED ONLY IN CI
       - name: Shutdown Ubuntu MySQL
         run: sudo service mysql stop
       - name: Start MongoDB
