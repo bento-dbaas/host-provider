@@ -18,7 +18,15 @@ jobs:
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.6.0
         with:
-          mongodb-version: "4.4.3"        
+          mongodb-version: "4.4.3"
+      - name: Start Mysql
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          mysql version: '5.7'
+          mysql database: 'host_provider'
+          mysql root password: "root"
+          host port: 3800
+          container port: 3800
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
@@ -33,24 +41,15 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/requirements_dev.txt') }}
       - name: Install Requirements
         run: python -V && pip install -r requirements_dev.txt
+      - name: Check ports
+        run: netstat -tnlp
       - name: Wait for MySQL
         run: |
           while ! mysqladmin ping --host=127.0.0.1 --port 3800 --user=root --password=root --silent; do
             sleep 1
           done
       - name: Run Tests
-        uses: mirromutth/mysql-action@v1.1
-        with:
-          mysql version: '5.7'
-          mysql user: 'root'
-          mysql database: 'host_provider'
-          mysql password: "root"
-          host port: 3800
-          container port: 3800
-        run: |
-          while ! mysqladmin ping --host=127.0.0.1 --port 3800 --user=root --password=root --silent; do
-            sleep 1
-          done && make test
+        run: make test
       - name: Send to codecov
         uses: codecov/codecov-action@v1
         with:
