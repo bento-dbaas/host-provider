@@ -7,11 +7,12 @@ jobs:
     name: Test
     env:
       MYSQL_PWD: root
+      MYSQL_PORT: 3800
     steps:
       - name: setup python verision
         uses: actions/setup-python@v2
         with:
-          python-version: '3.6.7'
+          python-version: '3.6.7' ## USED ONLY IN CI
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.6.0
         with:
@@ -22,6 +23,8 @@ jobs:
           mysql version: '5.7'
           mysql user: 'root'
           mysql password: "root"
+          host port: 3800
+          container port: 3800
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
