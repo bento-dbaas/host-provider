@@ -48,6 +48,8 @@ jobs:
           while ! mysqladmin ping --host=127.0.0.1 --port 3800 --user=root --password=root --silent; do
             sleep 1
           done
+      - name: Initialize DB
+        run: make db_initialize
       - name: Run Tests
         run: make test
       - name: Send to codecov
