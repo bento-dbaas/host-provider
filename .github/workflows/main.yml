@@ -5,15 +5,30 @@ jobs:
   test:
     runs-on: ubuntu-18.04
     name: Test
+    env:
+      MYSQL_PWD: root
+      MYSQL_PORT: 3800
+      MYSQL_HOST: 0.0.0.0
     steps:
       - name: setup python verision
         uses: actions/setup-python@v2
         with:
           python-version: '3.6.7' ## USED ONLY IN CI
+      - name: Shutdown Ubuntu MySQL
+        run: sudo service mysql stop
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.6.0
         with:
           mongodb-version: "4.4.3"
+      - name: Start Mysql
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          mysql version: '5.7'
+          mysql user: 'root'
+          mysql database: 'host_provider'
+          mysql password: "root"
+          host port: 3800
+          container port: 3800
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
