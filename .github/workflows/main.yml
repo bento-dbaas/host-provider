@@ -46,7 +46,7 @@ jobs:
         run: sudo service mysql restart
       - name: Wait for MySQL
         run: |
-          while ! mysqladmin ping --host=127.0.0.1 --port 3800 --password=root --silent; do
+          while ! mysqladmin ping --host=127.0.0.1 --port 3800 --user=root --password=root --silent; do
             sleep 1
           done
       - name: Run Tests
