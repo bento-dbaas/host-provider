@@ -141,6 +141,12 @@ class GceProvider(ProviderBase):
         static_ip_id = kw.get('static_ip_id')
         zone = zone or self.credential.zone
 
+        team_name = kw.get('team_name')
+        infra_name = kw.get('group')
+        database_name = kw.get('database_name')
+        tags = self.generate_tags(team_name, infra_name, database_name)
+        print('Tags:', tags)
+
         if not static_ip_id:
             raise StaticIPNotFoundError(
                 'The id of static IP must be provided'
@@ -172,9 +178,12 @@ class GceProvider(ProviderBase):
                     'autoDelete': True,
                     'initializeParams': {
                         'sourceImage': self.disk_image_link,
+                        'labels': tags
                     }
                 }
             ],
+
+            'labels': tags,
 
             # Specify a network interface with NAT to access the public
             # internet.
