@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/bento-dbaas/host-provider.svg?branch=master)](https://travis-ci.com/bento-dbaas/host-provider) [![codecov](https://codecov.io/gh/bento-dbaas/host-provider/branch/master/graph/badge.svg?token=GQN1ZN9FJQ)](https://codecov.io/gh/bento-dbaas/host-provider)
+[![Build status](https://github.com/bento-dbaas/host-provider/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/bento-dbaas/host-provider/actions) [![codecov](https://codecov.io/gh/bento-dbaas/host-provider/branch/master/graph/badge.svg?token=GQN1ZN9FJQ)](https://codecov.io/gh/bento-dbaas/host-provider)
 
 
 ## Host Provider
