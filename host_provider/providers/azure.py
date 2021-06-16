@@ -9,9 +9,7 @@ from host_provider.credentials.azure import CredentialAddAzure, CredentialAzure
 from host_provider.common.azure import AzureConnection
 from host_provider.models import Host
 from host_provider.providers import ProviderBase
-from host_provider.settings import HOST_ORIGIN_TAG
 from libcloud.compute.types import Provider
-from host_provider.clients.team import TeamClient
 from pathlib import Path
 
 
@@ -234,17 +232,6 @@ class AzureProvider(ProviderBase):
                 "Network {} not found".format(vnet)
             )
 
-    def generate_tags(self, team_name, infra_name, database_name):
-        tags = TeamClient.make_tags(team_name, self.engine)
-        if HOST_ORIGIN_TAG:
-            tags["origin"] = HOST_ORIGIN_TAG
-        tags.update({
-            "engine": self.engine_name,
-            "infra_name": infra_name,
-            "database_name": database_name or ''
-        })
-        return tags
-
     def create_host_object(self, provider, payload, env, created_host_metadata, static_ip_id, **kw):
         nic = created_host_metadata.get("nic", '')
         vm = created_host_metadata.get("vm", '')
@@ -407,10 +394,6 @@ class AzureProvider(ProviderBase):
 
     def _all_node_destroyed(self, group):
         self.credential.remove_last_used_for(group)
-
-    @property
-    def engine_name(self):
-        return self.engine.split("_")[0]
 
     def get_credential_add(self):
         return CredentialAddAzure
