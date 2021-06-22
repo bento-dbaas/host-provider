@@ -15,7 +15,7 @@ class TeamClient(object):
             regex_pattern=r'[^\w\S-]'
         )
 
-    @staticmethod
+    @classmethod
     def get_by_name(cls, name):
         slugify_name = cls.slugify(name)
         url = '{}/slug/{}'.format(cls.API_URL,slugify_name)
@@ -31,7 +31,7 @@ class TeamClient(object):
         if not team_name or not cls.API_URL:
             return {}
 
-        team = cls.get_by_name(team_name)
+        team = cls.get_by_name(name=team_name)
 
         if not team:
             return {}
