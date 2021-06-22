@@ -1,12 +1,8 @@
 from libcloud.compute.providers import get_driver
 from libcloud import security
-import datetime
 from host_provider.models import Host
 from dbaas_base_provider.baseProvider import BaseProvider
-from host_provider.clients.team import TeamClient
-from host_provider.settings import (
-    LIBCLOUD_CA_CERTS_PATH,
-    HOST_ORIGIN_TAG)
+from host_provider.settings import LIBCLOUD_CA_CERTS_PATH
 
 
 class ProviderBase(BaseProvider):
@@ -122,15 +118,3 @@ class ProviderBase(BaseProvider):
 
     def create_host_object(self, *args, **kw):
         raise NotImplementedError
-
-    def generate_tags(self, team_name, infra_name, database_name):
-        tags = TeamClient.make_tags(team_name, self.engine)
-        if HOST_ORIGIN_TAG:
-            tags["origin"] = HOST_ORIGIN_TAG
-        tags.update({
-            "engine": self.engine_name,
-            "infra_name": infra_name,
-            "database_name": database_name or '',
-            "create_at": datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        })
-        return tags

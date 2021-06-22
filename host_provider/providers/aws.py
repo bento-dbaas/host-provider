@@ -6,6 +6,7 @@ from host_provider.credentials.aws import CredentialAWS, \
     CredentialAddAWS
 from host_provider.settings import (HTTP_PROXY,
                                     HTTPS_PROXY)
+from host_provider.clients.team import TeamClient
 
 
 class OfferingNotFoundError(Exception):
@@ -74,7 +75,15 @@ class AWSProvider(ProviderBase):
         )
 
     def _create_host(self, cpu, memory, name, *args, **kw):
-
+        team_name = kw.get('team_name')
+        infra_name = kw.get('group')
+        database_name = kw.get('database_name')
+        team_tags = TeamClient.make_tags(
+            team_name=team_name,
+            engine_name=self.engine_name,
+            infra_name=infra_name,
+            database_name=database_name
+        )
         return self.client.create_node(
             name=name,
             image=self.BasicInfo(self.credential.template_to(self.engine)),
@@ -82,11 +91,7 @@ class AWSProvider(ProviderBase):
             ex_keyname=self.credential.keyname,
             ex_security_group_ids=self.credential.security_group_ids,
             ex_subnet=self.BasicInfo(self.credential.zone),
-            ex_metadata=self.generate_tags(
-                team_name=kw.get('team_name'),
-                infra_name=kw.get('group'),
-                database_name=kw.get('database_name')
-            )
+            ex_metadata=team_tags
         )
 
     def get_credential_add(self):

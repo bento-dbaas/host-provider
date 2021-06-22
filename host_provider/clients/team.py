@@ -1,30 +1,32 @@
 import requests
-from os import getenv
+import datetime
+from slugify import slugify
 from host_provider.settings import TEAM_API_URL
 
 
 class TeamClient(object):
 
     API_URL = TEAM_API_URL
-    SUB_COMPONENTS_BY_ENGINE = {
-        'redis': 'c672e379db9f43409fc15458dc96195f',
-        'mongodb': 'ea26a7fddb9f43409fc15458dc96199b',
-        'mysql': 'c672e379db9f43409fc15458dc96195f'
-    }
 
     @staticmethod
-    def get_by_name(name):
-        res = requests.get(
-            u'{}/{}'.format(TEAM_API_URL, name)
+    def slugify(name):
+        return slugify(
+            name,
+            regex_pattern=r'[^\w\S-]'
         )
 
+    @staticmethod
+    def get_by_name(cls, name):
+        slugify_name = cls.slugify(name)
+        url = '{}/slug/{}'.format(cls.API_URL,slugify_name)
+        res = requests.get(url)
         if res.ok:
             return res.json()
-
         return {}
 
     @classmethod
-    def make_tags(cls, team_name, engine):
+    def make_tags(cls,
+        team_name='', engine_name='', infra_name='', database_name=''):
 
         if not team_name or not cls.API_URL:
             return {}
@@ -34,11 +36,15 @@ class TeamClient(object):
         if not team:
             return {}
 
-        return {
-            'servico-de-negocio-id': team.get('servico-de-negocio'),
-            'equipe-id': team.get('id'),
-            'componente-id': 'ce72e379db9f43409fc15458dc961962',
-            'sub-componente-id': cls.SUB_COMPONENTS_BY_ENGINE[engine.split('_')[0]],
-            'cliente-id': team.get('cliente'),
-            'consumo-detalhado': True
+        tags = {
+            'servico_de_negocio': team.get('servico-de-negocio'),
+            'cliente': team.get('cliente'),
+            'team_slug_name': team.get('slug'),
+            'create_at': datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'),
+            'engine': engine_name,
+            'infra_name': infra_name,
+            'database_name': database_name,
+            'origin': 'dbaas'
         }
+
+        return tags
