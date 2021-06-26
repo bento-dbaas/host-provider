@@ -333,7 +333,7 @@ class GceProvider(ProviderBase):
             return request.execute()
         return request
 
-    def restore(self, host, engine=None):
+    def _restore(self, host, engine, *args, **kw):
 
         if engine:
             self.engine = engine
@@ -343,12 +343,19 @@ class GceProvider(ProviderBase):
             host.recreating = True
             host.save()
 
+        team_name = kw.get('team_name')
+        infra_name = kw.get('group')
+        database_name = kw.get('database_name')
+
         created_host_metadata = self._create_host(
             cpu=host.cpu,
             memory=host.memory,
             name=host.name,
             static_ip_id=self.get_static_ip_by_host_id(host.id).name,
-            zone=host.zone
+            zone=host.zone,
+            team_name=team_name,
+            infra_name=infra_name,
+            database_name=database_name
         )
 
         host.identifier = created_host_metadata['id']

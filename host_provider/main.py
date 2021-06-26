@@ -241,6 +241,11 @@ def reinstall_host(provider_name, env):
     data = request.get_json()
     host_id = data.get("host_id", None)
     engine = data.get("engine", None)
+    extra_params = {
+        'team_name': data.get("team_name", None),
+        'database_name': data.get("database_name", None),
+        'group': data.get("group", None)
+    }
 
     # TODO improve validation and response
     if not host_id:
@@ -255,7 +260,7 @@ def reinstall_host(provider_name, env):
 
     try:
         provider = build_provider(provider_name, env, host.engine)
-        provider.restore(host, engine)
+        provider.restore(host, engine, **extra_params)
         if engine and engine != host.engine:
             host.engine = engine
             host.save()

@@ -118,3 +118,9 @@ class ProviderBase(BaseProvider):
 
     def create_host_object(self, *args, **kw):
         raise NotImplementedError
+
+    def restore(self, host, engine, *args, **kw):
+        self._restore(host, engine, *args, **kw)
+
+    def _restore(self, host, engine, *args, **kw):
+        raise NotImplementedError
