@@ -190,6 +190,10 @@ class GceProvider(ProviderBase):
                 }
             ],
 
+            'tags': {
+                'items': [self.credential.network_tag]
+            },
+
             'labels': team_tags,
 
             # Specify a network interface with NAT to access the public
