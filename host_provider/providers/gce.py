@@ -28,7 +28,7 @@ class GceProvider(ProviderBase):
     WAIT_ATTEMPTS = 60
     WAIT_TIME = 5
 
-    def build_client(self):
+    def get_service_account_credentials(self):
         service_account_data = self.credential.content['service_account']
         service_account_data['private_key'] = service_account_data[
             'private_key'
@@ -38,23 +38,32 @@ class GceProvider(ProviderBase):
             service_account_data,
             scopes=self.credential.scopes
         )
+        return credentials
+
+    def get_authorized_http(self, credentials):
+        _, host, port = HTTP_PROXY.split(':')
+        try:
+            port = int(port)
+        except ValueError:
+            raise EnvironmentError('HTTP_PROXY incorrect format')
+
+        proxied_http = httplib2.Http(proxy_info=httplib2.ProxyInfo(
+            httplib2.socks.PROXY_TYPE_HTTP,
+            host.replace('//', ''),
+            port
+        ))
+
+        authorized_http = google_auth_httplib2.AuthorizedHttp(
+                            credentials,
+                            http=proxied_http)
+
+        return authorized_http
+
+    def build_client(self):
+        credentials = self.get_service_account_credentials()
 
         if HTTP_PROXY:
-            _, host, port = HTTP_PROXY.split(':')
-            try:
-                port = int(port)
-            except ValueError:
-                raise EnvironmentError('HTTP_PROXY incorrect format')
-
-            proxied_http = httplib2.Http(proxy_info=httplib2.ProxyInfo(
-                httplib2.socks.PROXY_TYPE_HTTP,
-                host.replace('//', ''),
-                port
-            ))
-
-            authorized_http = google_auth_httplib2.AuthorizedHttp(
-                                credentials,
-                                http=proxied_http)
+            authorized_http = self.get_authorized_http(credentials)
 
             service = googleapiclient.discovery.build(
                         'compute',
@@ -63,6 +72,25 @@ class GceProvider(ProviderBase):
         else:
             service = googleapiclient.discovery.build(
                 'compute',
+                'v1',
+                credentials=credentials,
+            )
+
+        return service
+
+    def get_iam_service_client(self):
+        credentials = self.get_service_account_credentials()
+
+        if HTTP_PROXY:
+            authorized_http = self.get_authorized_http(credentials)
+
+            service = googleapiclient.discovery.build(
+                        'iam',
+                        'v1',
+                        http=authorized_http)
+        else:
+            service = googleapiclient.discovery.build(
+                'iam',
                 'v1',
                 credentials=credentials,
             )
@@ -145,6 +173,7 @@ class GceProvider(ProviderBase):
         team_name = kw.get('team_name')
         infra_name = kw.get('group')
         database_name = kw.get('database_name')
+        service_account = kw.get('service_account')
         team_tags = TeamClient.make_tags(
             team_name=team_name,
             engine_name=self.engine_name,
@@ -167,7 +196,8 @@ class GceProvider(ProviderBase):
         }
 
         service_account = {
-            'email': self.credential.vm_service_account,
+            #'email': self.credential.vm_service_account,
+            'email': service_account,
             'scopes': [
                 'https://www.googleapis.com/auth/devstorage.read_write',
                 'https://www.googleapis.com/auth/logging.write'
@@ -350,6 +380,7 @@ class GceProvider(ProviderBase):
         team_name = kw.get('team_name')
         infra_name = kw.get('group')
         database_name = kw.get('database_name')
+        service_account = kw.get('service_account')
 
         created_host_metadata = self._create_host(
             cpu=host.cpu,
@@ -359,9 +390,28 @@ class GceProvider(ProviderBase):
             zone=host.zone,
             team_name=team_name,
             infra_name=infra_name,
-            database_name=database_name
+            database_name=database_name,
+            service_account=service_account
         )
 
         host.identifier = created_host_metadata['id']
         host.recreating = False
         host.save()
+
+    def _create_service_account(self, name):
+        iam_client = self.get_iam_service_client()
+        service_account = iam_client.projects().serviceAccounts().create(
+            name='projects/{}'.format(self.credential.project),
+            body={
+                'accountId': name,
+                'serviceAccount': {
+                    'displayName': name
+                }
+            }).execute()
+        return service_account['email']
+
+    def _destroy_service_account(self, service_account):
+        iam_client = self.get_iam_service_client()
+        name = 'projects/-/serviceAccounts/{}'.format(service_account)
+        iam_client.projects().serviceAccounts().delete(name=name).execute()
+

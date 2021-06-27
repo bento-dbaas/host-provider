@@ -124,3 +124,15 @@ class ProviderBase(BaseProvider):
 
     def _restore(self, host, engine, *args, **kw):
         raise NotImplementedError
+
+    def create_service_account(self, name):
+        return self._create_service_account(name)
+
+    def _create_service_account(self, name):
+        pass
+
+    def destroy_service_account(self, service_account):
+        return self._destroy_service_account(service_account)
+
+    def _destroy_service_account(self, service_account):
+        pass
