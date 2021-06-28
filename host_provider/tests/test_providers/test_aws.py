@@ -61,9 +61,8 @@ class TestCredentialAWS(TestCase):
     @patch(
         'host_provider.credentials.aws.CredentialAWS.collection_last'
     )
-    @patch(
-        'host_provider.providers.aws.TeamClient.API_URL',
-        new=None
+    @patch('dbaas_base_provider.team.TeamClient.make_labels',
+        new=MagicMock(return_value={})
     )
     def test_create_host_without_environment_of_teams(
         self, collection_last, zone, create_node, credential_content
@@ -89,6 +88,8 @@ class TestCredentialAWS(TestCase):
     @patch(
         'host_provider.credentials.aws.CredentialAWS.collection_last'
     )
+    @patch('dbaas_base_provider.team.TeamClient.make_labels',
+        new=MagicMock(return_value={}))
     def test_create_host_without_teams(self, collection_last, zone,
                                        create_node, credential_content):
         self.create_host_tests(
@@ -111,8 +112,7 @@ class TestCredentialAWS(TestCase):
     @patch(
         'host_provider.credentials.aws.CredentialAWS.collection_last'
     )
-    @patch(
-        'host_provider.providers.aws.TeamClient.make_tags',
+    @patch('dbaas_base_provider.team.TeamClient.make_labels',
         new=MagicMock(return_value=FAKE_TAGS)
     )
     def test_create_host_with_teams(self, collection_last, zone, create_node,

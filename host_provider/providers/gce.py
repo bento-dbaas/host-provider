@@ -10,7 +10,8 @@ from host_provider.settings import HTTP_PROXY
 from host_provider.credentials.gce import CredentialGce, CredentialAddGce
 from host_provider.providers.base import ProviderBase
 from host_provider.models import Host, IP
-from host_provider.clients.team import TeamClient
+from host_provider.settings import TEAM_API_URL
+from dbaas_base_provider.team import TeamClient
 
 
 LOG = logging.getLogger(__name__)
@@ -174,14 +175,12 @@ class GceProvider(ProviderBase):
         infra_name = kw.get('group')
         database_name = kw.get('database_name')
         service_account = kw.get('service_account')
-        team_tags = TeamClient.make_tags(
-            team_name=team_name,
+        team = TeamClient(api_url=TEAM_API_URL, team_name=team_name)
+        team_labels = team.make_labels(
             engine_name=self.engine_name,
             infra_name=infra_name,
             database_name=database_name
         )
-        if not team_tags:
-            raise Exception("Team {} not found on tsuru api".format(team_name))
 
         if not static_ip_id:
             raise StaticIPNotFoundError(
@@ -215,7 +214,7 @@ class GceProvider(ProviderBase):
                     'autoDelete': True,
                     'initializeParams': {
                         'sourceImage': self.disk_image_link,
-                        'labels': team_tags
+                        'labels': team_labels
                     }
                 }
             ],
@@ -224,7 +223,7 @@ class GceProvider(ProviderBase):
                 'items': [self.credential.network_tag]
             },
 
-            'labels': team_tags,
+            'labels': team_labels,
 
             # Specify a network interface with NAT to access the public
             # internet.

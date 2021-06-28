@@ -69,7 +69,7 @@ class StopVMEdgeCasesTestCase(GCPBaseTestCase):
        new=PropertyMock(return_value='fake_disk_image_link'))
 @patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation',
        new=MagicMock(return_value={'status': 'READY'}))
-@patch('host_provider.clients.team.TeamClient.make_tags',
+@patch('dbaas_base_provider.team.TeamClient.make_labels',
        new=MagicMock(return_value={'cliente': 'x'}))
 class CreateHostTestCase(GCPBaseTestCase):
 
