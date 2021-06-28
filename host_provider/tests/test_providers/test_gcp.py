@@ -7,7 +7,7 @@ from .base import GCPBaseTestCase
 from .fakes.gce import (FAKE_GCE_CREDENTIAL,
                         FAKE_STATIC_IP,
                         FAKE_GOOGLE_RESPONSE_STATIC_IP)
-from .fakes.base import FAKE_ENGINE, FAKE_HOST
+from .fakes.base import FAKE_ENGINE, FAKE_HOST, FAKE_TAGS
 from host_provider.providers.gce import StaticIPNotFoundError, WrongStatusError
 
 
@@ -69,6 +69,8 @@ class StopVMEdgeCasesTestCase(GCPBaseTestCase):
        new=PropertyMock(return_value='fake_disk_image_link'))
 @patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation',
        new=MagicMock(return_value={'status': 'READY'}))
+@patch('dbaas_base_provider.team.TeamClient.make_labels',
+       new=MagicMock(return_value={'cliente': 'x'}))
 class CreateHostTestCase(GCPBaseTestCase):
 
     def test_static_ip_not_found(self, client_mock, wait_op):

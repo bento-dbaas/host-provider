@@ -10,6 +10,8 @@ from host_provider.settings import HTTP_PROXY
 from host_provider.credentials.gce import CredentialGce, CredentialAddGce
 from host_provider.providers.base import ProviderBase
 from host_provider.models import Host, IP
+from host_provider.settings import TEAM_API_URL
+from dbaas_base_provider.team import TeamClient
 
 
 LOG = logging.getLogger(__name__)
@@ -24,10 +26,10 @@ class StaticIPNotFoundError(Exception):
 
 
 class GceProvider(ProviderBase):
-    WAIT_ATTEMPTS = 60
-    WAIT_TIME = 5
+    WAIT_ATTEMPTS = 100
+    WAIT_TIME = 3
 
-    def build_client(self):
+    def get_service_account_credentials(self):
         service_account_data = self.credential.content['service_account']
         service_account_data['private_key'] = service_account_data[
             'private_key'
@@ -37,23 +39,32 @@ class GceProvider(ProviderBase):
             service_account_data,
             scopes=self.credential.scopes
         )
+        return credentials
+
+    def get_authorized_http(self, credentials):
+        _, host, port = HTTP_PROXY.split(':')
+        try:
+            port = int(port)
+        except ValueError:
+            raise EnvironmentError('HTTP_PROXY incorrect format')
+
+        proxied_http = httplib2.Http(proxy_info=httplib2.ProxyInfo(
+            httplib2.socks.PROXY_TYPE_HTTP,
+            host.replace('//', ''),
+            port
+        ))
+
+        authorized_http = google_auth_httplib2.AuthorizedHttp(
+                            credentials,
+                            http=proxied_http)
+
+        return authorized_http
+
+    def build_client(self):
+        credentials = self.get_service_account_credentials()
 
         if HTTP_PROXY:
-            _, host, port = HTTP_PROXY.split(':')
-            try:
-                port = int(port)
-            except ValueError:
-                raise EnvironmentError('HTTP_PROXY incorrect format')
-
-            proxied_http = httplib2.Http(proxy_info=httplib2.ProxyInfo(
-                httplib2.socks.PROXY_TYPE_HTTP,
-                host.replace('//', ''),
-                port
-            ))
-
-            authorized_http = google_auth_httplib2.AuthorizedHttp(
-                                credentials,
-                                http=proxied_http)
+            authorized_http = self.get_authorized_http(credentials)
 
             service = googleapiclient.discovery.build(
                         'compute',
@@ -62,6 +73,25 @@ class GceProvider(ProviderBase):
         else:
             service = googleapiclient.discovery.build(
                 'compute',
+                'v1',
+                credentials=credentials,
+            )
+
+        return service
+
+    def get_iam_service_client(self):
+        credentials = self.get_service_account_credentials()
+
+        if HTTP_PROXY:
+            authorized_http = self.get_authorized_http(credentials)
+
+            service = googleapiclient.discovery.build(
+                        'iam',
+                        'v1',
+                        http=authorized_http)
+        else:
+            service = googleapiclient.discovery.build(
+                'iam',
                 'v1',
                 credentials=credentials,
             )
@@ -141,6 +171,17 @@ class GceProvider(ProviderBase):
         static_ip_id = kw.get('static_ip_id')
         zone = zone or self.credential.zone
 
+        team_name = kw.get('team_name')
+        infra_name = kw.get('group')
+        database_name = kw.get('database_name')
+        service_account = kw.get('service_account')
+        team = TeamClient(api_url=TEAM_API_URL, team_name=team_name)
+        team_labels = team.make_labels(
+            engine_name=self.engine_name,
+            infra_name=infra_name,
+            database_name=database_name
+        )
+
         if not static_ip_id:
             raise StaticIPNotFoundError(
                 'The id of static IP must be provided'
@@ -154,7 +195,8 @@ class GceProvider(ProviderBase):
         }
 
         service_account = {
-            'email': self.credential.vm_service_account,
+            #'email': self.credential.vm_service_account,
+            'email': service_account,
             'scopes': [
                 'https://www.googleapis.com/auth/devstorage.read_write',
                 'https://www.googleapis.com/auth/logging.write'
@@ -172,9 +214,16 @@ class GceProvider(ProviderBase):
                     'autoDelete': True,
                     'initializeParams': {
                         'sourceImage': self.disk_image_link,
+                        'labels': team_labels
                     }
                 }
             ],
+
+            'tags': {
+                'items': [self.credential.network_tag]
+            },
+
+            'labels': team_labels,
 
             # Specify a network interface with NAT to access the public
             # internet.
@@ -199,7 +248,31 @@ class GceProvider(ProviderBase):
         return instance
 
     def _destroy(self, identifier):
+        attempt = 0
         host = Host.get(identifier=identifier)
+
+        get_inst = self.get_instance(
+            host.name,
+            host.zone,
+            execute_request=False
+        )
+
+        while attempt < self.WAIT_ATTEMPTS:
+            try:
+                inst = get_inst.execute()
+            except Exception as ex:
+                if ex.resp.status == 404:
+                    return True
+                raise ex
+            finally:
+                if (inst.get('status') in
+                   ['STOPPING']):
+                    sleep(self.WAIT_TIME)
+                else:
+                    attempt = self.WAIT_ATTEMPTS
+
+            attempt += 1
+
         destroy = self.client.instances().delete(
             project=self.credential.project,
             zone=host.zone,
@@ -317,7 +390,7 @@ class GceProvider(ProviderBase):
             return request.execute()
         return request
 
-    def restore(self, host, engine=None):
+    def _restore(self, host, engine, *args, **kw):
 
         if engine:
             self.engine = engine
@@ -327,14 +400,41 @@ class GceProvider(ProviderBase):
             host.recreating = True
             host.save()
 
+        team_name = kw.get('team_name')
+        infra_name = kw.get('group')
+        database_name = kw.get('database_name')
+        service_account = kw.get('service_account')
+
         created_host_metadata = self._create_host(
             cpu=host.cpu,
             memory=host.memory,
             name=host.name,
             static_ip_id=self.get_static_ip_by_host_id(host.id).name,
-            zone=host.zone
+            zone=host.zone,
+            team_name=team_name,
+            infra_name=infra_name,
+            database_name=database_name,
+            service_account=service_account
         )
 
         host.identifier = created_host_metadata['id']
         host.recreating = False
         host.save()
+
+    def _create_service_account(self, name):
+        iam_client = self.get_iam_service_client()
+        service_account = iam_client.projects().serviceAccounts().create(
+            name='projects/{}'.format(self.credential.project),
+            body={
+                'accountId': name,
+                'serviceAccount': {
+                    'displayName': name
+                }
+            }).execute()
+        return service_account['email']
+
+    def _destroy_service_account(self, service_account):
+        iam_client = self.get_iam_service_client()
+        name = 'projects/-/serviceAccounts/{}'.format(service_account)
+        iam_client.projects().serviceAccounts().delete(name=name).execute()
+

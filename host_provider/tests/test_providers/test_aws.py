@@ -5,17 +5,14 @@ from libcloud.compute.types import Provider
 from libcloud.compute.drivers.ec2 import EC2NodeDriver
 from host_provider.providers.aws import AWSProvider, OfferingNotFoundError
 from host_provider.credentials.aws import CredentialAddAWS
-from .fakes.ec2 import LIST_SIZES, FAKE_TAGS, FAKE_CREDENTIAL, FAKE_HOST
+from .fakes.ec2 import LIST_SIZES, FAKE_CREDENTIAL, FAKE_HOST
+from .fakes.base import FAKE_TAGS
 
 
 ENVIRONMENT = "dev"
 ENGINE = "redis"
 
 
-@patch(
-    'host_provider.providers.aws.HOST_ORIGIN_TAG',
-    new=str('dbaas')
-)
 class TestCredentialAWS(TestCase):
 
     def setUp(self):
@@ -64,9 +61,8 @@ class TestCredentialAWS(TestCase):
     @patch(
         'host_provider.credentials.aws.CredentialAWS.collection_last'
     )
-    @patch(
-        'host_provider.providers.aws.TeamClient.API_URL',
-        new=None
+    @patch('dbaas_base_provider.team.TeamClient.make_labels',
+        new=MagicMock(return_value={})
     )
     def test_create_host_without_environment_of_teams(
         self, collection_last, zone, create_node, credential_content
@@ -92,6 +88,8 @@ class TestCredentialAWS(TestCase):
     @patch(
         'host_provider.credentials.aws.CredentialAWS.collection_last'
     )
+    @patch('dbaas_base_provider.team.TeamClient.make_labels',
+        new=MagicMock(return_value={}))
     def test_create_host_without_teams(self, collection_last, zone,
                                        create_node, credential_content):
         self.create_host_tests(
@@ -114,8 +112,7 @@ class TestCredentialAWS(TestCase):
     @patch(
         'host_provider.credentials.aws.CredentialAWS.collection_last'
     )
-    @patch(
-        'host_provider.providers.aws.TeamClient.make_tags',
+    @patch('dbaas_base_provider.team.TeamClient.make_labels',
         new=MagicMock(return_value=FAKE_TAGS)
     )
     def test_create_host_with_teams(self, collection_last, zone, create_node,
@@ -183,12 +180,6 @@ class TestCredentialAWS(TestCase):
             project = self.provider.BasicInfo(id=project)
 
         expected_tags = FAKE_TAGS if kwargs.get('has_tags') else {}
-        expected_tags.update({
-            'origin': 'dbaas',
-            'infra_name': group,
-            'engine': 'redis',
-            'database_name': ''
-        })
         create_node.assert_called_once_with(
             name=name,
             image=self.provider.BasicInfo('fake_so_image_id'),

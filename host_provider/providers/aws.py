@@ -4,10 +4,10 @@ from libcloud.compute.types import Provider
 from host_provider.providers.base import ProviderBase
 from host_provider.credentials.aws import CredentialAWS, \
     CredentialAddAWS
-from host_provider.settings import (HOST_ORIGIN_TAG,
-                                    HTTP_PROXY,
+from host_provider.settings import (HTTP_PROXY,
                                     HTTPS_PROXY)
-from host_provider.clients.team import TeamClient
+from host_provider.settings import TEAM_API_URL
+from dbaas_base_provider.team import TeamClient
 
 
 class OfferingNotFoundError(Exception):
@@ -28,10 +28,6 @@ class AWSProxyNotSet(Exception):
 
 class AWSProvider(ProviderBase):
     BasicInfo = namedtuple("EC2BasicInfo", "id")
-
-    @property
-    def engine_name(self):
-        return self.engine.split('_')[0]
 
     def get_node(self, node_id):
         try:
@@ -79,19 +75,16 @@ class AWSProvider(ProviderBase):
             "Offering with {} cpu and {} of memory not found.".format(cpu, memory)
         )
 
-    def generate_tags(self, team_name, infra_name, database_name):
-        tags = TeamClient.make_tags(team_name, self.engine)
-        if HOST_ORIGIN_TAG:
-            tags['origin'] = HOST_ORIGIN_TAG
-        tags.update({
-            'engine': self.engine_name,
-            'infra_name': infra_name,
-            'database_name': database_name or ''
-        })
-        return tags
-
     def _create_host(self, cpu, memory, name, *args, **kw):
-
+        team_name = kw.get('team_name')
+        infra_name = kw.get('group')
+        database_name = kw.get('database_name')
+        team = TeamClient(api_url=TEAM_API_URL, team_name=team_name)
+        team_labels = team.make_labels(
+            engine_name=self.engine_name,
+            infra_name=infra_name,
+            database_name=database_name
+        )
         return self.client.create_node(
             name=name,
             image=self.BasicInfo(self.credential.template_to(self.engine)),
@@ -99,11 +92,7 @@ class AWSProvider(ProviderBase):
             ex_keyname=self.credential.keyname,
             ex_security_group_ids=self.credential.security_group_ids,
             ex_subnet=self.BasicInfo(self.credential.zone),
-            ex_metadata=self.generate_tags(
-                team_name=kw.get('team_name'),
-                infra_name=kw.get('group'),
-                database_name=kw.get('database_name')
-            )
+            ex_metadata=team_labels
         )
 
     def get_credential_add(self):

@@ -27,6 +27,10 @@ class CredentialGce(CredentialBase):
         return self.content['vm_service_account']
 
     @property
+    def network_tag(self):
+        return self.content['network_tag']
+
+    @property
     def _zones_field(self):
         return self.availability_zones
 

@@ -73,6 +73,7 @@ def create_host(provider_name, env):
     team_name = data.get("team_name", None)
     database_name = data.get("database_name", "")
     static_ip_id = data.get("static_ip_id", "")
+    service_account = data.get("service_account", "")
 
     # TODO improve validation and response
     if not (group and name and engine and cpu and memory):
@@ -87,7 +88,8 @@ def create_host(provider_name, env):
         'node_ip': data.get('node_ip', ''),
         'init_user': data.get('init_user', ''),
         'init_password': data.get('init_password', ''),
-        'static_ip_id': static_ip_id
+        'static_ip_id': static_ip_id,
+        'service_account': service_account
     }
     for attempt in range(provider.create_attempts):
         try:
@@ -241,6 +243,13 @@ def reinstall_host(provider_name, env):
     data = request.get_json()
     host_id = data.get("host_id", None)
     engine = data.get("engine", None)
+    service_account = data.get("service_account", None)
+    extra_params = {
+        'team_name': data.get("team_name", None),
+        'database_name': data.get("database_name", None),
+        'group': data.get("group", None),
+        'service_account': service_account
+    }
 
     # TODO improve validation and response
     if not host_id:
@@ -255,7 +264,7 @@ def reinstall_host(provider_name, env):
 
     try:
         provider = build_provider(provider_name, env, host.engine)
-        provider.restore(host, engine)
+        provider.restore(host, engine, **extra_params)
         if engine and engine != host.engine:
             host.engine = engine
             host.save()
@@ -542,6 +551,37 @@ def list_zones(provider_name, env):
         )
     except Exception as e:
         return response_invalid_request(str(e))
+
+
+@app.route("/<string:provider_name>/<string:env>/sa/", methods=['POST'])
+@auth.login_required
+def create_service_account(provider_name, env):
+    data = request.get_json()
+    name = data.get("name", None)
+
+    # TODO improve validation and response
+    if not name:
+        return response_invalid_request("invalid data {}".format(data))
+
+    provider = build_provider(provider_name, env, "")
+
+    service_account = provider.create_service_account(name)
+    if service_account:
+        return response_created(
+            service_account=service_account
+        )
+    return response_empty_content()
+
+
+@app.route(
+    "/<string:provider_name>/<string:env>/sa/<string:sa>",
+    methods=['DELETE']
+)
+@auth.login_required
+def destroy_service_account(provider_name, env, sa):
+    provider = build_provider(provider_name, env, "")
+    provider.destroy_service_account(sa)
+    return response_ok()
 
 
 def response_invalid_request(error, status_code=500):

@@ -1,9 +1,8 @@
 from libcloud.compute.providers import get_driver
 from libcloud import security
 from host_provider.models import Host
-from host_provider.settings import LIBCLOUD_CA_CERTS_PATH
-
 from dbaas_base_provider.baseProvider import BaseProvider
+from host_provider.settings import LIBCLOUD_CA_CERTS_PATH
 
 
 class ProviderBase(BaseProvider):
@@ -28,6 +27,10 @@ class ProviderBase(BaseProvider):
     @property
     def create_attempts(self):
         return 1
+
+    @property
+    def engine_name(self):
+        return self.engine.split("_")[0]
 
     def credential_add(self, content):
         credential_cls = self.get_credential_add()
@@ -115,3 +118,21 @@ class ProviderBase(BaseProvider):
 
     def create_host_object(self, *args, **kw):
         raise NotImplementedError
+
+    def restore(self, host, engine, *args, **kw):
+        self._restore(host, engine, *args, **kw)
+
+    def _restore(self, host, engine, *args, **kw):
+        raise NotImplementedError
+
+    def create_service_account(self, name):
+        return self._create_service_account(name)
+
+    def _create_service_account(self, name):
+        pass
+
+    def destroy_service_account(self, service_account):
+        return self._destroy_service_account(service_account)
+
+    def _destroy_service_account(self, service_account):
+        pass

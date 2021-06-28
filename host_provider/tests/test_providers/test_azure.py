@@ -8,10 +8,6 @@ ENVIRONMENT = "dev"
 ENGINE = "mssql"
 
 
-@patch(
-    'host_provider.providers.azure.HOST_ORIGIN_TAG',
-    new=str('dbaas')
-)
 class AzureTestCase(TestCase):
 
     def setUp(self):
