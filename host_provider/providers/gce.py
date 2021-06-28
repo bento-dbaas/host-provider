@@ -250,6 +250,17 @@ class GceProvider(ProviderBase):
 
     def _destroy(self, identifier):
         host = Host.get(identifier=identifier)
+
+        try:
+            self.get_instance(
+                host.name,
+                host.zone
+            )
+        except Exception as ex:
+            if ex.resp.status == 404:
+                return True
+            raise ex
+
         destroy = self.client.instances().delete(
             project=self.credential.project,
             zone=host.zone,
