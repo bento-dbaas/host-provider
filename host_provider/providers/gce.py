@@ -24,8 +24,8 @@ class StaticIPNotFoundError(Exception):
 
 
 class GceProvider(ProviderBase):
-    WAIT_ATTEMPTS = 60
-    WAIT_TIME = 5
+    WAIT_ATTEMPTS = 100
+    WAIT_TIME = 3
 
     def build_client(self):
         service_account_data = self.credential.content['service_account']
@@ -199,17 +199,30 @@ class GceProvider(ProviderBase):
         return instance
 
     def _destroy(self, identifier):
+        attempt = 0
         host = Host.get(identifier=identifier)
 
-        try:
-            self.get_instance(
-                host.name,
-                host.zone
-            )
-        except Exception as ex:
-            if ex.resp.status == 404:
-                return True
-            raise ex
+        get_inst = self.get_instance(
+            host.name,
+            host.zone,
+            execute_request=False
+        )
+
+        while attempt < self.WAIT_ATTEMPTS:
+            try:
+                inst = get_inst.execute()
+            except Exception as ex:
+                if ex.resp.status == 404:
+                    return True
+                raise ex
+            finally:
+                if (inst.get('status') in
+                   ['STOPPING']):
+                    sleep(self.WAIT_TIME)
+                else:
+                    attempt = self.WAIT_ATTEMPTS
+
+            attempt += 1
 
         destroy = self.client.instances().delete(
             project=self.credential.project,
