@@ -435,5 +435,11 @@ class GceProvider(ProviderBase):
     def _destroy_service_account(self, service_account):
         iam_client = self.get_iam_service_client()
         name = 'projects/-/serviceAccounts/{}'.format(service_account)
+        try:
+            iam_client.projects().serviceAccounts().get(name=name).execute()
+        except Exception as ex:
+            if ex.resp.status == 404:
+                return True
+            raise ex
         iam_client.projects().serviceAccounts().delete(name=name).execute()
 
