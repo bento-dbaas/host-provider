@@ -264,9 +264,8 @@ class GceProvider(ProviderBase):
                 if ex.resp.status == 404:
                     return True
                 raise ex
-            finally:
-                if (inst.get('status') in
-                   ['STOPPING']):
+            else:
+                if (inst.get('status') in ['STOPPING']):
                     sleep(self.WAIT_TIME)
                 else:
                     attempt = self.WAIT_ATTEMPTS
