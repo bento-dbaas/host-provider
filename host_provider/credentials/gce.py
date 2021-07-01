@@ -31,6 +31,10 @@ class CredentialGce(CredentialBase):
         return self.content['network_tag']
 
     @property
+    def template_project(self):
+        return self.content['template_project']
+
+    @property
     def _zones_field(self):
         return self.availability_zones
 
