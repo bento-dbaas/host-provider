@@ -153,7 +153,7 @@ class GceProvider(ProviderBase):
     @property
     def disk_image_link(self):
         image_response = self.client.images().get(
-            project=self.credential.project,
+            project=self.credential.template_project,
             image=self.credential.template_to(self.engine),
         ).execute()
 
