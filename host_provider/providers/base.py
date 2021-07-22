@@ -24,6 +24,10 @@ class ProviderBase(BaseProvider):
     def get_driver(self):
         return get_driver(self.get_provider())
 
+    def get_host_ids(self, group_id):
+        hosts = Host.filter(group=group_id)
+        return self._get_host_ids(hosts)
+
     @property
     def create_attempts(self):
         return 1
@@ -135,4 +139,7 @@ class ProviderBase(BaseProvider):
         return self._destroy_service_account(service_account)
 
     def _destroy_service_account(self, service_account):
+        pass
+
+    def _get_host_ids(self, *args, **kwargs):
         pass
