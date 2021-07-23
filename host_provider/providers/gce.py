@@ -366,7 +366,7 @@ class GceProvider(ProviderBase):
             identifier=created_host_metadata['id'], address=address,
             zone=zone
         )
-        host.save()
+
         return host
 
     def get_instance(self, instance_name, zone, execute_request=True):
@@ -442,13 +442,3 @@ class GceProvider(ProviderBase):
                 return True
             raise ex
         iam_client.projects().serviceAccounts().delete(name=name).execute()
-
-    def _get_host_ids(self, hosts):
-        # @TODO - improve this method
-        # add cache layer or add instance ids in
-        # the host model
-        instance_ids = []
-        for host in hosts:
-            instance_ids.append(
-                self.get_instance(host.name, host.zone).get("id"))
-        return instance_ids

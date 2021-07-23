@@ -25,8 +25,8 @@ class ProviderBase(BaseProvider):
         return get_driver(self.get_provider())
 
     def get_host_ids(self, group_id):
-        hosts = Host.filter(group=group_id)
-        return self._get_host_ids(hosts)
+        host_ids = Host.filter(group=group_id).select(Host.identifier)
+        return [x.identifier for x in host_ids]
 
     @property
     def create_attempts(self):
@@ -69,6 +69,7 @@ class ProviderBase(BaseProvider):
             self.credential.zone = zone
         result = self._create_host(cpu, memory, name, *args, **kw)
         self.credential.after_create_host(group)
+
         return result
 
     def get_status(self, host):
@@ -139,7 +140,4 @@ class ProviderBase(BaseProvider):
         return self._destroy_service_account(service_account)
 
     def _destroy_service_account(self, service_account):
-        pass
-
-    def _get_host_ids(self, *args, **kwargs):
         pass
