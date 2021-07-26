@@ -366,7 +366,8 @@ class GceProvider(ProviderBase):
             identifier=created_host_metadata['id'], address=address,
             zone=zone
         )
-
+        
+        host.save()
         return host
 
     def get_instance(self, instance_name, zone, execute_request=True):
