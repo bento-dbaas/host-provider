@@ -361,6 +361,20 @@ def get_hosts_ids(provider_name, env, group_id):
 
 
 @app.route(
+    "/<string:provider_name>/<string:env>/host-names/<group_id>/", methods=['GET']
+)
+@auth.login_required
+def get_hosts_names(provider_name, env, group_id):
+    try:
+        provider = build_provider(provider_name, env, None)
+        host_names = provider.get_host_names(group_id)
+    except Exception as e:
+        print_exc()
+        return response_invalid_request(str(e))
+    return response_ok(**{"names": host_names})
+
+
+@app.route(
     "/<string:provider_name>/<string:env>/host/configure/<string:host>",
     methods=['DELETE']
 )
