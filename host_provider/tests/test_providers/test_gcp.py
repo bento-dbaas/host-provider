@@ -59,6 +59,35 @@ class StopVMEdgeCasesTestCase(GCPBaseTestCase):
             self.provider.stop('fake_identifier')
 
 
+@patch('dbaas_base_provider.baseProvider.BaseProvider.get_or_none_resource')
+@patch('dbaas_base_provider.baseProvider.BaseProvider.get_or_none_resource',
+       new=MagicMock(return_value={}))
+@patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation')
+@patch('host_provider.providers.gce.GceProvider.build_client')
+@patch('host_provider.providers.gce.CredentialGce.get_content',
+       new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
+@patch('host_provider.providers.gce.GceProvider.get_static_ip_by_name',
+       new=MagicMock(return_value=FAKE_STATIC_IP))
+@patch('host_provider.providers.gce.GceProvider.disk_image_link',
+       new=PropertyMock(return_value='fake_disk_image_link'))
+@patch('dbaas_base_provider.team.TeamClient.make_labels',
+       new=MagicMock(return_value={'cliente': 'x'}))
+class ResourceFoundTestCase(GCPBaseTestCase):
+
+    def test_create_host_is_not_called(self, client_mock, wait_op, get_or_none):
+        self.provider.credential._zone = 'fake_zone_1'
+        insert_mock = client_mock().instances().insert
+        self.provider._create_host(
+            2, 1024, 'fake_name', static_ip_id='fake_static_ip_id'
+        )
+
+        self.assertTrue(get_or_none.called)
+        self.assertFalse(wait_op.called)
+        self.assertFalse(insert_mock.called)
+
+
+@patch('dbaas_base_provider.baseProvider.BaseProvider.get_or_none_resource',
+       new=MagicMock(return_value=None))
 @patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
@@ -123,6 +152,8 @@ class CreateHostTestCase(GCPBaseTestCase):
         self.assertEqual(insert_params['zone'], 'another_fake_zone')
 
 
+@patch('dbaas_base_provider.baseProvider.BaseProvider.get_or_none_resource',
+       new=MagicMock(return_value=None))
 @patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.IP')
 @patch('host_provider.providers.gce.GceProvider.get_internal_static_ip',
@@ -132,7 +163,8 @@ class CreateHostTestCase(GCPBaseTestCase):
        new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
 class CreateStaticIPTestCase(GCPBaseTestCase):
 
-    def test_call_client_params(self, client_mock, model_ip_mock, wait_op):
+    def test_call_client_params(self, client_mock,
+                                model_ip_mock, wait_op):
         insert_mock = client_mock().addresses().insert
         self.provider.create_static_ip('fake_group', 'fake_ip_name')
         self.assertTrue(wait_op.called)

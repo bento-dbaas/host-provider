@@ -233,17 +233,24 @@ class GceProvider(ProviderBase):
             'serviceAccounts': [service_account],
 
         }
-
-        instance = self.client.instances().insert(
+        instance = self.get_or_none_resource(
+            self.client.instances,
             project=self.credential.project,
-            zone=zone,
-            body=config
-        ).execute()
-
-        self.wait_operation(
-            operation=instance.get('name'),
+            instance=name,
             zone=zone
         )
+
+        if instance is None:
+            instance = self.client.instances().insert(
+                project=self.credential.project,
+                zone=zone,
+                body=config
+            ).execute()
+
+            self.wait_operation(
+                operation=instance.get('name'),
+                zone=zone
+            )
 
         return instance
 
@@ -285,20 +292,29 @@ class GceProvider(ProviderBase):
 
     def create_static_ip(self, group, ip_name):
         self.credential.before_create_host(group)
-        address = self.client.addresses().insert(
+
+        address = self.get_or_none_resource(
+            self.client.addresses,
             project=self.credential.project,
             region=self.credential.region,
-            body={
-                'subnetwork': self.credential.subnetwork,
-                'addressType': 'INTERNAL',
-                'name': ip_name
-            }
-        ).execute()
-
-        self.wait_operation(
-            operation=address.get('name'),
-            region=self.credential.region
+            address=ip_name
         )
+
+        if address is None:
+            address = self.client.addresses().insert(
+                project=self.credential.project,
+                region=self.credential.region,
+                body={
+                    'subnetwork': self.credential.subnetwork,
+                    'addressType': 'INTERNAL',
+                    'name': ip_name
+                }
+            ).execute()
+
+            self.wait_operation(
+                operation=address.get('name'),
+                region=self.credential.region
+            )
 
         ip_metadata = self.get_internal_static_ip(ip_name)
 
@@ -312,6 +328,16 @@ class GceProvider(ProviderBase):
         return ip
 
     def destroy_static_ip(self, ip_name):
+        del_addr = self.get_or_none_resource(
+            self.client.addresses,
+            project=self.credential.project,
+            region=self.credential.region,
+            address=ip_name
+        )
+
+        if del_addr is None:
+            return True
+
         del_addr = self.client.addresses().delete(
             project=self.credential.project,
             region=self.credential.region,
