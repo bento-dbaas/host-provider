@@ -233,12 +233,20 @@ class GceProvider(ProviderBase):
             'serviceAccounts': [service_account],
 
         }
-        instance = self.get_or_none_resource(
-            self.client.instances,
-            project=self.credential.project,
-            instance=name,
-            zone=zone
-        )
+
+        # Search for the instance on all available zones
+        for zone in self.credential.availability_zones:
+            instance = self.get_or_none_resource(
+                self.client.instances,
+                project=self.credential.project,
+                instance=name,
+                zone=zone
+            )
+
+            if instance is not None:
+                # Set zone to instance location
+                self.credential.zone = zone
+                break
 
         if instance is None:
             instance = self.client.instances().insert(
