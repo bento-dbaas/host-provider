@@ -27,3 +27,6 @@ docker_mysql_57:
 
 docker_mongo:
 	docker-compose run --publish="27017:27017" mongodb42
+
+mysql_shell:
+	mysql -h ${DBAAS_MYSQL_HOSTS} -u  ${DBAAS_MYSQL_USER} -p${DBAAS_MYSQL_PASSWORD}

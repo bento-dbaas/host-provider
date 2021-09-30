@@ -400,6 +400,7 @@ class GceProvider(ProviderBase):
             identifier=created_host_metadata['id'], address=address,
             zone=zone
         )
+        
         host.save()
         return host
 
@@ -476,4 +477,3 @@ class GceProvider(ProviderBase):
                 return True
             raise ex
         iam_client.projects().serviceAccounts().delete(name=name).execute()
-

@@ -24,6 +24,14 @@ class ProviderBase(BaseProvider):
     def get_driver(self):
         return get_driver(self.get_provider())
 
+    def get_host_ids(self, group_id):
+        host_ids = Host.filter(group=group_id).select(Host.identifier)
+        return [x.identifier for x in host_ids]
+
+    def get_host_names(self, group_id):
+        host_names = Host.filter(group=group_id).select(Host.name)
+        return [x.name for x in host_names]
+
     @property
     def create_attempts(self):
         return 1
@@ -65,6 +73,7 @@ class ProviderBase(BaseProvider):
             self.credential.zone = zone
         result = self._create_host(cpu, memory, name, *args, **kw)
         self.credential.after_create_host(group)
+
         return result
 
     def get_status(self, host):
