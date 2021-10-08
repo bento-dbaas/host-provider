@@ -1,3 +1,4 @@
+import json
 import logging
 import httplib2
 import google_auth_httplib2
@@ -59,6 +60,25 @@ class GceProvider(ProviderBase):
                             http=proxied_http)
 
         return authorized_http
+
+    def get_pubsub_service_client(self):
+        credentials = self.get_service_account_credentials()
+
+        if HTTP_PROXY:
+            authorized_http = self.get_authorized_http(credentials)
+
+            service = googleapiclient.discovery.build(
+                'pubsub',
+                'v1',
+                http=authorized_http)
+        else:
+            service = googleapiclient.discovery.build(
+                'pubsub',
+                'v1',
+                credentials=credentials,
+            )
+
+        return service
 
     def build_client(self):
         credentials = self.get_service_account_credentials()
@@ -469,3 +489,26 @@ class GceProvider(ProviderBase):
             raise ex
         iam_client.projects().serviceAccounts().delete(name=name).execute()
 
+    def _set_service_account(self, sa):
+        service = self.get_pubsub_service_client()
+
+        topic = 'projects/{}/topics/{}'.format(
+            self.credential.project, self.credential.pubsub
+        )
+
+        body = {
+            "messages": [{
+                "attributes": {
+                    "project": self.credential.project,
+                    "roles": json.dumps(self.credential.roles),
+                    "service_account": sa,
+                }
+            }]
+        }
+
+        try:
+            service.projects().topics().publish(
+                topic=topic, body=body
+            ).execute()
+        except Exception as ex:
+            raise ex
