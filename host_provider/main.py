@@ -322,6 +322,31 @@ def clean(provider_name, env, name):
     return response_ok()
 
 
+@app.route("/<string:provider_name>/<string:env>/host/metadata", methods=['POST'])
+@auth.login_required
+def update_host_metadata(provider_name, env):
+    data = request.get_json()
+    host_id = data.get("host_id", None)
+
+    # TODO improve validation and response
+    if not host_id:
+        return response_invalid_request("invalid data {}".format(data))
+
+    try:
+        host = Host.get(id=host_id)
+    except Host.DoesNotExist:
+        return response_not_found(host_id)
+
+    try:
+        provider = build_provider(provider_name, env, host.engine)
+        provider.update_host_metadata(host.identifier)
+    except Exception as e:  # TODO What can get wrong here?
+        print_exc()  # TODO Improve log
+        return response_invalid_request(str(e))
+
+    return response_ok()
+
+
 @app.route(
     "/<string:provider_name>/<string:env>/host/configure", methods=['POST']
 )
