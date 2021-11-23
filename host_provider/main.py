@@ -584,6 +584,18 @@ def destroy_service_account(provider_name, env, sa):
     return response_ok()
 
 
+@app.route(
+    "/<string:provider_name>/<string:env>/sa-set-role/<string:sa>",
+    methods=['POST'])
+@auth.login_required
+def sa_set_role(provider_name, env, sa):
+    provider = build_provider(provider_name, env, "")
+
+    set_role = provider.sa_set_role(sa)
+    if set_role:
+        return response_ok()
+    return response_empty_content()
+
 def response_invalid_request(error, status_code=500):
     return _response(status_code, error=error)
 

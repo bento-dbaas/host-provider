@@ -476,7 +476,9 @@ class GceProvider(ProviderBase):
                     'displayName': name
                 }
             }).execute()
-        return service_account['email']
+
+        sa = service_account['email']
+        return sa
 
     def _destroy_service_account(self, service_account):
         iam_client = self.get_iam_service_client()
@@ -489,7 +491,7 @@ class GceProvider(ProviderBase):
             raise ex
         iam_client.projects().serviceAccounts().delete(name=name).execute()
 
-    def _set_service_account(self, sa):
+    def _sa_set_role(self, sa):
         service = self.get_pubsub_service_client()
 
         topic = 'projects/{}/topics/{}'.format(
