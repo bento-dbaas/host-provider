@@ -30,6 +30,10 @@ class ServiceAccountRoleCheckError(Exception):
     pass
 
 
+class NotDefinedError(Exception):
+    pass
+
+
 class GceProvider(ProviderBase):
     WAIT_ATTEMPTS = 100
     WAIT_TIME = 3
@@ -524,8 +528,11 @@ class GceProvider(ProviderBase):
         iam_client.projects().serviceAccounts().delete(name=name).execute()
 
     def _sa_set_role(self, sa):
-        WAIT_ROLE_TIME = 10
-        WAIT_ROLE_ATTEMPTS = 6
+        if not self.credential.pubsub:
+            raise NotDefinedError("Pubsub credential is not defined")
+
+        if not self.credential.roles:
+            raise NotDefinedError("Roles credential is not defined")
 
         service = self.get_pubsub_service_client()
 
@@ -551,10 +558,12 @@ class GceProvider(ProviderBase):
             raise ex
 
         wait_try = 0
-        while WAIT_ROLE_ATTEMPTS > wait_try:
+
+        # decrease attempts
+        while (self.WAIT_ATTEMPTS / 3) > wait_try:
             if self.check_sa_in_roles(sa, self.credential.roles):
                 return True
-            sleep(WAIT_ROLE_TIME)
+            sleep(self.WAIT_TIME)
             wait_try += 1
 
         raise ServiceAccountRoleCheckError("Role not applied")
