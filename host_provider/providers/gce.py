@@ -4,6 +4,7 @@ import httplib2
 import google_auth_httplib2
 
 from time import sleep
+
 import googleapiclient.discovery
 from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
@@ -23,6 +24,10 @@ class WrongStatusError(Exception):
 
 
 class StaticIPNotFoundError(Exception):
+    pass
+
+
+class ServiceAccountRoleCheckError(Exception):
     pass
 
 
@@ -74,6 +79,25 @@ class GceProvider(ProviderBase):
         else:
             service = googleapiclient.discovery.build(
                 'pubsub',
+                'v1',
+                credentials=credentials,
+            )
+
+        return service
+
+    def get_resource_manager_service_client(self):
+        credentials = self.get_service_account_credentials()
+
+        if HTTP_PROXY:
+            authorized_http = self.get_authorized_http(credentials)
+
+            service = googleapiclient.discovery.build(
+                'cloudresourcemanager',
+                'v1',
+                http=authorized_http)
+        else:
+            service = googleapiclient.discovery.build(
+                'cloudresourcemanager',
                 'v1',
                 credentials=credentials,
             )
@@ -492,6 +516,9 @@ class GceProvider(ProviderBase):
         iam_client.projects().serviceAccounts().delete(name=name).execute()
 
     def _sa_set_role(self, sa):
+        WAIT_ROLE_TIME = 10
+        WAIT_ROLE_ATTEMPTS = 6
+
         service = self.get_pubsub_service_client()
 
         topic = 'projects/{}/topics/{}'.format(
@@ -514,3 +541,33 @@ class GceProvider(ProviderBase):
             ).execute()
         except Exception as ex:
             raise ex
+
+        wait_try = 0
+        while WAIT_ROLE_ATTEMPTS > wait_try:
+            if self.check_sa_in_roles(sa, self.credential.roles):
+                return True
+            sleep(WAIT_ROLE_TIME)
+            wait_try += 1
+
+        raise ServiceAccountRoleCheckError("Role not applied")
+
+    def check_sa_in_roles(self, service_account: str, roles: list) -> bool:
+        service = self.get_resource_manager_service_client()
+        bindings = service.projects().getIamPolicy(
+                    resource=self.credential.project).execute()['bindings']
+
+        for role in roles:
+            role_idx = next(
+                (index for (index, d) in enumerate(bindings)
+                 if d["role"] == role),
+                None
+            )
+
+            if role_idx is None:
+                return False
+
+            sa_string = f"serviceAccount:{service_account}"
+            if sa_string not in bindings[role_idx]['members']:
+                return False
+
+        return True
