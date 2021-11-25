@@ -62,11 +62,11 @@ FAKE_STATIC_IP = FAKE_STATIC_IP_OBJ(
 FAKE_GOOGLE_RESPONSE_STATIC_IP = {'address': 'fake_address'}
 
 FAKE_SA = {
-  "name": "FAKE_SA_NAME",
-  "projectId": "FAKE_SA_PROJ",
-  "uniqueId": "0001",
-  "email": "FAKE_SA_PROJ@appspot.gserviceaccount.com",
-  "displayName": "Fake service account",
-  "etag": "HASH=",
-  "oauth2ClientId": "0002"
+    "name": "FAKE_SA_NAME",
+    "projectId": "FAKE_SA_PROJ",
+    "uniqueId": "0001",
+    "email": "FAKE_SA_PROJ@appspot.gserviceaccount.com",
+    "displayName": "Fake service account",
+    "etag": "HASH=",
+    "oauth2ClientId": "0002"
 }

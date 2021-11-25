@@ -571,7 +571,7 @@ class GceProvider(ProviderBase):
     def check_sa_in_roles(self, service_account: str, roles: list) -> bool:
         service = self.get_resource_manager_service_client()
         bindings = service.projects().getIamPolicy(
-                    resource=self.credential.project).execute()['bindings']
+                resource=self.credential.project).execute()['bindings']
 
         for role in roles:
             role_idx = next(
