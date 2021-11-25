@@ -149,5 +149,5 @@ class ProviderBase(BaseProvider):
     def sa_set_role(self, service_account):
         return self._sa_set_role(service_account)
 
-    def _sa_set_role(service_account):
+    def _sa_set_role(self, service_account):
         pass

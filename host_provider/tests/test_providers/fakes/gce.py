@@ -49,7 +49,9 @@ FAKE_GCE_CREDENTIAL = {
     "region": "fake_region",
     "scopes": ["fake_scope"],
     "vm_service_account": "fake_vm_sa",
-    "network_tag": "fake_network_tag"
+    "network_tag": "fake_network_tag",
+    "roles": ["role/fake_role", "roles/fake_role_2"],
+    "pubsub": "fake_pubsub"
 }
 
 FAKE_STATIC_IP_OBJ = namedtuple('FakeStaticIP', 'id name address')
@@ -58,3 +60,13 @@ FAKE_STATIC_IP = FAKE_STATIC_IP_OBJ(
 )
 
 FAKE_GOOGLE_RESPONSE_STATIC_IP = {'address': 'fake_address'}
+
+FAKE_SA = {
+  "name": "FAKE_SA_NAME",
+  "projectId": "FAKE_SA_PROJ",
+  "uniqueId": "0001",
+  "email": "FAKE_SA_PROJ@appspot.gserviceaccount.com",
+  "displayName": "Fake service account",
+  "etag": "HASH=",
+  "oauth2ClientId": "0002"
+}
