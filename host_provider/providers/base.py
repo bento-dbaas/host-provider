@@ -88,6 +88,12 @@ class ProviderBase(BaseProvider):
         if quantity:
             self._all_node_destroyed(group)
 
+    def update_host_metadata(self, identifier):
+        self._update_host_metadata(identifier)
+
+    def _update_host_metadata(self, identifier):
+        pass
+
     def clean(self, name):
         pass
 

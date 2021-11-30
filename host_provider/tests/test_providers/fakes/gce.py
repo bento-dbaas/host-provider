@@ -51,7 +51,8 @@ FAKE_GCE_CREDENTIAL = {
     "vm_service_account": "fake_vm_sa",
     "network_tag": "fake_network_tag",
     "roles": ["role/fake_role", "roles/fake_role_2"],
-    "pubsub": "fake_pubsub"
+    "pubsub": "fake_pubsub",
+    "metadata": {"fake_metadata": "fake_metadata_data"}
 }
 
 FAKE_STATIC_IP_OBJ = namedtuple('FakeStaticIP', 'id name address')

@@ -250,6 +250,13 @@ class GceProvider(ProviderBase):
             ]
         }
 
+        metadata_items = []
+        for metadata_item in self.credential.metadata:
+            metadata_items.append({
+                'key': 'google-logging-enable',
+                'value': '0'
+            })
+
         config = {
             'name': name,
             'machineType': self.get_machine_type(offering, zone),
@@ -278,6 +285,10 @@ class GceProvider(ProviderBase):
 
             # Allow the instance to access cloud storage and logging.
             'serviceAccounts': [service_account],
+
+            'metadata': {
+                'items': self.credential.metadata_items
+            }
 
         }
 
@@ -588,3 +599,23 @@ class GceProvider(ProviderBase):
                 return False
 
         return True
+    def _update_host_metadata(self, identifier):
+        host = Host.get(identifier=identifier)
+
+        project = self.credential.project
+        zone = host.zone
+        instance_name = host.name
+
+        instance = self.get_instance(instance_name, zone)
+        fingerprint = instance['metadata']['fingerprint']
+        body = {
+            "fingerprint": fingerprint,
+            "items": self.credential.metadata_items
+        }
+
+        self.client.instances().setMetadata(
+            project=project,
+            zone=zone,
+            instance=instance_name,
+            body=body
+        ).execute()
