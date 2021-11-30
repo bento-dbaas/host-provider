@@ -84,6 +84,14 @@ class CredentialGce(CredentialBase):
         resp = list(self.zones.keys())
         return resp[0]
 
+    @property
+    def pubsub(self):
+        return self.content['pubsub']
+
+    @property
+    def roles(self):
+        return self.content['roles']
+
 
 class CredentialAddGce(CredentialAdd):
 

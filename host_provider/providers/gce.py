@@ -1,3 +1,4 @@
+import json
 import logging
 import httplib2
 import google_auth_httplib2
@@ -22,6 +23,14 @@ class WrongStatusError(Exception):
 
 
 class StaticIPNotFoundError(Exception):
+    pass
+
+
+class ServiceAccountRoleCheckError(Exception):
+    pass
+
+
+class NotDefinedError(Exception):
     pass
 
 
@@ -59,6 +68,44 @@ class GceProvider(ProviderBase):
                             http=proxied_http)
 
         return authorized_http
+
+    def get_pubsub_service_client(self):
+        credentials = self.get_service_account_credentials()
+
+        if HTTP_PROXY:
+            authorized_http = self.get_authorized_http(credentials)
+
+            service = googleapiclient.discovery.build(
+                'pubsub',
+                'v1',
+                http=authorized_http)
+        else:
+            service = googleapiclient.discovery.build(
+                'pubsub',
+                'v1',
+                credentials=credentials,
+            )
+
+        return service
+
+    def get_resource_manager_service_client(self):
+        credentials = self.get_service_account_credentials()
+
+        if HTTP_PROXY:
+            authorized_http = self.get_authorized_http(credentials)
+
+            service = googleapiclient.discovery.build(
+                'cloudresourcemanager',
+                'v1',
+                http=authorized_http)
+        else:
+            service = googleapiclient.discovery.build(
+                'cloudresourcemanager',
+                'v1',
+                credentials=credentials,
+            )
+
+        return service
 
     def build_client(self):
         credentials = self.get_service_account_credentials()
@@ -476,7 +523,9 @@ class GceProvider(ProviderBase):
                     'displayName': name
                 }
             }).execute()
-        return service_account['email']
+
+        sa = service_account['email']
+        return sa
 
     def _destroy_service_account(self, service_account):
         iam_client = self.get_iam_service_client()
@@ -489,6 +538,67 @@ class GceProvider(ProviderBase):
             raise ex
         iam_client.projects().serviceAccounts().delete(name=name).execute()
 
+    def _sa_set_role(self, sa):
+        if not self.credential.pubsub:
+            raise NotDefinedError("Pubsub credential is not defined")
+
+        if not self.credential.roles:
+            raise NotDefinedError("Roles credential is not defined")
+
+        service = self.get_pubsub_service_client()
+
+        topic = 'projects/{}/topics/{}'.format(
+            self.credential.project, self.credential.pubsub
+        )
+
+        body = {
+            "messages": [{
+                "attributes": {
+                    "project": self.credential.project,
+                    "roles": json.dumps(self.credential.roles),
+                    "service_account": sa,
+                }
+            }]
+        }
+
+        try:
+            service.projects().topics().publish(
+                topic=topic, body=body
+            ).execute()
+        except Exception as ex:
+            raise ex
+
+        wait_try = 0
+
+        # decrease attempts
+        while (self.WAIT_ATTEMPTS / 3) > wait_try:
+            if self.check_sa_in_roles(sa, self.credential.roles):
+                return True
+            sleep(self.WAIT_TIME)
+            wait_try += 1
+
+        raise ServiceAccountRoleCheckError("Role not applied")
+
+    def check_sa_in_roles(self, service_account: str, roles: list) -> bool:
+        service = self.get_resource_manager_service_client()
+        bindings = service.projects().getIamPolicy(
+                resource=self.credential.project).execute()['bindings']
+
+        for role in roles:
+            role_idx = next(
+                (index for (index, d) in enumerate(bindings)
+                 if d["role"] == role),
+                None
+            )
+
+            if role_idx is None:
+                return False
+
+            sa_string = f"serviceAccount:{service_account}"
+            if sa_string not in bindings[role_idx]['members']:
+                return False
+
+        return True
     def _update_host_metadata(self, identifier):
         host = Host.get(identifier=identifier)
 

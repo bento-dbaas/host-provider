@@ -6,7 +6,7 @@ from googleapiclient.errors import HttpError
 from .base import GCPBaseTestCase
 from .fakes.gce import (FAKE_GCE_CREDENTIAL,
                         FAKE_STATIC_IP,
-                        FAKE_GOOGLE_RESPONSE_STATIC_IP)
+                        FAKE_GOOGLE_RESPONSE_STATIC_IP, FAKE_SA)
 from .fakes.base import FAKE_ENGINE, FAKE_HOST, FAKE_TAGS
 from host_provider.providers.gce import StaticIPNotFoundError, WrongStatusError
 
@@ -386,3 +386,50 @@ class RestoreTestCase(GCPBaseTestCase):
         self.provider.restore(FAKE_HOST, FAKE_ENGINE)
 
         self.assertFalse(destroy_host_mock.called)
+
+
+@patch('host_provider.providers.gce.GceProvider.get_iam_service_client')
+@patch('host_provider.providers.gce.CredentialGce.get_content',
+       new=MagicMock(return_value=FAKE_GCE_CREDENTIAL))
+@patch('host_provider.providers.gce.GceProvider.check_sa_in_roles',
+       new=MagicMock(return_value=True))
+class ServiceAccountTestCase(GCPBaseTestCase):
+
+    def test_create_service_account(self, client_mock):
+        create_service_account_mock = client_mock().projects()\
+         .serviceAccounts().create().execute
+
+        create_service_account_mock.return_value = {"email": FAKE_SA["email"]}
+        create = self.provider._create_service_account(
+            name=FAKE_SA["name"]
+        )
+
+        self.assertTrue(create_service_account_mock.called)
+        self.assertEqual(create, FAKE_SA["email"])
+
+    def test_destroy_service_account(self, client_mock):
+        destroy_sa_mock_get = client_mock().projects()\
+         .serviceAccounts().get().execute
+
+        destroy_sa_command = client_mock().projects()\
+                                          .serviceAccounts()\
+                                          .delete(name=FAKE_SA['name']).execute
+
+        destroy_sa_mock_get.return_value = FAKE_SA
+        self.provider._destroy_service_account(
+            FAKE_SA["name"]
+        )
+
+        self.assertTrue(destroy_sa_mock_get.called)
+        self.assertTrue(destroy_sa_command.called)
+
+    @patch('host_provider.providers.gce.GceProvider.get_pubsub_service_client')
+    def test_add_role_in_service_account(self, pubsub_client_mock, client_mock):
+        add_role_to_sa = pubsub_client_mock()\
+         .projects().topics().publish().execute
+
+        self.provider._sa_set_role(
+            FAKE_SA["name"]
+        )
+
+        self.assertTrue(add_role_to_sa.called)

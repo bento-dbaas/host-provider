@@ -151,3 +151,9 @@ class ProviderBase(BaseProvider):
 
     def _destroy_service_account(self, service_account):
         pass
+
+    def sa_set_role(self, service_account):
+        return self._sa_set_role(service_account)
+
+    def _sa_set_role(self, service_account):
+        pass
