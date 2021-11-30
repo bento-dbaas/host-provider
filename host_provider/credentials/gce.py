@@ -31,6 +31,20 @@ class CredentialGce(CredentialBase):
         return self.content['network_tag']
 
     @property
+    def metadata(self):
+        return self.content.get('metadata', {})
+
+    @property
+    def metadata_items(self):
+        metadata_items = []
+        for key in self.metadata.keys():
+            metadata_items.append({
+                'key': key,
+                'value': self.metadata[key]
+            })
+        return metadata_items
+
+    @property
     def template_project(self):
         return self.content['template_project']
 
