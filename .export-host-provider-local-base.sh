@@ -7,4 +7,5 @@ export DBAAS_MYSQL_PASSWORD=[mysql_passwd]
 export DBAAS_MYSQL_PORT=[mysql_port]
 export DBAAS_MYSQL_USER=[mysql_user]
 export MONGODB_DB=[mongo_db]
-export TEAM_API_URL=h[TEAM_API_URL]
+export TEAM_API_URL=[TEAM_API_URL]
+export SENTRY_DSN=""

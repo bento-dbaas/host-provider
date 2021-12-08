@@ -43,3 +43,4 @@ HTTPS_PROXY = getenv("DBAAS_HTTPS_PROXY", None)
 TEAM_API_URL = getenv("TEAM_API_URL", None)
 
 LOGGING_LEVEL = int(getenv('LOGGING_LEVEL', logging.INFO))
+SENTRY_DSN = getenv("SENTRY_DSN", None)
