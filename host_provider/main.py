@@ -5,7 +5,8 @@ from bson import json_util, ObjectId
 from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 from flask_httpauth import HTTPBasicAuth
-from host_provider.settings import APP_USERNAME, APP_PASSWORD
+from raven.contrib.flask import Sentry
+from host_provider.settings import APP_USERNAME, APP_PASSWORD, SENTRY_DSN
 from host_provider.settings import LOGGING_LEVEL
 from host_provider.credentials.base import CredentialAdd
 from host_provider.providers import get_provider_to
@@ -13,13 +14,13 @@ from host_provider.models import Host, IP
 
 # TODO: remove duplicate code and write more tests
 
-
 app = Flask(__name__)
 auth = HTTPBasicAuth()
 cors = CORS(app)
+if SENTRY_DSN:
+    sentry = Sentry(app, dsn=SENTRY_DSN)
 
 logging.basicConfig(level=LOGGING_LEVEL)
-
 
 @auth.verify_password
 def verify_password(username, password):
@@ -31,11 +32,9 @@ def verify_password(username, password):
 
     return True
 
-
 def build_provider(provider_name, env, engine):
     provider_cls = get_provider_to(provider_name)
     return provider_cls(env, engine, dict(request.headers))
-
 
 @app.route(
     "/<string:provider_name>/<string:env>/prepare", methods=['POST']
