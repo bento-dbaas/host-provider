@@ -4,6 +4,35 @@ from host_provider.models import Host
 from dbaas_base_provider.baseProvider import BaseProvider
 from host_provider.settings import LIBCLOUD_CA_CERTS_PATH
 
+import logging
+from functools import wraps
+from datetime import datetime
+
+def logHost(f):
+    @wraps(f)
+    def fw(*args, **kwargs):
+        print(f"args ==> {args}")
+        print(f"kwargs ==> {kwargs}")
+        logging.info('#' * 80)
+        logging.info('#' * 80)
+        logging.info(f'Function: {f.__name__}')
+        logging.info(f'Start: {datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}')
+        logging.info('-' * 80)
+        logging.info(f'args: {args}')    
+        logging.info('-' * 80)
+        logging.info(f'kwargs: {kwargs}')    
+        logging.info('=' * 80)
+        f(*args, **kwargs)
+        logging.info('=' * 80)
+        logging.info(f'Function: {f.__name__}')
+        logging.info(f'End: {datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}')
+        logging.info('#' * 80)
+        logging.info('#' * 80)
+        print(f"args ==> {args}")
+        print(f"kwargs ==> {kwargs}")
+
+    return fw
+
 
 class ProviderBase(BaseProvider):
 
