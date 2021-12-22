@@ -84,7 +84,7 @@ class CloudStackProvider(ProviderBase):
             networks=networks,
             project=project
         )
-        logging.error("Creating VM with params {}".format(params))
+        logging.info("Creating VM with params {}".format(params))
         return self.client.create_node(
             name=name,
             size=self.BasicInfo(self.credential.offering_to(int(cpu), memory)),

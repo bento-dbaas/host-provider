@@ -227,7 +227,7 @@ def resize_host(provider_name, env):
     try:
         provider = build_provider(provider_name, env, host.engine)
         if int(cpus) == host.cpu and int(memory) == host.memory:
-            logging.error(
+            logging.warning(
                 "Notting to resize for host {}, offering already done".format(
                     host.id
                 )
