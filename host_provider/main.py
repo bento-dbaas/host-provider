@@ -40,11 +40,11 @@ def build_provider(provider_name, env, engine):
     provider_cls = get_provider_to(provider_name)
     return provider_cls(env, engine, dict(request.headers))
 
+@logHost
 @app.route(
     "/<string:provider_name>/<string:env>/prepare", methods=['POST']
 )
 @auth.login_required
-#@logHost
 def prepare(provider_name, env):
     data = request.get_json()
     group = data.get("group", None)
@@ -65,7 +65,7 @@ def prepare(provider_name, env):
 
 @app.route("/<string:provider_name>/<string:env>/host/new", methods=['POST'])
 @auth.login_required
-#@logHost
+@logHost
 def create_host(provider_name, env):
     print('123')
     data = request.get_json()
@@ -114,7 +114,7 @@ def create_host(provider_name, env):
 
 @app.route("/<string:provider_name>/<string:env>/ip/", methods=['POST'])
 @auth.login_required
-#@logHost
+@logHost
 def create_ip(provider_name, env):
     data = request.get_json()
     group = data.get("group", None)
@@ -142,7 +142,7 @@ def create_ip(provider_name, env):
     methods=['DELETE']
 )
 @auth.login_required
-#@logHost
+@logHost
 def destroy_ip(provider_name, env, ip_name):
     provider = build_provider(provider_name, env, "")
     provider.destroy_static_ip(ip_name)
@@ -153,7 +153,7 @@ def destroy_ip(provider_name, env, ip_name):
 
 @app.route("/<string:provider_name>/<string:env>/host/stop", methods=['POST'])
 @auth.login_required
-#@logHost
+@logHost
 def stop_host(provider_name, env):
     data = request.get_json()
     host_id = data.get("host_id", None)
@@ -248,7 +248,7 @@ def resize_host(provider_name, env):
     "/<string:provider_name>/<string:env>/host/reinstall", methods=['POST']
 )
 @auth.login_required
-#@logHost
+@logHost
 def reinstall_host(provider_name, env):
     data = request.get_json()
     host_id = data.get("host_id", None)
@@ -289,7 +289,7 @@ def reinstall_host(provider_name, env):
     "/<string:provider_name>/<string:env>/host/<host_id>", methods=['DELETE']
 )
 @auth.login_required
-#@logHost
+@logHost
 def destroy_host(provider_name, env, host_id):
     # TODO improve validation and response
     if not host_id:
@@ -320,7 +320,7 @@ def destroy_host(provider_name, env, host_id):
     methods=['DELETE']
 )
 @auth.login_required
-#@logHost
+@logHost
 def clean(provider_name, env, name):
     if not name:
         return response_invalid_request("invalid data")
@@ -336,7 +336,7 @@ def clean(provider_name, env, name):
 
 @app.route("/<string:provider_name>/<string:env>/host/metadata", methods=['POST'])
 @auth.login_required
-#@logHost
+@logHost
 def update_host_metadata(provider_name, env):
     data = request.get_json()
     host_id = data.get("host_id", None)
@@ -364,7 +364,7 @@ def update_host_metadata(provider_name, env):
     "/<string:provider_name>/<string:env>/host/configure", methods=['POST']
 )
 @auth.login_required
-#@logHost
+@logHost
 def configure(provider_name, env):
     data = request.get_json()
     host = data.get("host", None)
@@ -389,7 +389,7 @@ def configure(provider_name, env):
     "/<string:provider_name>/<string:env>/host-ids/<group_id>/", methods=['GET']
 )
 @auth.login_required
-#@logHost
+@logHost
 def get_hosts_ids(provider_name, env, group_id):
     try:
         provider = build_provider(provider_name, env, None)
@@ -404,7 +404,7 @@ def get_hosts_ids(provider_name, env, group_id):
     "/<string:provider_name>/<string:env>/host-names/<group_id>/", methods=['GET']
 )
 @auth.login_required
-#@logHost
+@logHost
 def get_hosts_names(provider_name, env, group_id):
     try:
         provider = build_provider(provider_name, env, None)
@@ -420,7 +420,7 @@ def get_hosts_names(provider_name, env, group_id):
     methods=['DELETE']
 )
 @auth.login_required
-#@logHost
+@logHost
 def configure_delete(provider_name, env, host):
     try:
         provider = build_provider(provider_name, env, None)
@@ -452,7 +452,7 @@ def _host_info(provider_name, env, host_id, refresh=False):
     "/<string:provider_name>/<string:env>/host/<host_id>/", methods=['GET']
 )
 @auth.login_required
-#@logHost
+@logHost
 def get_host(provider_name, env, host_id):
     return _host_info(provider_name, env, host_id)
 
@@ -462,7 +462,7 @@ def get_host(provider_name, env, host_id):
     methods=['GET']
 )
 @auth.login_required
-#@logHost
+@logHost
 def get_host_refresh(provider_name, env, host_id):
     return _host_info(provider_name, env, host_id, True)
 
@@ -471,7 +471,7 @@ def get_host_refresh(provider_name, env, host_id):
     "/<string:provider_name>/<string:env>/status/<host_id>", methods=['GET']
 )
 @auth.login_required
-#@logHost
+@logHost
 def status_host(provider_name, env, host_id):
     if not host_id:
         return response_invalid_request("Missing parameter host_id")
@@ -489,7 +489,7 @@ def status_host(provider_name, env, host_id):
     "/<string:provider_name>/<string:env>/credential/new", methods=['POST']
 )
 @auth.login_required
-#@logHost
+@logHost
 def create_credential(provider_name, env):
     data = request.get_json()
     try:
@@ -509,7 +509,7 @@ def create_credential(provider_name, env):
     "/<string:provider_name>/credentials", methods=['GET']
 )
 @auth.login_required
-#@logHost
+@logHost
 def get_all_credential(provider_name):
     try:
         provider = build_provider(provider_name, None, None)
@@ -528,7 +528,7 @@ def get_all_credential(provider_name):
     "/<string:provider_name>/credential/<string:uuid>", methods=['GET']
 )
 @auth.login_required
-#@logHost
+@logHost
 def get_credential(provider_name, uuid):
     try:
         provider = build_provider(provider_name, None, None)
@@ -546,7 +546,7 @@ def get_credential(provider_name, uuid):
 @app.route(("/<string:provider_name>/<string:env>/credential/<string:cpus>"
             "/<string:memory>"), methods=['GET'])
 @auth.login_required
-#@logHost
+@logHost
 def get_credential_by_offering(provider_name, env, cpus, memory):
     try:
         provider = build_provider(provider_name, env, None)
@@ -565,7 +565,7 @@ def get_credential_by_offering(provider_name, env, cpus, memory):
     "/<string:provider_name>/credential/<string:uuid>", methods=['PUT']
 )
 @auth.login_required
-#@logHost
+@logHost
 def update_credential(provider_name, uuid):
     data = request.get_json()
     if not data:
@@ -594,7 +594,7 @@ def update_credential(provider_name, uuid):
     "/<string:provider_name>/<string:env>/credential/", methods=['DELETE']
 )
 @auth.login_required
-#@logHost
+@logHost
 def destroy_credential(provider_name, env):
     try:
         credential = CredentialAdd(provider_name, env, {})
@@ -612,7 +612,7 @@ def destroy_credential(provider_name, env):
     "/<string:provider_name>/<string:env>/zones", methods=['GET']
 )
 @auth.login_required
-#@logHost
+@logHost
 def list_zones(provider_name, env):
     try:
         provider = build_provider(provider_name, env, None)
@@ -635,7 +635,7 @@ def list_zones(provider_name, env):
 
 @app.route("/<string:provider_name>/<string:env>/sa/", methods=['POST'])
 @auth.login_required
-#@logHost
+@logHost
 def create_service_account(provider_name, env):
     data = request.get_json()
     name = data.get("name", None)
@@ -659,7 +659,7 @@ def create_service_account(provider_name, env):
     methods=['DELETE']
 )
 @auth.login_required
-#@logHost
+@logHost
 def destroy_service_account(provider_name, env, sa):
     provider = build_provider(provider_name, env, "")
     provider.destroy_service_account(sa)
@@ -670,7 +670,7 @@ def destroy_service_account(provider_name, env, sa):
     "/<string:provider_name>/<string:env>/sa-set-role/<string:sa>",
     methods=['POST'])
 @auth.login_required
-#@logHost
+@logHost
 def sa_set_role(provider_name, env, sa):
     provider = build_provider(provider_name, env, "")
 

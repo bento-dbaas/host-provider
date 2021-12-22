@@ -11,8 +11,6 @@ from datetime import datetime
 def logHost(f):
     @wraps(f)
     def fw(*args, **kwargs):
-        print(f"args ==> {args}")
-        print(f"kwargs ==> {kwargs}")
         logging.info('#' * 80)
         logging.info('#' * 80)
         logging.info(f'Function: {f.__name__}')
@@ -22,15 +20,13 @@ def logHost(f):
         logging.info('-' * 80)
         logging.info(f'kwargs: {kwargs}')    
         logging.info('=' * 80)
-        f(*args, **kwargs)
+        retFunc =  f(*args, **kwargs)
         logging.info('=' * 80)
         logging.info(f'Function: {f.__name__}')
         logging.info(f'End: {datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}')
         logging.info('#' * 80)
         logging.info('#' * 80)
-        print(f"args ==> {args}")
-        print(f"kwargs ==> {kwargs}")
-
+        return retFunc
     return fw
 
 
