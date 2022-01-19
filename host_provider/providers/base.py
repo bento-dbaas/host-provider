@@ -4,6 +4,8 @@ from host_provider.models import Host
 from dbaas_base_provider.baseProvider import BaseProvider
 from host_provider.settings import LIBCLOUD_CA_CERTS_PATH
 
+from dbaas_base_provider.log import log_this
+
 
 class ProviderBase(BaseProvider):
 
