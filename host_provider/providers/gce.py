@@ -250,13 +250,6 @@ class GceProvider(ProviderBase):
             ]
         }
 
-        metadata_items = []
-        for metadata_item in self.credential.metadata:
-            metadata_items.append({
-                'key': 'google-logging-enable',
-                'value': '0'
-            })
-
         config = {
             'name': name,
             'machineType': self.get_machine_type(offering, zone),
@@ -307,16 +300,18 @@ class GceProvider(ProviderBase):
                 break
 
         if instance is None:
-            instance = self.client.instances().insert(
+            operation = self.client.instances().insert(
                 project=self.credential.project,
                 zone=zone,
                 body=config
             ).execute()
 
             self.wait_operation(
-                operation=instance.get('name'),
+                operation=operation.get('name'),
                 zone=zone
             )
+
+            instance = self.get_instance(name, zone)
 
         return instance
 
@@ -599,6 +594,7 @@ class GceProvider(ProviderBase):
                 return False
 
         return True
+
     def _update_host_metadata(self, identifier):
         host = Host.get(identifier=identifier)
 
