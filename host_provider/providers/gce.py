@@ -488,7 +488,7 @@ class GceProvider(ProviderBase):
             host.save()
 
         team_name = kw.get('team_name')
-        infra_name = kw.get('group')
+        group = kw.get('group')
         database_name = kw.get('database_name')
         service_account = kw.get('service_account')
 
@@ -499,7 +499,7 @@ class GceProvider(ProviderBase):
             static_ip_id=self.get_static_ip_by_host_id(host.id).name,
             zone=host.zone,
             team_name=team_name,
-            infra_name=infra_name,
+            group=group,
             database_name=database_name,
             service_account=service_account
         )
