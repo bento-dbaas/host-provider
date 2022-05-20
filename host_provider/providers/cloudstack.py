@@ -67,6 +67,11 @@ class CloudStackProvider(ProviderBase):
             self.get_provider(), self.environment, self.engine
         )
 
+    def get_host_by_name(self, name):
+        project = self.BasicInfo(self.credential.project)
+        nodes = self.client.list_nodes(project=project)
+        return list(filter(lambda n: n is not None, [n if name in n.name else None for n in nodes]))
+
     def _create_host(self, cpu, memory, name, *args, **kw):
         networks = [
             self.BasicInfo(network) for network in self.credential.networks
@@ -85,14 +90,19 @@ class CloudStackProvider(ProviderBase):
             project=project
         )
         logging.info("Creating VM with params {}".format(params))
-        return self.client.create_node(
-            name=name,
-            size=self.BasicInfo(self.credential.offering_to(int(cpu), memory)),
-            image=self.BasicInfo(self.credential.template),
-            location=self.BasicInfo(self.credential.zone),
-            networks=networks,
-            project=project
-        )
+
+        node = self.get_host_by_name(name)
+        if len(node) > 0:
+            return node[0]
+        else:
+            return self.client.create_node(
+                name=name,
+                size=self.BasicInfo(self.credential.offering_to(int(cpu), memory)),
+                image=self.BasicInfo(self.credential.template),
+                location=self.BasicInfo(self.credential.zone),
+                networks=networks,
+                project=project
+            )
 
     def get_credential_add(self):
         return CredentialAddCloudStack
