@@ -68,9 +68,13 @@ class CloudStackProvider(ProviderBase):
         )
 
     def get_host_by_name(self, name):
-        project = self.BasicInfo(self.credential.project)
-        nodes = self.client.list_nodes(project=project)
-        return list(filter(lambda n: n is not None, [n if name in n.name else None for n in nodes]))
+        try:
+            project = self.BasicInfo(self.credential.project)
+            nodes = self.client.list_nodes(project=project)
+            return list(filter(lambda n: n is not None, [n if name in n.name else None for n in nodes]))
+        except Exception as error:
+            logging.error("Error in list host {}".format(error))
+            return []
 
     def _create_host(self, cpu, memory, name, *args, **kw):
         networks = [
