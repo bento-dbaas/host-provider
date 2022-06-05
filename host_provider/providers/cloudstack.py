@@ -67,6 +67,18 @@ class CloudStackProvider(ProviderBase):
             self.get_provider(), self.environment, self.engine
         )
 
+    def get_host_by_name_and_zone(self, name, zone):
+        try:
+            project = self.BasicInfo(self.credential.project)
+            zone = self.BasicInfo(zone)
+            nodes = self.client.list_nodes(project=project, location=zone)
+            list_by_name = list(filter(lambda n: n is not None, [n if name in n.name else None for n in nodes]))
+            # list_by_zone = list(filter(lambda z: z is not None, [z if zone in z.extra.get('zone_id') else None for z in list_by_name]))
+            return list_by_name
+        except Exception as error:
+            logging.error("Error in list host {}".format(error))
+            return []
+
     def _create_host(self, cpu, memory, name, *args, **kw):
         networks = [
             self.BasicInfo(network) for network in self.credential.networks
@@ -85,14 +97,19 @@ class CloudStackProvider(ProviderBase):
             project=project
         )
         logging.info("Creating VM with params {}".format(params))
-        return self.client.create_node(
-            name=name,
-            size=self.BasicInfo(self.credential.offering_to(int(cpu), memory)),
-            image=self.BasicInfo(self.credential.template),
-            location=self.BasicInfo(self.credential.zone),
-            networks=networks,
-            project=project
-        )
+
+        node = self.get_host_by_name_and_zone(name, self.credential.zone)
+        if len(node) > 0:
+            return node[0]
+        else:
+            return self.client.create_node(
+                name=name,
+                size=self.BasicInfo(self.credential.offering_to(int(cpu), memory)),
+                image=self.BasicInfo(self.credential.template),
+                location=self.BasicInfo(self.credential.zone),
+                networks=networks,
+                project=project
+            )
 
     def get_credential_add(self):
         return CredentialAddCloudStack
