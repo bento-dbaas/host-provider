@@ -60,7 +60,10 @@ FAKE_STATIC_IP = FAKE_STATIC_IP_OBJ(
     'fake_id', 'fake_ip_name', 'fake_address'
 )
 
-FAKE_GOOGLE_RESPONSE_STATIC_IP = {'address': 'fake_address'}
+FAKE_GOOGLE_RESPONSE_STATIC_IP = {
+    'address': 'fake_address',
+    'subnetwork': 'fake_subnetwork'
+}
 
 FAKE_SA = {
     "name": "FAKE_SA_NAME",
