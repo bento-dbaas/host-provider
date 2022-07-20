@@ -87,7 +87,7 @@ class ResourceFoundTestCase(GCPBaseTestCase):
 
 
 @patch('dbaas_base_provider.baseProvider.BaseProvider.get_or_none_resource',
-       new=MagicMock(return_value=FAKE_GOOGLE_RESPONSE_STATIC_IP))
+       new=MagicMock(return_value=None))
 @patch('dbaas_base_provider.baseProvider.BaseProvider.wait_operation')
 @patch('host_provider.providers.gce.GceProvider.build_client')
 @patch('host_provider.providers.gce.CredentialGce.get_content',
