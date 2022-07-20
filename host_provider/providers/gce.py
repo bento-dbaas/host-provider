@@ -235,8 +235,16 @@ class GceProvider(ProviderBase):
             )
         static_ip = self.get_static_ip_by_name(static_ip_id)
 
+        ip_info = self.get_or_none_resource(
+            self.client.addresses,
+            project=self.credential.project,
+            region=self.credential.region,
+            address=static_ip.name
+        )
+        ip_subnetwork = ip_info['subnetwork'].replace('https://www.googleapis.com/compute/v1/', '')
+
         network_interface = {
-            'subnetwork': self.credential.subnetwork,
+            'subnetwork': ip_subnetwork,
             'aliasIpRanges': [],
             'networkIP': static_ip.address
         }
