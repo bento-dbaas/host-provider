@@ -62,7 +62,7 @@ FAKE_STATIC_IP = FAKE_STATIC_IP_OBJ(
 
 FAKE_GOOGLE_RESPONSE_STATIC_IP = {
     'address': 'fake_address',
-    'subnetwork': 'fake_subnetwork'
+    'subnetwork': 'fake/sub/network'
 }
 
 FAKE_SA = {
