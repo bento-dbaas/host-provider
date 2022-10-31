@@ -69,6 +69,25 @@ class GceProvider(ProviderBase):
 
         return authorized_http
 
+    def get_cloudidentity_service_client(self):
+        credentials = self.get_service_account_credentials()
+
+        if HTTP_PROXY:
+            authorized_http = self.get_authorized_http(credentials)
+
+            service = googleapiclient.discovery.build(
+                'cloudidentity',
+                'v1',
+                http=authorized_http)
+        else:
+            service = googleapiclient.discovery.build(
+                'cloudidentity',
+                'v1',
+                credentials=credentials,
+            )
+
+        return service
+
     def get_pubsub_service_client(self):
         credentials = self.get_service_account_credentials()
 
@@ -544,7 +563,7 @@ class GceProvider(ProviderBase):
             raise ex
         iam_client.projects().serviceAccounts().delete(name=name).execute()
 
-    def _sa_set_role(self, sa):
+    def set_role_to_sa(self, sa):
         if not self.credential.pubsub:
             raise NotDefinedError("Pubsub credential is not defined")
 
@@ -584,6 +603,65 @@ class GceProvider(ProviderBase):
             wait_try += 1
 
         raise ServiceAccountRoleCheckError("Role not applied")
+
+    def get_group_name(self):
+        try:
+            param = "&groupKey.id=" + self.credential.group_id
+            service = self.get_cloudidentity_service_client()
+            lookup_group_name_request = service.groups().lookup()
+            lookup_group_name_request.uri += param
+            lookup_group_name_response = lookup_group_name_request.execute()
+            group_name = lookup_group_name_response.get("name")
+            return True, group_name
+        except Exception as error:
+            return False, error
+
+    def list_group_memberships(self, group_name):
+        try:
+            service = self.get_cloudidentity_service_client()
+            response = service.groups().memberships().list(parent=group_name).execute()
+            status = True
+            msg = response['memberships']
+            return status, msg
+        except Exception as error:
+            return False, error
+
+    def add_sa_to_group(self, sa, group_name):
+        try:
+            service = self.get_cloudidentity_service_client()
+            membership = {
+                "preferredMemberKey": {"id": sa},
+                "roles": {
+                    "name": "MEMBER",
+                }
+            }
+            response = service.groups().memberships().create(parent=group_name, body=membership).execute()
+            status = response['done']
+            msg = response['response']
+            return status, msg
+        except Exception as error:
+            return False, error
+
+    def _sa_set_role(self, sa):
+        '''
+            Because of the IAM quota issue, we had to change how to add roles to the new service accounts.
+            We need to create a group, associate the roles with the group and add the new service accounts to the group.
+            Now the host provider checks if the gce credentials have the fields group_name and group_id to choose which
+            function will be used.
+            The new function add members to a group otherwise the old function add roles to a service account and use the
+            IAM quotas.
+        '''
+        status, group_name = self.get_group_name()
+        if status:
+            status, msg = self.add_sa_to_group(sa, group_name)
+            logging.info('Status: {}. Message: {}'.format(status, msg))
+            return status
+        else:
+            try:
+                return self.set_role_to_sa(sa)
+            except Exception as error:
+                logging.info('Status: {}. Message: {}'.format(False, error))
+                return False
 
     def check_sa_in_roles(self, service_account: str, roles: list) -> bool:
         service = self.get_resource_manager_service_client()
