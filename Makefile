@@ -30,3 +30,22 @@ docker_mongo:
 
 mysql_shell:
 	mysql -h ${DBAAS_MYSQL_HOSTS} -u  ${DBAAS_MYSQL_USER} -p${DBAAS_MYSQL_PASSWORD}
+
+
+
+# Docker part, for deploy
+# TODO, standardize with other providers
+docker_build:
+	GIT_BRANCH=$$(git branch --show-current); \
+	GIT_COMMIT=$$(git rev-parse --short HEAD); \
+	DATE=$$(date +"%Y-%M-%d_%T"); \
+	INFO="date:$$DATE  branch:$$GIT_BRANCH  commit:$$GIT_COMMIT"; \
+	docker build -t dbaas/host_provider --label git-commit=$(git rev-parse --short HEAD) --build-arg build_info="$$INFO" .
+
+docker_run:
+	make docker_stop
+	docker rm host_provider
+	docker run --name=host_provider -d -p 80:80 dbaas/host_provider 
+
+docker_stop:
+	docker stop host_provider	

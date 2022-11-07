@@ -679,6 +679,16 @@ def sa_set_role(provider_name, env, sa):
         return response_ok()
     return response_empty_content()
 
+@app.route('/')
+def default_route():
+    response = "host-provider, from dbaas/dbdev <br>"
+    try:
+        f = open("./build_info.txt")
+        response += f.readline()
+    except:
+        response += "build_info.txt not found"
+    return response
+
 def response_invalid_request(error, status_code=500):
     return _response(status_code, error=error)
 
