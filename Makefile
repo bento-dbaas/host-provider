@@ -49,3 +49,24 @@ docker_run:
 
 docker_stop:
 	docker stop host_provider	
+
+# exemplo 
+# make deploy_build TAG=v1.02
+deploy_build: 
+	@echo "tag usada:${TAG}"
+	@echo "exemplo de uso make deploy_build TAG=v1.02"
+	docker build . -t us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/host-provider:${TAG}
+
+deploy_push:
+	@echo "tag usada:${TAG}"
+	@echo "exemplo de uso make deploy_push TAG=v1.02"
+	docker push us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/host-provider:${TAG}
+
+
+# marcelo.rsoares@g.globo
+# AKCp8nG6NJtRZM4w4tzRGc62K26AbWNdXtDUmkPiirgNZZGt9KyuyNbkBM9yuyGyaV5ant91G
+# ARTIFACTORY_USER=marcelo.rsoares@g.globo
+# ARTIFACTORY_APIKEY=AKCp8nG6NJtRZM4w4tzRGc62K26AbWNdXtDUmkPiirgNZZGt9KyuyNbkBM9yuyGyaV5ant91G
+# docker login -u $ARTIFACTORY_USER docker.artifactory.globoi.com -p $ARTIFACTORY_APIKEY
+
+# docker-local/dbaas/host_provider
