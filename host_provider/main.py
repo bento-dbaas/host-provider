@@ -615,6 +615,7 @@ def destroy_credential(provider_name, env):
 @log_this
 def list_zones(provider_name, env):
     try:
+        print('getting provider!')
         provider = build_provider(provider_name, env, None)
         credential = provider.build_credential()
         return make_response(

@@ -33,7 +33,7 @@ mysql_shell:
 
 
 
-# Docker part, for deploy
+# Docker part, for deploy, for GCP
 # TODO, standardize with other providers
 docker_build:
 	GIT_BRANCH=$$(git branch --show-current); \
@@ -52,10 +52,10 @@ docker_stop:
 
 docker_deploy_build: 
 	@echo "tag usada:${TAG}"
-	@echo "exemplo de uso make deploy_build TAG=v1.02"
+	@echo "exemplo de uso make docker_deploy_build TAG=v1.02"
 	docker build . -t us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/host-provider:${TAG}
 
 docker_deploy_push:
 	@echo "tag usada:${TAG}"
-	@echo "exemplo de uso make deploy_push TAG=v1.02"
+	@echo "exemplo de uso make docker_deploy_push TAG=v1.02"
 	docker push us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/host-provider:${TAG}

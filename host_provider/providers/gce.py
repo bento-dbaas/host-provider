@@ -147,8 +147,10 @@ class GceProvider(ProviderBase):
 
     def get_iam_service_client(self):
         credentials = self.get_service_account_credentials()
-
+        print("creating iam service gcp")
         if HTTP_PROXY:
+            print("-- using proxy")
+            print(HTTP_PROXY)
             authorized_http = self.get_authorized_http(credentials)
 
             service = googleapiclient.discovery.build(
@@ -156,6 +158,7 @@ class GceProvider(ProviderBase):
                         'v1',
                         http=authorized_http)
         else:
+            print("-- not using proxy")
             service = googleapiclient.discovery.build(
                 'iam',
                 'v1',
