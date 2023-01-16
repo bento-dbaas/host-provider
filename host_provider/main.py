@@ -690,6 +690,32 @@ def default_route():
         response += "build_info.txt not found"
     return response
 
+
+@app.route("/<string:provider_name>/<string:env>/host/update_labels", methods=['POST'])
+@auth.login_required
+@log_this
+def update_host_team_labels(provider_name, env):
+    data = request.get_json()
+    host_id = data.get("host_id", None)
+    team_name = data.get("team_name", None)
+
+    if not host_id and not team_name:
+        return response_invalid_request("host_id and team_name are mandatory")
+
+    try:
+        host = Host.get(id=host_id)
+    except Host.DoesNotExist:
+        return response_not_found(host_id)
+
+    try:
+        provider = build_provider(provider_name, env, host.engine)
+        provider.update_team_labels(host, team_name)
+    except Exception as e:
+        print_exc()
+        return response_invalid_request(str(e))
+    return response_ok()
+
+
 def response_invalid_request(error, status_code=500):
     return _response(status_code, error=error)
 
