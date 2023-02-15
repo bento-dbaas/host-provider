@@ -159,3 +159,9 @@ class ProviderBase(BaseProvider):
 
     def _sa_set_role(self, service_account):
         pass
+
+    def update_team_labels(self, host, team_name):
+        return self._update_team_labels(host, team_name)
+
+    def _update_team_labels(self, host, team_name):
+        pass

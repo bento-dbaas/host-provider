@@ -707,3 +707,36 @@ class GceProvider(ProviderBase):
             instance=instance_name,
             body=body
         ).execute()
+
+    def _update_team_labels(self, host, team_name):
+        """
+             Function to update team labels in GCP.
+        """
+        # host = Host.get(identifier=identifier)
+        # function to get labelFingerprint and Labels info from an instance of GCP
+        instance = self.get_instance(host.name, host.zone)
+        labelFingerprint = instance['labelFingerprint']
+        labels = instance['labels']
+
+        # function to get information from a team
+        team = TeamClient(api_url=TEAM_API_URL, team_name=team_name)
+        team = team.team
+
+        # add info of new team
+        labels['servico_de_negocio'] = team.get('servico-de-negocio')
+        labels['cliente'] = team.get('cliente')
+        labels['team_slug_name'] = team.get('slug')
+        labels['team_id'] = team.get('id')
+
+        # create the body of function with Label Fingerprint and Labels
+        body = dict()
+        body['labels'] = labels
+        body['labelFingerprint'] = labelFingerprint
+
+        update_label = self.client.instances().setLabels(project=self.credential.project,
+                                                         zone=host.zone,
+                                                         instance=host.name,
+                                                         body=body).execute()
+
+        return self.wait_operation(operation=update_label.get('name'),
+                                   zone=host.zone)
