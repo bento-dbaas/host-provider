@@ -9,7 +9,7 @@ RUN apt-get update
 
 # Requirements
 COPY requirements.apt .
-RUN xargs apt install -y < requirements.apt
+RUN xargs apt install -y --force-yes < requirements.apt
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

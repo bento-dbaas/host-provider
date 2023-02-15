@@ -48,7 +48,15 @@ docker_run:
 	docker run --name=host_provider -d -p 80:80 dbaas/host_provider 
 
 docker_stop:
-	docker stop host_provider	
+	docker stop host_provider
+
+docker_deploy_gcp:
+	@echo "tag usada:${TAG}"
+	@echo "exemplo de uso:"
+	@echo "make docker_deploy_gcp TAG=v1.02"
+	@echo "Checar as tags atuais: https://console.cloud.google.com/artifacts/docker/gglobo-dbaas-hub/us-east1/dbaas-docker-images?project=gglobo-dbaas-hub"
+	make docker_deploy_build TAG=${TAG}
+	make docker_deploy_push TAG=${TAG}
 
 docker_deploy_build: 
 	@echo "tag usada:${TAG}"
