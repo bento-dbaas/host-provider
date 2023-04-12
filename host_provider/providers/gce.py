@@ -1,6 +1,7 @@
 import json
 import logging
 import httplib2
+import socket
 import google_auth_httplib2
 
 from time import sleep
@@ -129,21 +130,23 @@ class GceProvider(ProviderBase):
     def build_client(self):
         credentials = self.get_service_account_credentials()
 
-        if HTTP_PROXY:
-            authorized_http = self.get_authorized_http(credentials)
+        cont = 0
+        while cont <= 1:
+            cont += 1
+            try:
+                if HTTP_PROXY:
+                    socket.setdefaulttimeout(15)
+                    authorized_http = self.get_authorized_http(credentials)
+                    service = googleapiclient.discovery.build('compute', 'v1', http=authorized_http)
+                else:
+                    service = googleapiclient.discovery.build('compute', 'v1', credentials=credentials)
 
-            service = googleapiclient.discovery.build(
-                        'compute',
-                        'v1',
-                        http=authorized_http)
-        else:
-            service = googleapiclient.discovery.build(
-                'compute',
-                'v1',
-                credentials=credentials,
-            )
+                return service
 
-        return service
+            except:
+                raise
+
+        return False
 
     def get_iam_service_client(self):
         credentials = self.get_service_account_credentials()
