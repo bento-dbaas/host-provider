@@ -50,10 +50,29 @@ docker_run:
 docker_stop:
 	docker stop host_provider	
 
+docker_deploy_gcp:
+	@echo "tag usada:${TAG}"
+	@echo "exemplo de uso:"
+	@echo "make docker_deploy_gcp TAG=v1.02"
+	@echo "Checar as tags atuais: https://console.cloud.google.com/artifacts/docker/gglobo-dbaas-hub/us-east1/dbaas-docker-images?project=gglobo-dbaas-hub"
+	make docker_deploy_build TAG=${TAG}
+	make docker_deploy_push TAG=${TAG}
+
 docker_deploy_build: 
 	@echo "tag usada:${TAG}"
 	@echo "exemplo de uso make docker_deploy_build TAG=v1.02"
 	docker build . -t us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/host-provider:${TAG}
+
+docker_deploy_build:
+	@echo "tag usada:${TAG}"
+	@echo "exemplo de uso make docker_deploy_build TAG=v1.02"
+	GIT_BRANCH=$$(git branch --show-current); \
+	GIT_COMMIT=$$(git rev-parse --short HEAD); \
+	DATE=$$(date +"%Y-%M-%d_%T"); \
+	INFO="date:$$DATE  branch:$$GIT_BRANCH  commit:$$GIT_COMMIT"; \
+	docker build . -t us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/host-provider:${TAG} \
+		--label git-commit=$(git rev-parse --short HEAD) \
+		--build-arg build_info="$$INFO"
 
 docker_deploy_push:
 	@echo "tag usada:${TAG}"
