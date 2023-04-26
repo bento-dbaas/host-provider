@@ -1,10 +1,11 @@
-FROM python:3.6.1-slim
+FROM python:3.6.9-slim
 
 # Python optimization to run on docker
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
 # Maybe run upgrade as well???
+RUN apt-get clean
 RUN apt-get update
 
 # Requirements
