@@ -4,12 +4,16 @@ FROM python:3.6.1-slim
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
+
 # Maybe run upgrade as well???
 RUN apt-get update
 
 # Requirements
-COPY requirements.apt .
-RUN xargs apt install -y < requirements.apt
+#COPY requirements.apt .
+#RUN xargs apt install -y < requirements.apt
+RUN apt-get install -y --force-yes build-essential
+RUN apt-get install -y --force-yes default-libmysqlclient-dev
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
