@@ -247,6 +247,7 @@ class GceProvider(ProviderBase):
         infra_name = kw.get('group')
         database_name = kw.get('database_name')
         service_account = kw.get('service_account')
+        environment_tag = kw.get('environment_tag')
         team = TeamClient(api_url=TEAM_API_URL, team_name=team_name)
         team_labels = team.make_labels(
             engine_name=self.engine_name,
@@ -286,6 +287,10 @@ class GceProvider(ProviderBase):
             ]
         }
 
+        tags = [self.credential.network_tag]
+        if environment_tag != '':
+            tags.append(environment_tag)
+
         config = {
             'name': name,
             'machineType': self.get_machine_type(offering, zone),
@@ -303,7 +308,7 @@ class GceProvider(ProviderBase):
             ],
 
             'tags': {
-                'items': [self.credential.network_tag]
+                'items': tags
             },
 
             'labels': team_labels,
