@@ -287,9 +287,9 @@ class GceProvider(ProviderBase):
             ]
         }
 
-        tags = [self.credential.network_tag]
+        network_tags = [self.credential.network_tag]
         if environment_tag != '':
-            tags.append(environment_tag)
+            network_tags.append(environment_tag)
 
         config = {
             'name': name,
@@ -308,7 +308,7 @@ class GceProvider(ProviderBase):
             ],
 
             'tags': {
-                'items': tags
+                'items': network_tags
             },
 
             'labels': team_labels,
