@@ -77,7 +77,7 @@ def create_host(provider_name, env):
     database_name = data.get("database_name", "")
     static_ip_id = data.get("static_ip_id", "")
     service_account = data.get("service_account", "")
-    environment_tag = data.get("environment_tag", "")
+    ingress_network_tag = data.get("ingress_network_tag", "")
 
     # TODO improve validation and response
     if not (group and name and engine and cpu and memory):
@@ -94,7 +94,7 @@ def create_host(provider_name, env):
         'init_password': data.get('init_password', ''),
         'static_ip_id': static_ip_id,
         'service_account': service_account,
-        'environment_tag': environment_tag,
+        'ingress_network_tag': ingress_network_tag,
     }
 
     for attempt in range(provider.create_attempts):

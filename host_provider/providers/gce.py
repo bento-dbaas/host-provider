@@ -247,7 +247,7 @@ class GceProvider(ProviderBase):
         infra_name = kw.get('group')
         database_name = kw.get('database_name')
         service_account = kw.get('service_account')
-        environment_tag = kw.get('environment_tag')
+        ingress_network_tag = kw.get('ingress_network_tag')
         team = TeamClient(api_url=TEAM_API_URL, team_name=team_name)
         team_labels = team.make_labels(
             engine_name=self.engine_name,
@@ -288,8 +288,8 @@ class GceProvider(ProviderBase):
         }
 
         network_tags = [self.credential.network_tag]
-        if environment_tag != '':
-            network_tags.append(environment_tag)
+        if ingress_network_tag != '':
+            network_tags.append(ingress_network_tag)
 
         config = {
             'name': name,
