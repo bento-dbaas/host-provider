@@ -6,7 +6,6 @@ import logging
 
 LIBCLOUD_CA_CERTS_PATH = getenv("LIBCLOUD_CA_CERTS_PATH", None)
 
-
 MONGODB_HOST = getenv("MONGODB_HOST", "127.0.0.1")
 MONGODB_PORT = int(getenv("MONGODB_PORT", 27017))
 MONGODB_DB = getenv("MONGODB_DB", "host_provider")
@@ -40,7 +39,11 @@ APP_USERNAME = getenv("APP_USERNAME", None)
 APP_PASSWORD = getenv("APP_PASSWORD", None)
 HTTP_PROXY = getenv("DBAAS_HTTP_PROXY", None)
 HTTPS_PROXY = getenv("DBAAS_HTTPS_PROXY", None)
+
 TEAM_API_URL = getenv("TEAM_API_URL", None)
+DBAAS_TEAM_API_URL = getenv("DBAAS_TEAM_API_URL", None)
+USER_DBAAS_API = getenv("USER_DBAAS_API", "user")
+PASSWORD_DBAAS_API = getenv("PASSWORD_DBAAS_API", "password")
 
 LOGGING_LEVEL = int(getenv('LOGGING_LEVEL', logging.INFO))
 SENTRY_DSN = getenv("SENTRY_DSN", None)

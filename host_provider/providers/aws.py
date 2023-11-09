@@ -79,12 +79,7 @@ class AWSProvider(ProviderBase):
         team_name = kw.get('team_name')
         infra_name = kw.get('group')
         database_name = kw.get('database_name')
-        team = TeamClient(api_url=TEAM_API_URL, team_name=team_name)
-        team_labels = team.make_labels(
-            engine_name=self.engine_name,
-            infra_name=infra_name,
-            database_name=database_name
-        )
+        team_labels = self.get_team(team_name, infra_name, database_name)
         return self.client.create_node(
             name=name,
             image=self.BasicInfo(self.credential.template_to(self.engine)),
