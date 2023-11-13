@@ -9,6 +9,7 @@ from dbaas_base_provider.baseProvider import BaseProvider
 from host_provider.settings import LIBCLOUD_CA_CERTS_PATH, TEAM_API_URL, DBAAS_TEAM_API_URL, USER_DBAAS_API, PASSWORD_DBAAS_API
 
 from dbaas_base_provider.log import log_this
+from dbaas_base_provider.team import TeamClient
 
 
 class ProviderBase(BaseProvider):
@@ -88,7 +89,7 @@ class ProviderBase(BaseProvider):
             return "READY", version_id
         return "NOT READY", None
 
-    def get_team(self, team_name, infra_name='', database_name=''):
+    def get_team_labels_formatted(self, team_name, infra_name='', database_name=''):
         team_labels = {}
         url = DBAAS_TEAM_API_URL + team_name
         response = requests.get(url, verify=False, auth=HTTPBasicAuth(USER_DBAAS_API, PASSWORD_DBAAS_API))

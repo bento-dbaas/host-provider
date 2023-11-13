@@ -247,7 +247,7 @@ class GceProvider(ProviderBase):
         infra_name = kw.get('group')
         database_name = kw.get('database_name')
         service_account = kw.get('service_account')
-        team_labels = self.get_team(team_name, infra_name, database_name)
+        team_labels = self.get_team_labels_formatted(team_name, infra_name, database_name)
 
         if not static_ip_id:
             raise StaticIPNotFoundError(
@@ -717,7 +717,7 @@ class GceProvider(ProviderBase):
         labels = instance['labels']
 
         # function to get information from a team
-        team = self.get_team(team_name)
+        team = self.get_team_labels_formatted(team_name)
 
         # add info of new team
         labels['servico_de_negocio'] = team.get('servico_de_negocio')
