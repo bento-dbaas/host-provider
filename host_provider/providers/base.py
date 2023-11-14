@@ -1,10 +1,15 @@
+import requests
+import datetime
+from requests.auth import HTTPBasicAuth
+
 from libcloud.compute.providers import get_driver
 from libcloud import security
 from host_provider.models import Host
 from dbaas_base_provider.baseProvider import BaseProvider
-from host_provider.settings import LIBCLOUD_CA_CERTS_PATH
+from host_provider.settings import LIBCLOUD_CA_CERTS_PATH, TEAM_API_URL, DBAAS_TEAM_API_URL, USER_DBAAS_API, PASSWORD_DBAAS_API
 
 from dbaas_base_provider.log import log_this
+from dbaas_base_provider.team import TeamClient
 
 
 class ProviderBase(BaseProvider):
@@ -83,6 +88,31 @@ class ProviderBase(BaseProvider):
         if is_ready:
             return "READY", version_id
         return "NOT READY", None
+
+    def get_team_labels_formatted(self, team_name, infra_name='', database_name=''):
+        team_labels = {}
+        url = DBAAS_TEAM_API_URL + team_name
+        response = requests.get(url, verify=False, auth=HTTPBasicAuth(USER_DBAAS_API, PASSWORD_DBAAS_API))
+        if response.status_code == 200:
+            team = response.json()
+            team_labels = {
+                "servico_de_negocio": team["business_service"],
+                "cliente": team["client"],
+                "team_slug_name": team["slug"],
+                "team_id": team["identifier"],
+                "created_at": datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'),
+                "engine": self.engine_name,
+                "infra_name": infra_name,
+                "database_name": database_name
+            }
+        else:
+            team = TeamClient(api_url=TEAM_API_URL, team_name=team_name)
+            team_labels = team.make_labels(
+                engine_name=self.engine_name,
+                infra_name=infra_name,
+                database_name=database_name
+            )
+        return team_labels
 
     def destroy(self, group, identifier):
         self._destroy(identifier)
