@@ -3,6 +3,7 @@ FROM python:3.6.1-slim
 # Python optimization to run on docker
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONIOENCODING UTF-8
 
 RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
 
