@@ -247,6 +247,7 @@ class GceProvider(ProviderBase):
         infra_name = kw.get('group')
         database_name = kw.get('database_name')
         service_account = kw.get('service_account')
+        ingress_network_tag = kw.get('ingress_network_tag')
         team_labels = self.get_team_labels_formatted(team_name, infra_name, database_name)
 
         if not static_ip_id:
@@ -281,6 +282,10 @@ class GceProvider(ProviderBase):
             ]
         }
 
+        network_tags = [self.credential.network_tag]
+        if ingress_network_tag != '':
+            network_tags.append(ingress_network_tag)
+
         config = {
             'name': name,
             'machineType': self.get_machine_type(offering, zone),
@@ -298,7 +303,7 @@ class GceProvider(ProviderBase):
             ],
 
             'tags': {
-                'items': [self.credential.network_tag]
+                'items': network_tags
             },
 
             'labels': team_labels,
